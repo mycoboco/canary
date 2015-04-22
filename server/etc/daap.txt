@@ -1,0 +1,515 @@
+	       Digital Audio Access Protocol (DAAP)
+		     Protocol documentation v0.2
+                           daap@tapjam.net
+
+
+I. Introduction
+
+
+Apple introduced the Digital Audio Access Protocol (DAAP[1]) with
+iTunes4, to allow iTunes to share its library with other machines also
+running iTunes.  iTunes uses the Rendezvous protocol[2], specifically
+the multi-cast dns and service discovery bits, to find other local
+machines that happen to be running iTunes and also sharing their
+libraries.
+
+Rendezvous is well documented in a number of places, and so it will
+not be discussed here.  DAAP, on the other hand, in spite of having an
+IANA defined port number, has yet to be documented.  This will
+hopefully rectify that situation.
+
+UPDATE: With iTunes 4.0.1 apple introduced a handful of changes that
+break compatability with iTunes 4.0.  The changes are simply:
+
+	o the version number is bumped to 2.0, from 1.0
+	o the sessionid needs to be an unsigned integer, it looks
+	  like the way session id's are created caused a signed
+	  sessiondid, e.g. -9184 as a signed int, the string sessionid
+	  needs to be unsigned, e.g. 4294958112 - I don't know if
+	  this goes for all numeric values, or just sessionid
+	
+PART 1 - High level overview
+
+
+
+II. DAAP Overview
+
+
+DAAP, in a nutshell, is a fairly simple protocol.  Once iTunes has
+found another instance, it will connect to, and download basic server
+information about that instance.  It will then download a dictionary
+of attributes that will be used at various other points in the
+conversation.  iTunes then makes a series of DAAP requests to download
+the list of songs from the server, as well as the various playlists of
+those songs that the server has shared.  Finally, when iTunes wishes to
+stream a song from the server, once again, a request is made to the
+server to stream the selected track back to iTunes.  In addition,
+there is a provision for allowing the client to pick up on when
+changes are made to the server.
+
+The iTunes implementation of DAAP imposes some restrictions.  Most
+notably, it limits a user to 5 connections/sessions at any given
+point.  Note, that a session doesn't necessarily have to be actively
+streaming music to be counted to that five connections.  (The limit on
+connections is actually 10, as a client may have up to two connections
+to the server - one for the database/playlist updates, the other for
+streaming).
+
+Interestingly enough, the iTunes implementation of DAAP does not
+restrict access to the local network.  This has lead to the rise of a
+number of iTunes server repositories, including one that uses the DAAP
+protocol to download the playlists of servers registered with it, and
+uses that information to provide a search engine.
+
+
+III. Under the Hood - the DAAP packet format
+
+
+At it's heart, DAAP is the latest in a long line of protocols that
+uses HTTP[3] as it's underlying transport mechanism.  It appears to
+prefer using the connection-oriented HTTP/1.1 - though there is also
+some support, it seems, for HTTP/1.0.  This document will focus on the
+HTTP/1.1 implementation, and assume that the HTTP/1.0 implementation
+is around for some strange legacy reason.
+
+(Note: the specifics of writing HTTP clients and servers are beyond
+the scope of this document.  There are a number of excellent libraries
+and resources out there for providing this functionality, however).
+
+While the requests are normal URLs (documented further below), the
+responses have the mime-type application/x-dmap-tagged.  This type
+appears to be a flattened form of a plist or xml formatted file.  (In
+fact, it would be fairly trivial to write an x-dmap-tagged to xml
+converter, with just a little bit of foreknowledge on the specific
+tags).
+
+The basic format of DAAP (expanded on below) is:
+
+    4 byte tag | size (4 byte int) | data
+
+where the length of the data is determined by the size.  The 4 byte
+tag can be represented as either an integer, or as a four character
+string.  (Of course, the characters in that string form the bytes of
+the 4 byte integer, highest order byte first - e.g. the code 'minm'
+has the numeric value 1835626093.  This jumping back and forth comes
+in real handy in writing code to deal with daap, as it allows you to
+use switch/jump tables to react to the various codes, with a minimal
+amount of hash-table lookup/string conversion/etc...)
+
+Very early on in the DAAP conversation, a 'map' of content codes,
+their long name, and their types gets sent back.  This map is used to
+provide the basic description for a number of fields used in various
+points further down.  See appendix A for a full listing of codes used
+in the iTunes conversation.
+
+An example, simple dmap-tagged block, the response to a /login
+request:
+
+0000000  155 154 157 147 000 000 000 044 155 163 164 164 000 000 000 004
+           m   l   o   g  \0  \0  \0   $   m   s   t   t  \0  \0  \0 004
+0000020  000 000 000 310 155 154 151 144 000 000 000 004 000 000 037 336
+          \0  \0  \0 310   m   l   i   d  \0  \0  \0 004  \0  \0 037 336
+
+or:
+	mlog (36 bytes)
+	  mstt - 200  (4 bytes)
+	  mlid - 8158 (4 bytes)
+
+NOTE: For some reason, iTunes sometimes lies about the size of the
+response that its sending back, claiming to be sending back more than
+it actually ends up sending.  No reason for this has been found, and
+iTunes behaves properly if sent a packet with the correct size, so it
+seems to be a non issue (save for possibly sloppy coding on apple's
+part?).  The login response may be padded for an extra field that
+doesn't always get dropped in (but iTunes always counts it).
+
+For container types (e.g. content codes with a type 12, or list), the
+data can, itself contain more code/size/data blocks.  Lists will
+contain multiple code/size/data blocks, one for each item in the list.
+
+All sizes are in bytes and count only the following data block.
+
+
+IV. Client/Server conversation overview
+
+
+Here's a quick diagram of the flow of requests/responses in a DAAP
+session:
+
+client				server 	Description
+	  ---/server-info---->		Request for server info
+	<-------msrv-------		server info response
+	  ---/content-codes-->		request for content-codes
+	<-------mccr-------		content-codes response
+	  ---/login---------->		login
+	<-------mlog-------		login response (with sessionid)
+	  ---/update--------->		update request
+	<-------mupd-------		update response (with server rev)
+	  ---/databases------>		database request
+	<-------avdb-------		data base response (with dbid)
+	  ---/db/id/items---->		request songs
+        <-------adbs-------		list of songs in database
+	  -/db/id/containers->		request playlists
+	<-------aply-------		list of playlists in database
+	  -/db/id/c/id/items->		request playlist
+	<-------apso-------		list of songs in playlist
+	  -/db/id/c/id/items->
+	<-------apso-------
+	  -/db/id/c/id/items->
+	<-------apso-------
+	  -/db/id/c/id/items->
+	<-------apso-------
+	  -/db/id/items/x.mp3->		request mp3
+	<--stream-mp3-file-		stream'd mp3
+
+(For some reason, the iTunes server flags the content type as
+x-dmap-tagged for the streamed mp3 - i don't know if this is laziness
+on apple's part, or an intent to trip up web browsers trying to
+download tracks).
+
+The following sections will describe the requests and responses in
+detail.  These sections will be expanded on ures are discovered and
+documented.  (Note: daap://server can be interchanged with
+http://server:3689 for purposes of coding/using command line utilities
+such as curl/wget to poke at things)
+
+1. Server Info
+
+Request: daap://server/server-info (or http://server:3689/)
+Response: msrv
+Description: Provides basic negotiation info on what the server does
+	and doesn't support and protocols.
+Content: (See appendix A for detailed information on codes)
+	msrv
+	  mstt - status
+	  apro - daap protocol
+	  msix - does the server support indexing?
+	  msex - does the server support extensions?
+	  msup - does the server support update?
+	  msal - does the server support auto-logout?
+	  mstm - timeout interval
+	  mslr - is login required?
+	  msqy - does the server support queries?
+	  minm - server name
+	  msrs - does the server support resolve?  (needs persistent ids)
+	  msbr - does the server support browsing?
+  	  mspi - does the server support persistent ids?
+	  mpro - dmap protocol version
+
+	
+2. Content Codes
+
+Request: daap://server/content-codes
+Response: mccr
+Description: Provides a dictionary of content codes, names, and size
+	information.
+Content: ( See Appendix A for detailed code information )
+	mccr
+	  mstt		status
+	  mdcl		dictionary entry (one for each type)
+	    mcna	item name
+	    mcnm	item number
+	    mcty	item type
+	
+3. Login (and session id)
+
+Request: daap://server/login
+Response: mlog
+Description: Provides session information to use for the rest of the
+	session.  If requiresLogin is set in the server-info, then
+	from this point on, a basic http authentication header needs
+	to be included with the request.  It is basically a header of the
+	form:
+		Authentication: base64encodedusernamepassword
+	where the base64 encoded password is the string:
+		username:password
+	base64 encoded (obviously replacing username and password with
+	the appropriate values).  Username appears to be meaningless.
+	A shame - i like the idea of being able to do user level
+	permissions.
+Content:
+	mlog
+	  mstt	status
+	  mlid	session id (used in remaining requests <sid> below)
+
+
+4. Update (and server revision)
+
+Request: daap://server/update?session-id=<sid>
+Response: mupd
+Description: There seem to be two forms update requests.  The first is
+	the update when logging in, to get the initial data.  The
+	second (not yet documented) is to catch updates/changes to
+	the server database.  Note the addition of the session-id
+	from the login.
+Conent:
+	mupd
+	  musr 	the server revision (<rid> below)
+	  mstt
+
+5. Database list
+
+Request: daap://server/databases?session-id=<sid>&revision-id=<rid>
+Response: avdb
+Description: This provides a list of databases served up by the
+	server.  At present, it appears that only one db per server
+	is the norm, but it may be possible to have multiple servers.
+Content:
+	avdb
+	  mstt - status
+	  muty - update type - always 0 for now
+	  mtco - total number of matching records
+	  mrco - total number of records returned
+	  mlcl - listing of records
+	    mlit - single record
+	      miid - database id (<dbid> in subsequent requests)
+	      mper - database persistent id
+	      minm - database name
+	      mimc - number of items (songs) in the database
+	      mctc - number of containers (playlists) in the database
+
+
+	
+6. Song list
+
+Request: daap://server/databases/<dbid>/items?type=music&meta=<list of
+fields>&session-id=<sid>&revision-id=<rid>
+Response: apso
+Description: This is the list of songs in the database.  Every song.
+	Note given the format of the records and the request, I believe
+	that it's possible to have other types as well.  The standard
+	list of fields is (e.g. the value for meta):
+
+		dmap.itemid,dmap.itemname,dmap.itemkind,dmap.persistentid,
+		daap.songalbum,daap.songartist,daap.songbitrate,
+		daap.songbeatsperminute,daap.songcomment,daap.songcompilation,
+		daap.songcomposer,daap.songdateadded,daap.songdatemodified,
+		daap.songdisccount,daap.songdiscnumber,daap.songdisabled,
+		daap.songeqpreset,daap.songformat,daap.songgenre,
+		daap.songdescription,daap.songrelativevolume,
+		daap.songsamplerate,daap.songsize,daap.songstarttime,
+		daap.songstoptime,daap.songtime,daap.songtrackcount,
+		daap.songtracknumber,daap.songuserrating,daap.songyear,
+		daap.songdatakind,daap.songdataurl,com.apple.itunes.norm-volume
+
+	Note that in the response, it is very important that itemtype(mikd)
+	be returned first for each record.  It looks like the order of the
+	remaining fields can be arbitrary, but it is vital that itemid
+	be first.  It also appears to be permissable to leave out fields
+	that are request.  I'd imagine there is some subset of fields
+	that is required, however.
+
+Response:
+	apso
+	  mstt - status
+	  muty - update type (0)
+	  mtco - matched items
+	  mrco - items in message
+	  mlcl - list of items
+	    mlit - single item (one per song)
+	      mikd - item kind (2 for music)
+	      miid - item id
+	      minm - item name (e.g. the trackname)
+	      ...  - the remaining fields for the track
+
+7. Playlist list
+
+Request: daap://server/databases/<dbid>/containers?meta=<containermeta>&session-id=<sid>&revision-id=<rid>
+Response: aply
+Description: provides a list of the playlists stored on the server, as
+	well as some basic information about them, depending on the
+	metadata that the client asks for.  So far, iTunes seems to ask
+	for:
+		dmap.itemid,dmap.itemname,dma.persistentid,
+		com.apple.itunes.smart-playlist
+
+Content:
+	aply
+	  mstt - status
+	  muty - update type(0)
+	  mtco - matched items
+	  mrco - items in response
+	  mlcl
+	    mlit - playlist entry (one per playlist)
+	      miid - the playlist's itemid (plid below)
+	      mper - the playlist's persistent id
+	      minm - the playlist's name
+	      mimc - the number of items in the playlist
+	      aeSP (optional) - is it a smart playlist
+
+
+8. Playlist
+
+Request: daap://server/databases/<dbid>/containers/<plid>/items?type=music&meta=<playlistmeta>&session-id=<sid>&revision-id=<rid>
+Response: apso
+Description: provides a list of items in the given playlist, providing
+	the requested meta information for each item.  The most commonly
+	requested items seem to be:
+
+	  dmap.itemkind,dmap.itemid,dmap.containeritemid
+
+Content:
+	apso
+	  mstt - status
+	  muty - update type(0)
+	  mtco - matched items
+	  mrco - returned items
+	  mlcl - list of playlist entries
+	    mlit - single playlist entry (one per song)
+	      mikd - item kind (2 for music)
+	      miid - itemid of the song
+	      containeritemid - id in the container
+
+9. Stream song
+
+Request: daap://server/databases/<dbid>/items/<songid>.mp3?session-id=session
+Response: streamed mp3
+Description: Request a song from the server.  Note that it is possible
+	to use the 'range' http header to specify the range of a song,
+	e.g. the start and end bytes for the track.  It's important for
+	a server to support this, in case itunes users decide to jump
+	around.
+
+Content: the raw mp3 stream
+	
+
+Appendix A - iTunes4 content codes
+
+
+This is a list of the content codes used by iTunes4.  Note, the
+conversion from four letter code to integer is left as an exercise for
+the reader.  (note: many of these should be self explanatory)
+
+Code	Type	Name			Description
+mdcl	list	dmap.dictionary		a dictionary entry
+mstt	int	dmap.status		the response status code,
+					these appear to be http status
+					codes, e.g. 200
+miid	int	dmap.itemid		an item's id
+minm	string	dmap.itemname		an items name
+mikd	byte	dmap.itemkind		the kind of item.  So far,
+					only '2' has been seen, an
+					audio file?
+mper	long	dmap.persistentid	a persistend id
+mcon	list	dmap.container		an arbitrary container
+mcti	int	dmap.containeritemid	the id of an item in its
+					container
+mpco	int	dmap.parentcontainerid
+msts	string	dmap.statusstring
+mimc	int	dmap.itemcount		number of items in a container
+mrco	int	dmap.returnedcount	number of items returned in a
+					request
+mtco	int	dmap.specifiedtotalcount number of items in response
+					to a request
+mlcl	list	dmap.listing		a list
+mlit	list	dmap.listingitem	a single item in said list
+mbcl	list	dmap.bag
+mdcl	list	dmap.dictionary
+
+msrv	list	dmap.serverinforesponse	response to a /server-info
+msaud	byte	dmap.authenticationmethod (should be self explanitory)
+mslr	byte	dmap.loginrequired
+mpro	version	dmap.protocolversion
+apro	version	daap.protocolversion
+msal	byte	dmap.supportsuatologout
+msup	byte	dmap.supportsupdate
+mspi	byte	dmap.supportspersistentids
+msex	byte	dmap.supportsextensions
+msbr	byte	dmap.supportsbrowse
+msqy	byte	dmap.supportsquery
+msix	byte	dmap.supportsindex
+msrs	byte	dmap.supportsresolve
+mstm	int	dmap.timeoutinterval
+msdc	int	dmap.databasescount
+
+mccr	list	dmap.contentcodesresponse	the response to the
+						content-codes request
+mcnm	int	dmap.contentcodesnumber	the four letter code
+mcna	string	dmap.contentcodesname	the full name of the code
+mcty	short	dmap.contentcodestype	the type of the code (see
+					appendix b for type values)
+
+mlog	list	dmap.loginresponse	response to a /login
+mlid	int	dmap.sessionid		the session id for the login session
+
+mupd	list	dmap.updateresponse	response to a /update
+msur	int	dmap.serverrevision	revision to use for requests
+muty	byte	dmap.updatetype
+mudl	list	dmap.deletedidlisting	used in updates?  (document soon)
+
+avdb	list	daap.serverdatabases	response to a /databases
+abro	list	daap.databasebrowse	
+abal	list	daap.browsealbumlistung	
+abar	list	daap.browseartistlisting
+abcp	list	daap.browsecomposerlisting
+abgn	list	daap.browsegenrelisting
+
+adbs	list	daap.databasesongs	repsoonse to a /databases/id/items
+asal	string	daap.songalbum		the song ones should be self exp.
+asar	string	daap.songartist
+asbt	short	daap.songsbeatsperminute
+asbr	short	daap.songbitrate
+ascm	string	daap.songcomment
+asco	byte	daap.songcompilation
+asda	date	daap.songdateadded
+asdm	date	daap.songdatemodified
+asdc	short	daap.songdisccount
+asdn	short	daap.songdiscnumber
+asdb	byte	daap.songdisabled
+aseq	string	daap.songeqpreset
+asfm	string	daap.songformat
+asgn	string	daap.songgenre
+asdt	string	daap.songdescription
+asrv	byte	daap.songrelativevolume
+assr	int	daap.songsamplerate
+assz	int	daap.songsize
+asst	int	daap.songstarttime 	(in milliseconds)	
+assp	int	daap.songstoptime 	(in milliseconds)
+astm	int	daap.songtime		(in milliseconds)
+astc	short	daap.songtrackcount
+astn	short	daap.songtracknumber
+asur	byte	daap.songuserrating
+asyr	short	daap.songyear
+asdk	byte	daap.songdatakind
+asul	string	daap.songdataurl
+
+aply	list	daap.databaseplaylists	response to /databases/id/containers
+abpl	byte	daap.baseplaylist
+
+apso	list	daap.playlistsongs	response to
+					/databases/id/containers/id/items
+prsv	list	daap.resolve
+arif	list	daap.resolveinfo
+
+aeNV	int	com.apple.itunes.norm-volume
+aeSP	byte	com.apple.itunes.smart-playlist
+
+	
+Appendix B - iTunes4 content types
+
+
+(Note: the ones in parenthesis are assumed based on the arrangement of
+types, however they have not yet been confirmed)
+
+id	type
+1	byte
+2	(unsigned byte)
+3	short
+4	(unsigned short)
+5	int
+6	(unsigned int)
+7	long
+8	(unsigned long)
+9	string
+10	date (represented as a 4 byte integer)
+11	version (represented as either 4 single bytes, e.g. 0.1.0.0 or
+		as two shorts, e.g. 1.0)
+12	list
+
+
+Footnotes
+
+1. It is my assumption, at least, that this is what DAAP stands for
+2. Apples implementation of the zeroconf standards
+3. HyperText Transport Protocol - although, these days it's shunting
+around a lot more than hypertext, no?

@@ -1,0 +1,13 @@
+{
+    "name":     "canary music",
+    "host":     "localhost",
+    "port":     3689,
+    "password": "password",
+    "timeout":  1800,
+    "scan": {
+        "path":  [ "/path/to/mp3/files" ],
+        "cycle": [ "17:00:00" ],
+        "utc":   false
+    },
+    "debug": false
+}

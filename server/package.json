@@ -1,0 +1,49 @@
+{
+  "name": "canary",
+  "version": "0.0.1",
+  "description": "a music streaming server with DAAP support",
+  "author": {
+    "name": "Woong Jun",
+    "email": "woong.jun@gmail.com",
+    "url": "http://code.woong.org/"
+  },
+  "contributors": [],
+  "homepage": "http://code.woong.org/canary",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mycoboco/canary"
+  },
+  "bugs": {
+    "url": "https://github.com/mycoboco/canary/issues",
+    "email": "woong.jun@gmail.com"
+  },
+  "main": "server.js",
+  "scripts": {
+    "install": "node-gyp rebuild"
+  },
+  "dependencies": {
+    "async": "^0.9.0",
+    "bindings": "*",
+    "colors": "^0.6.2",
+    "defaults": "^1.0.0",
+    "fnv": "^0.1.3",
+    "konphyg": "^1.4.0",
+    "mime": "^1.3.4",
+    "mongoose": "^3.8.12",
+    "mp3info": "^0.0.9",
+    "musicmetadata": "^1.0.1",
+    "ontime": "^0.0.3",
+    "optimist": "^0.6.1",
+    "restify": "^2.7.0",
+    "underscore": "^1.6.0",
+    "watch": "^0.16.0",
+    "winston": "^0.7.3"
+  },
+  "devDependencies": {
+  },
+  "engines": { "node": ">=0.10.21" },
+  "licenses": "MIT",
+  "keywords": [
+    "DAAP", "iTunes"
+  ]
+}
