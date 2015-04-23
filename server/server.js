@@ -126,7 +126,7 @@ function usage() {
     console.log('Usage: node server <OPTION>...\n\n' +
                 'Mandatory arguments to long options are mandatory for short options too.\n' +
                 '  -c, --config DIR      directory for configurations [required]\n' +
-                '      --rescan          scan songs immediately after server starts\n' +
+                '      --no-rescan       do not scan songs immediately after server starts\n' +
                 '      --help            display this help and exit\n' +
                 '      --version         display version information and exit\n')
     console.log('For bug reporting instructions, please see: <http://code.woong.org/>.');
@@ -226,7 +226,7 @@ function usage() {
         debug: conf.server.debug
     })
 
-    if (argv.rescan) mp3.scan(true)
+    if (!argv['no-rescan']) mp3.scan(true)
 
     server.listen(conf.server.port, function () {
         log.info('%s listening on port %s', server.name, conf.server.port)
