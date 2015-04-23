@@ -229,8 +229,7 @@ function usage() {
     if (argv.rescan) mp3.scan(true)
 
     server.listen(conf.server.port, function () {
-        log.info('%s listening at %s', server.name,
-                 'http://'+conf.server.host+':'+conf.server.port)
+        log.info('%s listening on port %s', server.name, conf.server.port)
     })
 
     avahi.publish({

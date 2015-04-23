@@ -1,6 +1,5 @@
 {
     "name":     "canary music",
-    "host":     "localhost",
     "port":     3689,
     "password": "password",
     "timeout":  1800,
