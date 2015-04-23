@@ -20,8 +20,7 @@ var cache = {}
 function init(_db, _daap, _conf) {
     conf = defaults(_conf, {
         server: {
-            name:    'canary',
-            timeout: 1800
+            name: 'canary'
         },
         debug: false
     })
@@ -120,7 +119,7 @@ function serverInfo(req, res) {
             { minm: conf.server.name },
             { mslr: !!auth },
             { msau: auth },
-            { mstm: conf.server.timeout },
+            { mstm: 1800 },
             { msex: false },
             { msix: false },
             { msbr: false },
