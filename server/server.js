@@ -227,7 +227,7 @@ function usage() {
         debug: conf.server.debug
     })
 
-    if (!argv.rescan) mp3.scan(true)
+    if (argv.rescan) mp3.scan(true)
 
     server.listen(conf.server.port, function () {
         log.info('%s listening on port %s', server.name, conf.server.port)
