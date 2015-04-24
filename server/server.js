@@ -178,7 +178,7 @@ function usage() {
 
             zlib.gzip(body, function (err, buffer) {
                 var header = {
-                    'DAAP-Server':     'canary/0.0.1',
+                    'DAAP-Server':     'canary/'+VERSION,
                     'Content-Type':    'application/x-dmap-tagged',
                     'Accept-Ranges':   'bytes',
                 }
