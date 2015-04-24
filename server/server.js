@@ -13,6 +13,7 @@ var zlib = require('zlib')
 var argv = require('optimist')
            .string('c')
            .alias('c', 'config')
+           .default('rescan', true)
            .argv
 
 // checks for program arguments must be done before konphyg
@@ -226,7 +227,7 @@ function usage() {
         debug: conf.server.debug
     })
 
-    if (!argv['no-rescan']) mp3.scan(true)
+    if (!argv.rescan) mp3.scan(true)
 
     server.listen(conf.server.port, function () {
         log.info('%s listening on port %s', server.name, conf.server.port)
