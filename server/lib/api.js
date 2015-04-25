@@ -20,7 +20,10 @@ var cache = {}
 function init(_db, _daap, _conf) {
     conf = defaults(_conf, {
         server: {
-            name: 'canary'
+            name: 'canary',
+            scan: {
+                path: [ '/path/to/mp3/files' ]
+            }
         },
         debug: false
     })
@@ -295,11 +298,22 @@ function song(req, res) {
     }
 
     db.song.path(+id[1], function (err, songs) {
+        var i
+
         if (err) {
             res.err(err)
             return
         }
         if (songs.length === 0) {
+            res.err(404)
+            return
+        }
+
+        for (var i = 0; i < conf.server.path.length; i++) {
+            if (songs[0].path.indexOf(conf.server.path[0]) === 0) break
+        }
+        if (i === conf.server.path.length) {
+            log.error(new Error('requested file('+songs[0].path+') has no valid path'))
             res.err(404)
             return
         }
