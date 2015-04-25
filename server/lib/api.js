@@ -309,10 +309,10 @@ function song(req, res) {
             return
         }
 
-        for (var i = 0; i < conf.server.path.length; i++) {
-            if (songs[0].path.indexOf(conf.server.path[0]) === 0) break
+        for (i = 0; i < conf.server.scan.path.length; i++) {
+            if (songs[0].path.indexOf(conf.server.scan.path[0]) === 0) break
         }
-        if (i === conf.server.path.length) {
+        if (i === conf.server.scan.path.length) {
             log.error(new Error('requested file('+songs[0].path+') has no valid path'))
             res.err(404)
             return
