@@ -1,5 +1,5 @@
-canary: a music streaming server/client with DAAP support
-=========================================================
+canary: a music streaming server/client
+=======================================
 
 `canary` is a package of a music streaming server and its companion iOS client
 that run upon
@@ -87,8 +87,8 @@ The server configuration, `config/server.json` looks like:
   - `cycle` and `utc`: clear what these mean from their names but you can refer
     to [`ontime`](https://www.npmjs.com/package/ontime) for how to specify the
     rescanning schedule. `canary-server` accepts other options for `ontime`
-    except `single` that is always set to true;
-- `debug` controls the server's log level. Setting this to true makes the
+    except `single` that is always set to _true_;
+- `debug` controls the server's log level. Setting this to _true_ makes the
   server verbose.
 
 `config/db.json` contains:
@@ -134,8 +134,6 @@ needs many improvements that include, but not limited to:
   files are normalized so not enough samples to push the server's metadata
   handling.
 
-
--------------------------------------------------------------------------------
 
 `INSTALL.md` explains how to build and install the library. For the copyright
 issues, see the accompanying `LICENSE.md` file.

@@ -1,5 +1,5 @@
-canary: a music streaming server/client with DAAP support
-=========================================================
+canary: a music streaming server/client
+=======================================
 
 Copyright (C) 2015 by Jun Woong.
 

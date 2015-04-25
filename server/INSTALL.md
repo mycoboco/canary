@@ -11,6 +11,6 @@ If you have `node.js` in your system,
 brings the latest version of `canary-server` and installs it with its all
 depending packages.
 
-To build a native module for [DNS-SD](http://www.dns-sd.org/), a
+To build a native module for [DNS-SD](http://www.dns-sd.org/), an
 [Avahi](http://www.avahi.org/)-compatible library is required; see `README.md`
 for details.
