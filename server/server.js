@@ -170,23 +170,17 @@ function usage() {
         log.info('<< '+req.method+' '+req.url+' >>')
 
         res.ok = function (body) {
-            if (!body) {
-                res.send(500)
-                return
-            }
-            log.info('sending response to '+req.method+' '+req.url)
-
-            zlib.gzip(body, function (err, buffer) {
+            var send = function (err, buffer) {
                 var header = {
-                    'DAAP-Server':     'canary/'+VERSION,
-                    'Content-Type':    'application/x-dmap-tagged',
-                    'Accept-Ranges':   'bytes',
+                    'DAAP-Server':   'canary/'+VERSION,
+                    'Content-Type':  'application/x-dmap-tagged',
+                    'Accept-Ranges': 'bytes',
                 }
 
                 if (err) {
                     log.error(err)
                     log.warning('uncompressed response sent instead')
-                } else {
+                } else if (buffer) {
                     header['Content-Encoding'] = 'gzip'
                     body = buffer
                 }
@@ -194,7 +188,19 @@ function usage() {
                 res.writeHead(200, header)
                 res.write(body)
                 res.end()
-            })
+            }
+
+            if (!body) {
+                res.send(500)
+                return
+            }
+            log.info('sending response to '+req.method+' '+req.url)
+
+            if (/\bgzip\b/.test(req.headers['accept-encoding'])) {
+                zlib.gzip(body, send)
+            } else {
+                send(null, null)
+            }
         }
 
         res.err = function (code, err) {
