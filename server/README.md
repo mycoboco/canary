@@ -122,6 +122,21 @@ where the `-c` option (or `--config`) specifies a configuration directory the
 server will use.
 
 
+#### Clients tested
+
+The following DAAP clients have been tested with `canary-server`. If your
+favorite client is not on the list or does not work with the server, please
+[open](https://github.com/mycoboco/canary/issues/new) a new issue to describe
+the problem concisely.
+
+- [iTunes](https://www.apple.com/itunes/) (Mac, Windows)
+- [Simple DAAP Client](https://itunes.apple.com/app/simple-daap-client/id369605270)
+  (iOS)
+  - the app itself does not work on the recent versions of iOS
+- [DAAP Media Player](https://play.google.com/store/apps/details?id=org.mult.daap)
+  (Android)
+
+
 #### Help needed
 
 `canary-server` is implemented in a very short time. It already works well but
