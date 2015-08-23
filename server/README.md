@@ -135,6 +135,10 @@ the problem concisely.
   - the app itself does not work on the recent versions of iOS
 - [DAAP Media Player](https://play.google.com/store/apps/details?id=org.mult.daap)
   (Android)
+- [Music Pump DAAP Player Demo](https://play.google.com/store/apps/details?id=ch.berard.musicpumpdemo)
+  (Android)
+- [SharePlay](https://play.google.com/store/apps/details?id=com.afqa123.shareplay)
+  (Android)
 
 
 #### Help needed
