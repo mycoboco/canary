@@ -9,6 +9,8 @@ var VERSION = require('./VERSION')
 var path = require('path')
 var util = require('util')
 var zlib = require('zlib')
+var mdns = require('mdns-js'),
+    service
 
 var argv = require('optimist')
            .string('c')
@@ -36,12 +38,12 @@ var db = require('./lib/db')
 var daap = require('./lib/daap')
 var api = require('./lib/api')
 var mp3 = require('./lib/mp3')
-var avahi = require('./lib/avahi_pub')
 var logger = require('./lib/logger'),
     log
 
 
 function exit() {
+    if (service) service.stop()
     if (db) db.close()
     process.exit(0)
 }
@@ -239,12 +241,15 @@ function usage() {
         log.info('%s listening on port %s', server.name, conf.server.port)
     })
 
-    avahi.publish({
+    mdns.excludeInterface('0.0.0.0')
+    service = mdns.createAdvertisement('_daap._tcp', conf.server.port, {
         name: conf.server.name,
-        type: '_daap._tcp',
-        port: conf.server.port,
-        // data: ''
+        txt: {
+            txtvers:       '1',
+            'Database ID': 'beddab1edeadbea7'
+        }
     })
+    service.start()
 }()
 
 // end of server.js

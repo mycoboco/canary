@@ -18,19 +18,16 @@
     "email": "woong.jun@gmail.com"
   },
   "main": "server.js",
-  "scripts": {
-    "install": "node-gyp rebuild"
-  },
   "dependencies": {
     "async": "^0.9.0",
-    "bindings": "*",
     "colors": "^0.6.2",
     "defaults": "^1.0.0",
     "fnv": "^0.1.3",
     "konphyg": "^1.4.0",
+    "mdns-js": "git://github.com/mycoboco/node-mdns-js.git#for-canary",
     "mime": "^1.3.4",
     "mongoose": "^3.8.12",
-    "mp3info": "^0.0.9",
+    "mp3info": "git://github.com/mycoboco/node-mp3info.git#for-canary",
     "musicmetadata": "^1.0.1",
     "ontime": "^0.0.3",
     "optimist": "^0.6.1",
