@@ -4,8 +4,10 @@ canary: a music streaming server/client
 `canary` is a package of a music streaming server and its companion iOS client
 that run upon
 [DAAP](http://en.wikipedia.org/wiki/Digital_Audio_Access_Protocol). Employing
-DAAP for streaming and [Avahi](http://www.avahi.org/) for service advertisement
-let `canary` work perfectly with [iTunes](https://www.apple.com/itunes/).
+DAAP for streaming and
+[mDNS](http://www.multicastdns.org)/[DNS-SD](http://www.dns-sd.org) for service
+advertisement let `canary` work perfectly with
+[iTunes](https://www.apple.com/itunes/).
 
 This document explains the server. See the files in the `client` directory for
 the client.
@@ -34,24 +36,16 @@ has been built, however, rescanning is fairly fast; 20 secs on the same
 condition. The server remembers the mtime, modification time of files and
 reads only added or modified files.
 
-This server implementation makes use of a modified version of
-[avahi_pub](https://www.npmjs.com/package/avahi_pub) by
-[d1plo1d](https://www.npmjs.com/~d1plo1d) distributed under the
-[MIT license](http://opensource.org/licenses/MIT).
-
 
 #### Prerequisites
 
 - [MongoDB](https://www.mongodb.org/)
-- Avahi and its library
 
-Even if Avahi is meant to be compatible with Apple's
-[Bonjour](http://www.apple.com/macosx/features/bonjour/) and there are
-[node.js modules](https://www.npmjs.com/package/mdns) for
-[DNS-SD](http://www.dns-sd.org), the module canary chooses to hire for service
-discovery requires a library compatible with Avahi, which prevents you from
-installing `canary` on Mac or Linux machines with a mDNSResponder-compatible
-library. I'm figuring out an elegant way to resolve this incompatibility.
+`canary` runs its own instance of mDNS/DNS-SD service implemented in pure
+JavaScript (a forked version of
+[`node-mdns-js`](https://www.npmjs.com/package/mdns-js) until my pull requests
+are merged), thus other libraries like [avahi](http://www.avahi.org) are not
+necessary.
 
 
 #### Configuration
