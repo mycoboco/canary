@@ -24,7 +24,7 @@
     "defaults": "^1.0.0",
     "fnv": "^0.1.3",
     "konphyg": "^1.4.0",
-    "mdns-js": "git://github.com/mycoboco/node-mdns-js.git#for-canary",
+    "mdns-js": "git://github.com/mycoboco/node-mdns-js.git#fix-inaddrany-check",
     "mime": "^1.3.4",
     "mongoose": "^3.8.12",
     "mp3info": "git://github.com/mycoboco/node-mp3info.git#for-canary",
