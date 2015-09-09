@@ -11,11 +11,12 @@ var txt = ' "txtvers=1" "Database ID=beddab1edeadbea7"'
 
 
 function escape(s) {
-    return s.replace(/\"/g, '\\"')
+    return s.replace(/-/g, '\\-')
+            .replace(/\"/g, '\\"')
 }
 
 function avahi(name, port, cb) {
-    return exec('avahi-publish-service -- "'+escape(name)+'" _daap._tcp '+port+txt, cb)
+    return exec('avahi-publish-service "'+escape(name)+'" _daap._tcp '+port+txt, cb)
 }
 
 function dnssd(name, port, cb) {
