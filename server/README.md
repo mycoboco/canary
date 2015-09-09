@@ -41,11 +41,34 @@ reads only added or modified files.
 
 - [MongoDB](https://www.mongodb.org/)
 
-`canary` runs its own instance of mDNS/DNS-SD service implemented in pure
-JavaScript (a forked version of
-[`node-mdns-js`](https://www.npmjs.com/package/mdns-js) until my pull requests
-are merged), thus other libraries like [avahi](http://www.avahi.org) are not
-necessary.
+`canary` can run with [`avahi`](http://www.avahi.org/) or
+[`dns-sd`](https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man1/dns-sd.1.html),
+or launch its own instance of mDNS/DNS-SD service implemented in pure
+JavaScript ([`node-mdns-js`](https://www.npmjs.com/package/mdns-js)) when you
+have neither installed.
+
+_Having more than one instance of mDNS/DNS-SD service on the same machine
+confuses the service to prevent it from properly working._
+
+The value for `mdns` in `server.conf` (see below) chooses a service for mDNS
+publication.
+
+- `avahi`: `avahi-publish-service` is probed to execute;
+- `dns-sd`: `dns-sd` is probed to execute;
+- `mdns-js`: `mdns-js` is launched without probing the two above;
+- `auto`: `canary` tries to execute either of `avahi-publish-service` or
+  `dns-sd`, and launches `mdns-js` on failure. This is the default behavior;
+- `off`: no service advertisement activated.
+
+If your system have `avahi` or `dns-sd`, please make sure that
+`avahi-publish-service` or `dns-sd` is accessible not specifying a path from
+the location `canary` runs.
+
+Whenever `avahi` or `dns-sd` fails to start, `mdns-sd` is selected as a
+fallback.
+
+If you are not able to get the service advertisement to work with any of these
+options, please let me know to help you.
 
 
 #### Configuration
@@ -65,6 +88,7 @@ The server configuration, `config/server.json` looks like:
         "cycle": [ "17:00:00" ],
         "utc":   false
     },
+    "mdns":  "auto",
     "debug": false
 }
 ```
@@ -82,6 +106,8 @@ The server configuration, `config/server.json` looks like:
     to [`ontime`](https://www.npmjs.com/package/ontime) for how to specify the
     rescanning schedule. `canary-server` accepts other options for `ontime`
     except `single` that is always set to _true_;
+- `mdns` selects a service for mDNS advertisement. Possible values are `auto`,
+  `avahi`, `dns-sd`, `mdns-js` and `off`. See _Prerequisites_ section above.
 - `debug` controls the server's log level. Setting this to _true_ makes the
   server verbose.
 
