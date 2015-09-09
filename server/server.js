@@ -9,8 +9,6 @@ var VERSION = require('./VERSION')
 var path = require('path')
 var util = require('util')
 var zlib = require('zlib')
-var mdns = require('mdns-js'),
-    service
 
 var argv = require('optimist')
            .string('c')
@@ -38,12 +36,17 @@ var db = require('./lib/db')
 var daap = require('./lib/daap')
 var api = require('./lib/api')
 var mp3 = require('./lib/mp3')
+var mdns = require('./lib/mdns'),
+    service
 var logger = require('./lib/logger'),
     log
 
 
 function exit() {
-    if (service) service.stop()
+    if (service) {
+        log.info('stopping service advertisement')
+        if (typeof service.stop === 'function') service.stop()
+    }
     if (db) db.close()
     process.exit(0)
 }
@@ -110,6 +113,21 @@ var installRoute = function () {
             }
         })
     }
+}
+
+
+function publishService(services, i) {
+    i = i || 0
+
+    log.info('running \''+services[i]+'\'')
+    service = mdns[services[i]](conf.server.name, conf.server.port, function (err) {
+        if (err) {
+            log.warning('seems not have \''+services[i]+'\'')
+            if (i+1 === services.length-1) log.warning('fallback to \''+services[i+1]+'\'')
+            publishService(services, i+1)
+            return
+        }
+    })
 }
 
 
@@ -241,15 +259,18 @@ function usage() {
         log.info('%s listening on port %s', server.name, conf.server.port)
     })
 
-    mdns.excludeInterface('0.0.0.0')
-    service = mdns.createAdvertisement('_daap._tcp', conf.server.port, {
-        name: conf.server.name,
-        txt: {
-            txtvers:       '1',
-            'Database ID': 'beddab1edeadbea7'
+    if (conf.server.mdns === 'auto') {
+        log.info('detecting tools for service advertisement')
+        publishService([ 'avahi', 'dns-sd', 'mdns-js' ])
+    } else {
+        if (typeof mdns[conf.server.mdns] === 'function') {
+            publishService([ conf.server.mdns, 'mdns-js' ])
+        } else {
+            log.error('\''+conf.server.mdns+'\' not supported for service advertisement')
+            log.warning('trying to auto-detect')
+            publishService([ 'avahi', 'dns-sd', 'mdns-js' ])
         }
-    })
-    service.start()
+    }
 }()
 
 // end of server.js

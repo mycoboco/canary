@@ -7,5 +7,6 @@
         "cycle": [ "17:00:00" ],
         "utc":   false
     },
+    "mdns":  "auto",
     "debug": false
 }
