@@ -19,7 +19,7 @@ function avahi(name, port, cb) {
 }
 
 function dnssd(name, port, cb) {
-    return exec('dns-sd -R -- "'+escape(name)+'" _daap._tcp local '+port+txt, cb)
+    return exec('dns-sd -R "'+escape(name)+'" _daap._tcp local '+port+txt, cb)
 }
 
 function mdnsjs(name, port, cb) {
