@@ -107,7 +107,7 @@ The server configuration, `config/server.json` looks like:
     rescanning schedule. `canary-server` accepts other options for `ontime`
     except `single` that is always set to _true_;
 - `mdns` selects a service for mDNS advertisement. Possible values are `auto`,
-  `avahi`, `dns-sd`, `mdns-js` and `off`. See _Prerequisites_ section above.
+  `avahi`, `dns-sd`, `mdns-js` and `off`. See _Prerequisites_ section above;
 - `debug` controls the server's log level. Setting this to _true_ makes the
   server verbose.
 
