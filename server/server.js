@@ -45,7 +45,8 @@ var logger = require('./lib/logger'),
 function exit() {
     if (service) {
         log.info('stopping service advertisement')
-        if (typeof service.stop === 'function') service.stop()
+        if (typeof service.kill === 'function') service.kill()
+        else if (typeof service.stop === 'function') service.stop()
     }
     if (db) db.close()
     process.exit(0)
