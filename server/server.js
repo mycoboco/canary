@@ -121,11 +121,14 @@ function publishService(services, i) {
 
     log.info('running \''+services[i]+'\'')
     service = mdns[services[i]](conf.server.name, conf.server.port, function (err) {
-        if (err) {
-            log.warning('seems not have \''+services[i]+'\'')
-            if (i+1 === services.length-1) log.warning('fallback to \''+services[i+1]+'\'')
-            publishService(services, i+1)
-            return
+        if (i < services.length-1) {    // something went wrong
+            if (!err || !err.signal) {
+                log.warning('seems not have \''+services[i]+'\'')
+                if (i+1 === services.length-1) log.warning('fallback to \''+services[i+1]+'\'')
+                publishService(services, i+1)
+            } else {    // probably killed for a reason
+                log.error('\''+services[i]+'\' has suddenly stopped')
+            }
         }
     })
 }
