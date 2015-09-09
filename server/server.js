@@ -122,6 +122,7 @@ function publishService(services, i) {
     log.info('running \''+services[i]+'\'')
     service = mdns[services[i]](conf.server.name, conf.server.port, function (err) {
         if (i < services.length-1) {    // something went wrong
+            service = null
             if (!err || !err.signal) {
                 log.warning('seems not have \''+services[i]+'\'')
                 if (i+1 === services.length-1) log.warning('fallback to \''+services[i+1]+'\'')
