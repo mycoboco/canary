@@ -266,7 +266,7 @@ function usage() {
     if (conf.server.mdns === 'auto') {
         log.info('detecting tools for service advertisement')
         publishService([ 'avahi', 'dns-sd', 'mdns-js' ])
-    } else {
+    } else if (conf.server.mdns !== 'off') {
         if (typeof mdns[conf.server.mdns] === 'function') {
             publishService([ conf.server.mdns, 'mdns-js' ])
         } else {
