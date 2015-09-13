@@ -64,7 +64,7 @@ If your system have `avahi` or `dns-sd`, please make sure that
 `avahi-publish-service` or `dns-sd` is accessible not specifying a path from
 the location `canary` runs.
 
-Whenever `avahi` or `dns-sd` fails to start, `mdns-sd` is selected as a
+Whenever `avahi` or `dns-sd` fails to start, `mdns-js` is selected as a
 fallback.
 
 If you are not able to get the service advertisement to work with any of these
