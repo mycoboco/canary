@@ -143,7 +143,7 @@ function version() {
         'This is free software; see the LICENSE file for more information. There is NO\n' +
         'warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n' +
         'Written by Jun Woong.')
-    exit();
+    exit()
 }
 
 
@@ -155,8 +155,8 @@ function usage() {
                 '      --no-rescan       do not scan songs immediately after server starts\n' +
                 '      --help            display this help and exit\n' +
                 '      --version         display version information and exit\n')
-    console.log('For bug reporting instructions, please see: <http://code.woong.org/>.');
-    exit();
+    console.log('For bug reporting instructions, please see: <http://code.woong.org/>.')
+    exit()
 }
 
 
