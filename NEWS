@@ -1,9 +1,10 @@
 What's new in canary?
 =====================
 
-2015-09-09  0.0.7 released
-2015-08-31  0.0.6 released
-2015-04-27  0.0.5 released
+2015-09-??  0.0.8 released with a bug fix
+2015-09-09  0.0.7 released with mDNS advertisement options
+2015-08-31  0.0.6 released with support for node.js 0.12.x
+2015-04-27  0.0.5 released with security enhancement
 2015-04-24  0.0.4 released with a critical bug fix
 2015-04-24  0.0.3 released for publication on npm
 2015-04-24  0.0.2 released with documentation
