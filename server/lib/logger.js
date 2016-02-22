@@ -64,14 +64,14 @@ function create(conf) {
 
     var logger = new winston.Logger({
         levels: {
-            info:    0,
+            error:   0,
             warning: 1,
-            error:   2
+            info:    2
         },
         colors: {
-            info:    'green',
+            error:   'red',
             warning: 'yellow',
-            error:   'red'
+            info:    'green'
         },
         transports: (conf.level !== 'off')? [
             new winston.transports.Console({
