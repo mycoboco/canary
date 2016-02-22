@@ -186,7 +186,9 @@ function usage() {
         level:  (conf.server.debug)? 'info': 'error'
     })
 
-    server = restify.createServer()
+    server = restify.createServer({
+        name: 'canary'
+    })
 
     server.use(restify.acceptParser(server.acceptable))
     server.use(restify.queryParser())
