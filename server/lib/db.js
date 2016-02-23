@@ -119,7 +119,7 @@ function init(_conf) {
 
 
 function close() {
-    log.info('closing db connection')
+    if (log) log.info('closing db connection')
     mongoose.connection.removeAllListeners('disconnected')
     mongoose.connection.close()
 }
