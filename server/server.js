@@ -187,7 +187,7 @@ function usage() {
     })
 
     server = restify.createServer({
-        name: 'canary'
+        name: conf.server.name
     })
 
     server.use(restify.acceptParser(server.acceptable))
