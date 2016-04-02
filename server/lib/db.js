@@ -11,6 +11,10 @@ var async = require('async')
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema
 var defaults = require('defaults')
+var hodgepodge = {
+    logger:   require('hodgepodge-node/logger'),
+    mongoose: require('hodgepodge-node/mongoose')
+}
 
 var infoSchema = new Schema({
         type: {
@@ -45,55 +49,7 @@ var songSchema = new Schema({
     Song = mongoose.model('Song', songSchema)
 
 
-var logger = require('./logger'),
-    log
-
-
-var conf
-
-
-function connect() {
-    var db = mongoose.connection
-    var url = 'mongodb://'+conf.db.host+':'+conf.db.port+'/'+conf.db.db
-
-    var reconnect = function () {
-        mongoose.connect(url, {
-            db: {
-                native_parser: true
-            },
-            server: {
-                socketOptions: {
-                    keepAlive: 1
-                },
-                auto_reconnect: true
-            },
-            replset: {
-                socketOptions: {
-                    keepAlive: 1
-                }
-            },
-            user: conf.db.user,
-            pass: conf.db.password
-        })
-    }
-
-    log.info('connecting to '+url)
-
-    db.on('connected', function () {
-        log.info('connected to '+url)
-    })
-    db.on('error', function (err) {
-        log.error(err)
-        mongoose.disconnect()
-    })
-    db.on('disconnected', function () {
-        log.warning('disconnected from '+url+';'+
-                    ' try to reconnect after '+conf.db.reconnectTime+' sec(s)')
-        setTimeout(reconnect, conf.db.reconnectTime*1000)
-    })
-
-    reconnect()
-}
+var log, conf
 
 
 function init(_conf) {
@@ -109,19 +65,18 @@ function init(_conf) {
         debug: false
     })
 
-    log = logger.create({
+    log = hodgepodge.logger.create({
         prefix: 'db',
         level:  (conf.debug)? 'info': 'error'
     })
 
-    connect()
+    hodgepodge.mongoose = hodgepodge.mongoose(log)
+    hodgepodge.mongoose.connect(conf.db)
 }
 
 
 function close() {
-    if (log) log.info('closing db connection')
-    mongoose.connection.removeAllListeners('disconnected')
-    mongoose.connection.close()
+    hodgepodge.mongoose.close && hodgepodge.mongoose.close()
 }
 
 

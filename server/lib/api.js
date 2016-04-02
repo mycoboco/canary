@@ -8,12 +8,12 @@ var fs = require('fs')
 
 var defaults = require('defaults')
 var mime = require('mime')
+var logger = require('hodgepodge-node/logger')
 
 var mp3 = require('./mp3')
-var logger = require('./logger'),
-    log
 
-var db, daap, conf
+
+var log, db, daap, conf
 var cache = {}
 
 

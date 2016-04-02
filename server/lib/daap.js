@@ -8,9 +8,7 @@ var util = require('util')
 
 var _ = require('underscore')
 var defaults = require('defaults')
-
-var logger = require('./logger'),
-    log
+var logger = require('hodgepodge-node/logger')
 
 
 var tag2info = {
@@ -137,7 +135,7 @@ var max = {
     byte4: Math.pow(2, 32)-1
 }
 var verTmpl = /([0-9]+)\.([0-9]+)(?:\.([0-9]+))?/
-var conf
+var log, conf
 
 
 function init(_conf) {

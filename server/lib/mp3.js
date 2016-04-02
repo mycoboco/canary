@@ -15,12 +15,10 @@ var FNV = require('fnv').FNV
 var defaults = require('defaults')
 var watch = require('watch')
 var ontime = require('ontime')
-
-var logger = require('./logger'),
-    log
+var logger = require('hodgepodge-node/logger')
 
 
-var db, conf
+var log, db, conf
 var qd = [], qf = []
 var needRescan, inProgress, version
 

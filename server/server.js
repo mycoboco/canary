@@ -26,6 +26,10 @@ var _ = require('underscore')
 var restify = require('restify'),
     server
 var defaults = require('defaults')
+var hodgepodge = {
+    logger:        require('hodgepodge-node/logger'),
+    dropPrivilege: require('hodgepodge-node/dropPrivilege')
+}
 var config = require('konphyg')(path.join(__dirname, argv.c)),
     conf = {
         server: config('server'),
@@ -38,8 +42,9 @@ var api = require('./lib/api')
 var mp3 = require('./lib/mp3')
 var mdns = require('./lib/mdns'),
     service
-var logger = require('./lib/logger'),
-    log
+
+
+var log
 
 
 function exit() {
@@ -163,9 +168,12 @@ function usage() {
 // starts here
 !function () {
     conf.server = defaults(conf.server, {
-        name:     'canary',
-        host:     'localhost',
-        port:     3689,
+        name: 'canary music',
+        port: 3689,
+        runAs: {
+            uid: 'userid',
+            gid: 'groupid'
+        },
         password: 'password',
         timeout:  1800,
         scan: {
@@ -173,18 +181,21 @@ function usage() {
             cycle: [ '19:00:00' ],
             utc:   false
         },
-        debug:   false
+        mdns:  'auto',
+        debug: false
     })
     if (!_.isArray(conf.server.scan.path)) conf.server.scan.path = [ conf.server.scan.path ]
+
+    log = hodgepodge.logger.create({
+        prefix: 'server',
+        level:  (conf.server.debug)? 'info': 'error'
+    })
 
     process.on('SIGINT', exit)
            .on('SIGTERM', exit)
     process.on('SIGUSR2', mp3.scan.bind(mp3, true))
 
-    log = logger.create({
-        prefix: 'server',
-        level:  (conf.server.debug)? 'info': 'error'
-    })
+    hodgepodge.dropPrivilege(conf.server.runAs, log, exit)
 
     server = restify.createServer({
         name: conf.server.name

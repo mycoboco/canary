@@ -1,6 +1,10 @@
 {
     "name":     "canary music",
     "port":     3689,
+    "runAs": {
+        "uid": "userid",
+        "gid": "groupid"
+    },
     "password": "password",
     "scan": {
         "path":  [ "/path/to/mp3/files" ],

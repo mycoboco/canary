@@ -21,9 +21,9 @@
   "main": "server.js",
   "dependencies": {
     "async": "^1.4.2",
-    "colors": "^1.1.2",
     "defaults": "^1.0.2",
     "fnv": "^0.1.3",
+    "hodgepodge-node": "git://github.com/mycoboco/hodgepodge-node.git#v0.0.1",
     "konphyg": "^1.4.0",
     "mdns-js": "git://github.com/mdns-js/node-mdns-js.git",
     "mime": "^1.3.4",
@@ -34,8 +34,7 @@
     "optimist": "^0.6.1",
     "restify": "^4.0.0",
     "underscore": "^1.8.3",
-    "watch": "^0.16.0",
-    "winston": "^1.0.1"
+    "watch": "^0.16.0"
   },
   "devDependencies": {
   },
