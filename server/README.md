@@ -82,6 +82,10 @@ The server configuration, `config/server.json` looks like:
 {
     "name":     "canary music",
     "port":     3689,
+    "runAs": {
+        "uid": "userid",
+        "gid": "groupid"
+    },
     "password": "password",
     "scan": {
         "path":  [ "/path/to/mp3/files" ],
@@ -97,6 +101,10 @@ The server configuration, `config/server.json` looks like:
   client knows DNS-SD, it will appear on it;
 - the server will run on `port`; it must be set to the default port 3689 for
   iTunes to work with the server;
+- `runAs`, if specified, makes the server drop privileges by changing its `uid`
+  and `gid` to the given ones, which is useful when the server initially runs
+  as `root`, for example, by an `init.d` script. If not specified, running the
+  server as `root` will be warned;
 - if `password` is a non-empty string, the server requires a client to send the
   password on every request. This, for example, forces iTunes ask a password on
   its initial connection to the server;
