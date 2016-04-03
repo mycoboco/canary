@@ -69,7 +69,7 @@ function init(_conf) {
         level:  (conf.debug)? 'info': 'error'
     })
 
-    hodgepodge.mongoose = hodgepodge.mongoose(log)
+    hodgepodge.mongoose = hodgepodge.mongoose(mongoose, log)
     hodgepodge.mongoose.connect(conf.db)
 }
 
