@@ -33,7 +33,6 @@
     "ontime": "^0.0.3",
     "optimist": "^0.6.1",
     "restify": "^4.0.0",
-    "underscore": "^1.8.3",
     "watch": "^0.16.0"
   },
   "devDependencies": {

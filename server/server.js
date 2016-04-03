@@ -22,7 +22,6 @@ var argv = require('optimist')
     if (!argv.c || argv.help) usage()
 }()
 
-var _ = require('underscore')
 var restify = require('restify'),
     server
 var defaults = require('defaults')
@@ -184,7 +183,7 @@ function usage() {
         mdns:  'auto',
         debug: false
     })
-    if (!_.isArray(conf.server.scan.path)) conf.server.scan.path = [ conf.server.scan.path ]
+    if (!Array.isArray(conf.server.scan.path)) conf.server.scan.path = [ conf.server.scan.path ]
 
     log = hodgepodge.logger.create({
         prefix: 'server',

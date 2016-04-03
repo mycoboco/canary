@@ -6,7 +6,6 @@
 
 var util = require('util')
 
-var _ = require('underscore')
 var defaults = require('defaults')
 var logger = require('hodgepodge-node/logger')
 
@@ -291,7 +290,7 @@ function buffer(obj) {
             break
         case 12:    // container
             chktype(key, val, 'object')
-            if (!_.isArray(val)) {
+            if (!Array.isArray(val)) {
                 top = []
                 for (var key in val) {
                     nested = {}

@@ -6,7 +6,6 @@
 
 var util = require('util')
 
-var _ = require('underscore')
 var async = require('async')
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema
