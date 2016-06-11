@@ -18,8 +18,8 @@ var argv = require('optimist')
 
 // checks for program arguments must be done before konphyg
 !function () {
-    if (argv.version) version()
-    if (!argv.c || argv.help) usage()
+    argv.version && version()
+    ;(!argv.c || argv.help) && usage()
 }()
 
 var restify = require('restify'),
@@ -52,7 +52,7 @@ function exit() {
         if (typeof service.kill === 'function') service.kill()
         else if (typeof service.stop === 'function') service.stop()
     }
-    if (db) db.close()
+    db && db.close()
     process.exit(0)
 }
 
@@ -130,7 +130,7 @@ function publishService(services, i) {
             service = null
             if (!err || !err.signal) {
                 log.warning('seems not have \''+services[i]+'\'')
-                if (i+1 === services.length-1) log.warning('fallback to \''+services[i+1]+'\'')
+                ;(i+1 === services.length-1) && log.warning('fallback to \''+services[i+1]+'\'')
                 publishService(services, i+1)
             } else {    // probably killed for a reason
                 log.error('\''+services[i]+'\' has suddenly stopped')
@@ -246,7 +246,7 @@ function usage() {
                 code = 500
             }
             log.warning('error occurred while handling '+req.method+' '+req.url)
-            if (err) log.error(err)
+            err && log.error(err)
             res.send(code)
         }
 
@@ -270,7 +270,7 @@ function usage() {
         debug: conf.server.debug
     })
 
-    if (argv.rescan) mp3.scan(true)
+    argv.rescan && mp3.scan(true)
 
     server.listen(conf.server.port, function () {
         log.info('%s listening on port %s', server.name, conf.server.port)

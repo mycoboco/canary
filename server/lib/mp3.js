@@ -10,7 +10,7 @@ var util = require('util')
 
 var async = require('async')
 var mm = require('musicmetadata')
-var mp3info = require('mp3info')
+var mp3len = require('mp3-duration')
 var FNV = require('fnv').FNV
 var defaults = require('defaults')
 var watch = require('watch')
@@ -126,9 +126,9 @@ function meta(song, cb) {
         }
 
         if (!data.duration) {
-            mp3info(song, function (err, data) {
-                if (err) log.error(err)
-                meta.time = data && +data.length*1000
+            mp3len(song, function (err, len) {
+                err && log.error(err)
+                meta.time = len || 0
                 cb(null, chkmeta(meta))
             })
         } else {
@@ -147,12 +147,12 @@ function isSong(f) {
 function done(cb) {
     log.info('scanning songs finished')
     db.song.clear(version, function (err) {
-        if (err) log.error(err)
+        err && log.error(err)
         inProgress = false
         db.song.count(function (err, count) {
-            if (!err) log.info(count+' song(s) in database')
+            !err && log.info(count+' song(s) in database')
         })
-        if (typeof cb === 'function') cb()
+        ;(typeof cb === 'function') && cb()
     })
 }
 
@@ -160,7 +160,7 @@ function done(cb) {
 function next(cb) {
     var addSong = function (file, stats, cb) {
         db.song.get(id(file), function (err, songs) {
-            if (err) log.error(err)
+            err && log.error(err)
             qf.push({
                 path:    file,
                 mtime:   stats.mtime,
@@ -244,7 +244,7 @@ function next(cb) {
             }
         }
     ], function (err) {
-        if (err) log.error(err)
+        err && log.error(err)
         next(cb)
     })
 }
@@ -257,12 +257,12 @@ function scan(force, cb) {
     }
     if (!force && !needRescan) {
         log.info('rescan is not necessary')
-        if (typeof cb === 'function') cb()
+        ;(typeof cb === 'function') && cb()
         return
     }
     if (inProgress) {
         log.warning('scanning is already in progress')
-        if (typeof cb === 'function') cb()
+        ;(typeof cb === 'function') && cb()
         return
     }
     needRescan = false
@@ -270,7 +270,7 @@ function scan(force, cb) {
 
     log.info('starting to scan songs')
     db.version.inc(function (err) {
-        if (err) log.error(err)
+        err && log.error(err)
         db.version.get(function (err, _version) {
             if (err) {
                 log.error(err)
