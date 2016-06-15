@@ -110,7 +110,7 @@ function meta(song, cb) {
             var meta = {
                 id:     id(song),
                 kind:   2,
-                title:  data.title || '(Untitled)',
+                title:  data.title || song,
                 artist: data.artist[0] || '(Unknown Artist)',
                 album:  data.album || '(Unknown Album)',
                 time:   +data.duration*1000,
