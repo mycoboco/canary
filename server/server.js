@@ -129,8 +129,8 @@ function publishService(services, i) {
         if (i < services.length-1) {    // something went wrong
             service = null
             if (!err || !err.signal) {
-                log.warning('seems not have \''+services[i]+'\'')
-                ;(i+1 === services.length-1) && log.warning('fallback to \''+services[i+1]+'\'')
+                log.warning('seems not to have \''+services[i]+'\'')
+                ;(i+1 === services.length-1) && log.warning('fall back to \''+services[i+1]+'\'')
                 publishService(services, i+1)
             } else {    // probably killed for a reason
                 log.error('\''+services[i]+'\' has suddenly stopped')
@@ -276,18 +276,23 @@ function usage() {
         log.info('%s listening on port %s', server.name, conf.server.port)
     })
 
-    if (conf.server.mdns === 'auto') {
-        log.info('detecting tools for service advertisement')
-        publishService([ 'avahi', 'dns-sd', 'mdns-js' ])
-    } else if (conf.server.mdns !== 'off') {
-        if (typeof mdns[conf.server.mdns] === 'function') {
-            publishService([ conf.server.mdns, 'mdns-js' ])
-        } else {
-            log.error('\''+conf.server.mdns+'\' not supported for service advertisement')
-            log.warning('trying to auto-detect')
+    mdns.init(db, function (err, id) {
+        err && log.warning(err)
+        log.info('database id to advertise is '+id)
+
+        if (conf.server.mdns === 'auto') {
+            log.info('detecting tools for service advertisement')
             publishService([ 'avahi', 'dns-sd', 'mdns-js' ])
+        } else if (conf.server.mdns !== 'off') {
+            if (typeof mdns[conf.server.mdns] === 'function') {
+                publishService([ conf.server.mdns, 'mdns-js' ])
+            } else {
+                log.error('\''+conf.server.mdns+'\' not supported for service advertisement')
+                log.warning('trying to auto-detect')
+                publishService([ 'avahi', 'dns-sd', 'mdns-js' ])
+            }
         }
-    }
+    })
 }()
 
 // end of server.js

@@ -7,7 +7,24 @@ var mdns = require('mdns-js'),
     service
 
 
-var txt = ' "txtvers=1" "Database ID=beddab1edeadbea7"'
+var id = 'beddab1edeadbea7'
+
+
+function init(db, cb) {
+    db.dbId.get(function (err, dbId) {
+        if (!err && dbId) {
+            id = dbId
+            cb(null, id)
+            return
+        }
+
+        dbId = (new Date()).valueOf().toString(16) + Math.floor(Math.random()*16).toString(16)
+        id = id.substring(0, id.length-dbId.length) + dbId
+        db.dbId.set(id, function (err) {
+            cb(err, id)
+        })
+    })
+}
 
 
 function escape(s) {
@@ -15,20 +32,28 @@ function escape(s) {
             .replace(/\"/g, '\\"')
 }
 
-function avahi(name, port, cb) {
-    return exec('avahi-publish-service "'+escape(name)+'" _daap._tcp '+port+txt, cb)
+
+function getTxt() {
+    return ' "txtvers=1" "Database ID='+id+'"'
 }
 
-function dnssd(name, port, cb) {
-    return exec('dns-sd -R "'+escape(name)+'" _daap._tcp local '+port+txt, cb)
+
+function avahi(name, port, cb) {
+    return exec('avahi-publish-service "'+escape(name)+'" _daap._tcp '+port+getTxt(), cb)
 }
+
+
+function dnssd(name, port, cb) {
+    return exec('dns-sd -R "'+escape(name)+'" _daap._tcp local '+port+getTxt(), cb)
+}
+
 
 function mdnsjs(name, port, cb) {
     service = mdns.createAdvertisement('_daap._tcp', port, {
         name: name,
         txt: {
             txtvers:       '1',
-            'Database ID': 'beddab1edeadbea7',
+            'Database ID': id,
         }
     })
     service.start()
@@ -38,6 +63,7 @@ function mdnsjs(name, port, cb) {
 
 
 module.exports = {
+    init:      init,
     avahi:     avahi,
     'dns-sd':  dnssd,
     'mdns-js': mdnsjs

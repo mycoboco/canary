@@ -20,7 +20,8 @@ var infoSchema = new Schema({
             index: true,
             type:  String
         },
-        version: Number
+        version: Number,
+        dbId:    String
     }),
     Info = mongoose.model('Info', infoSchema)
 
@@ -157,6 +158,34 @@ function versionInc(cb) {
 }
 
 
+function dbIdGet(cb) {
+    Info.find({
+        type: 'music'
+    }).select('dbId -_id').exec(function (err, ids) {
+        if (err) {
+            cb(err)
+            return
+        }
+
+        cb(null, ids && ids[0].dbId)
+    })
+}
+
+
+function dbIdSet(dbId, cb) {
+    if (typeof dbId !== 'string' || !dbId) {
+        cb(new Error('invalid db id: '+util.inspect(dbId)))
+        return
+    }
+
+    Info.update({
+        type: 'music'
+    }, {
+        $set: { dbId: dbId }
+    }, cb)
+}
+
+
 module.exports = {
     init:  init,
     close: close,
@@ -172,6 +201,10 @@ module.exports = {
     version: {
         get: versionGet,
         inc: versionInc
+    },
+    dbId: {
+        get: dbIdGet,
+        set: dbIdSet
     }
 }
 
