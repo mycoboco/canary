@@ -105,35 +105,47 @@ function meta(song, cb) {
         return meta
     }
 
-    mm(fs.createReadStream(song), function (err, data) {
+    mm(fs.createReadStream(song), { duration: true }, function (err, data) {
+        var setMeta = function () {
+            var meta = {
+                id:     id(song),
+                kind:   2,
+                title:  data.title || '(Untitled)',
+                artist: data.artist[0] || '(Unknown Artist)',
+                album:  data.album || '(Unknown Album)',
+                time:   +data.duration*1000,
+                year:   data.year || 0,
+                track:  data.track.no || 0,
+                genre:  data.genre[0] || '(Unknown Genre)',
+                format: path.extname(song).substring(1, song.length-1),
+                path:   song
+            }
+
+            if (!data.duration) {
+                mp3len(song, true, function (err, len) {
+                    err && log.error(err)
+                    meta.time = len || 0
+                    cb(null, chkmeta(meta))
+                })
+            } else {
+                cb(null, chkmeta(meta))
+            }
+        }
+
         if (err) {
-            cb(err)
+            mp3len(song, true, function (err, len) {
+                if (err) {
+                    log.error('failed to retrieve meta data from '+song)
+                    cb(err)
+                    return
+                }
+                data.duration = len
+                setMeta()
+            })
             return
         }
 
-        var meta = {
-            id:     id(song),
-            kind:   2,
-            title:  data.title || '(Untitled)',
-            artist: data.artist[0] || '(Unknown Artist)',
-            album:  data.album || '(Unknown Album)',
-            time:   +data.duration*1000,
-            year:   data.year || 0,
-            track:  data.track.no || 0,
-            genre:  data.genre[0] || '(Unknown Genre)',
-            format: path.extname(song).substring(1, song.length-1),
-            path:   song
-        }
-
-        if (!data.duration) {
-            mp3len(song, function (err, len) {
-                err && log.error(err)
-                meta.time = len || 0
-                cb(null, chkmeta(meta))
-            })
-        } else {
-            cb(null, chkmeta(meta))
-        }
+        setMeta()
     })
 }
 
