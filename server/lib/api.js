@@ -327,7 +327,7 @@ function song(req, res) {
 
             if (r) {
                 res.writeHead(206, {
-                    'Content-Length': stats.size,
+                    'Content-Length': r.e-r.s+1,
                     'Content-Type':   mime.lookup(req.params.file),
                     'Content-Range':  hodgepodge.range.header(r, stats)
                 })
