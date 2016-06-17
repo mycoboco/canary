@@ -8,7 +8,10 @@ var fs = require('fs')
 
 var defaults = require('defaults')
 var mime = require('mime')
-var logger = require('hodgepodge-node/logger')
+var hodgepodge = {
+    logger: require('hodgepodge-node/logger'),
+    range:  require('hodgepodge-node/range')
+}
 
 var mp3 = require('./mp3')
 
@@ -28,7 +31,7 @@ function init(_db, _daap, _conf) {
         debug: false
     })
 
-    log = logger.create({
+    log = hodgepodge.logger.create({
         prefix: 'api',
         level:  (conf.debug)? 'info': 'error'
     })
@@ -281,16 +284,6 @@ function containerItem(req, res) {
 function song(req, res) {
     var id, rs
 
-    var range = function (r) {
-        r = /bytes=([0-9]+)-([0-9]+)?/.exec(r)
-        if (!r) return null
-
-        return {
-            s: +r[1],
-            e: +r[2]
-        }
-    }
-
     id = /([0-9]+)\.(mp3|ogg)/i.exec(req.params.file)
     if (!isFinite(+id[1])) {
         res.err(400)
@@ -326,22 +319,17 @@ function song(req, res) {
                 return
             }
 
-            if (req.headers.range) {
-                r = range(req.headers.range)
-                if (r) {
-                    if (r.e !== r.e) r.e = stats.size-1
-                    if (r.s >= stats.size || r.e >= stats.size || r.s > r.e) {
-                        res.err(416, new Error('invalid range request: '+req.headers.range))
-                        return
-                    }
-                }
+            r = hodgepodge.range.parse(req.headers.range, stats)
+            if (r instanceof Error) {
+                res.err(416, r)
+                return
             }
 
             if (r) {
                 res.writeHead(206, {
                     'Content-Length': stats.size,
                     'Content-Type':   mime.lookup(req.params.file),
-                    'Content-Range':  'bytes '+r.s+'-'+r.e+'/'+stats.size
+                    'Content-Range':  hodgepodge.range.header(r, stats)
                 })
                 rs = fs.createReadStream(songs[0].path, {
                     start: r.s,
