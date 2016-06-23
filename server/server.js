@@ -174,7 +174,6 @@ function usage() {
             gid: 'groupid'
         },
         password: 'password',
-        timeout:  1800,
         scan: {
             path:  [ '/path/to/mp3/files' ],
             cycle: [ '19:00:00' ],
