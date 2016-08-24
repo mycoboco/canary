@@ -4,7 +4,7 @@
 
 'use strict'
 
-var VERSION = require('./VERSION')
+var VERSION = require('./package.json').version
 
 var path = require('path')
 var util = require('util')
