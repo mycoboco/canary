@@ -271,7 +271,7 @@ function usage() {
 
     argv.rescan && mp3.scan(true)
 
-    server.listen(conf.server.port, function () {
+    server.listen(conf.server.port, '::', function () {
         log.info('%s listening on port %s', server.name, conf.server.port)
     })
 
