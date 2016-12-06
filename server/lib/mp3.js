@@ -139,7 +139,7 @@ function meta(song, cb) {
                     cb(err)
                     return
                 }
-                data.duration = len
+                data.duration = len * 1000
                 setMeta()
             })
             return
