@@ -124,7 +124,7 @@ function meta(song, cb) {
             if (!data.duration) {
                 mp3len(song, true, function (err, len) {
                     err && log.error(err)
-                    meta.time = len || 0
+                    meta.time = len*1000 || 0
                     cb(null, chkmeta(meta))
                 })
             } else {
@@ -139,7 +139,7 @@ function meta(song, cb) {
                     cb(err)
                     return
                 }
-                data.duration = len * 1000
+                data.duration = len
                 setMeta()
             })
             return
