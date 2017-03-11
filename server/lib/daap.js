@@ -235,7 +235,7 @@ function chktype(key, val, type) {
             }
             break
         case 'date':
-            if (val instanceof Date) {
+            if (!(val instanceof Date)) {
                 throw new Error('val('+val+') has invalid type('+(typeof val)+') for '+key+
                                 '; should be '+type)
             }
@@ -282,7 +282,7 @@ function buffer(obj) {
             break
         case 10:    // date (4-byte integer with seconds since 1970)
             chktype(key, val, 'date')
-            buf = buffer.concat([ buf, size(4), date(val) ], buf.length+4+4)
+            buf = Buffer.concat([ buf, size(4), date(val) ], buf.length+4+4)
             break
         case 11:    // version (2-bytes major version, minor version, patch level)
             chktype(key, val, 'version')
