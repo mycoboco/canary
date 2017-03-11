@@ -17,7 +17,6 @@ var mp3 = require('./mp3')
 
 
 var log, db, daap, conf
-var cache = {}
 
 
 function init(_db, _daap, _conf) {
@@ -189,23 +188,13 @@ function databaseItem(req, res) {
             return
         }
 
-        if (cache && cache.databaseItem && !err && cache.databaseItem.version === version) {
-            log.info('sending response from cache')
-            res.ok(cache.databaseItem.buffer)
-            return
-        }
-
         db.song.list(function (err, songs) {
             if (err) {
                 res.err(err)
                 return
             }
 
-            cache.databaseItem = {
-                buffer:  daap.build(daap.song.item(songs, query)),
-                version: version
-            }
-            res.ok(cache.databaseItem.buffer)
+            res.ok(daap.build(daap.song.item(songs, query))),
         })
     })
 }
@@ -259,23 +248,13 @@ function containerItem(req, res) {
             return
         }
 
-        if (cache && cache.containerItem && !err && cache.containerItem.version === version) {
-            log.info('sending response from cache')
-            res.ok(cache.containerItem.buffer)
-            return
-        }
-
         db.song.list(function (err, songs) {
             if (err) {
                 res.err(err)
                 return
             }
 
-            cache.containerItem = {
-                buffer:  daap.build(daap.container.item(songs, query)),
-                version: version
-            }
-            res.ok(cache.containerItem.buffer)
+            res.ok(daap.build(daap.container.item(songs, query)))
         })
     })
 }
