@@ -221,32 +221,23 @@ function version(v) {
 function chktype(key, val, type) {
     switch(type) {
         case 'byte':
-            if (typeof val !== 'number' && typeof val !== 'boolean') {
-                throw new Error('val('+val+') has invalid type('+(typeof val)+') for '+key+
-                                '; should be '+type)
-            }
+            if (typeof val === 'number' || typeof val === 'boolean') return
             break
         case 'number':
         case 'string':
         case 'object':
-            if (typeof val !== type) {
-                throw new Error('val('+val+') has invalid type('+(typeof val)+') for '+key+
-                                '; should be '+type)
-            }
+            if (typeof val === type) return
             break
         case 'date':
-            if (!(val instanceof Date)) {
-                throw new Error('val('+val+') has invalid type('+(typeof val)+') for '+key+
-                                '; should be '+type)
-            }
+            if (val instanceof Date) return
             break
         case 'version':
-            if (typeof val !== 'string' || !verTmpl.test(val)) {
-                throw new Error('val('+val+') has invalid type('+(typeof val)+') for '+key+
-                                '; should be '+type)
-            }
+            if (typeof val === 'string' && verTmpl.test(val)) return
             break
     }
+
+    throw new Error('val('+val+') has invalid type('+(typeof val)+') for '+key+
+                    '; should be '+type)
 }
 
 
