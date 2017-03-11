@@ -78,12 +78,12 @@ function auth(req, res, next) {
 
 
 function login(req, res) {
-    res.ok(daap.build({
+    daap.build({
         mlog: [
             { mstt: 200 },
             { mlid: nextSession() }
         ]
-    }))
+    }, res.ok.bind(res))
 }
 
 
@@ -94,12 +94,12 @@ function update(req, res) {
                 log.error(err)
                 version = 1
             }
-            res.ok(daap.build({
+            daap.build({
                 mupd: [
                     { mstt: 200 },
                     { musr: version }
                 ]
-            }))
+            }, res.ok.bind(res))
         })
     }
 
@@ -116,7 +116,7 @@ function logout(req, res) {
 function serverInfo(req, res) {
     var auth = (conf.server.password)? 2: 0;    // 2: password only
 
-    res.ok(daap.build({
+    daap.build({
         msrv: [
             { mstt: 200 },
             { mpro: '2.0.0' },
@@ -136,7 +136,7 @@ function serverInfo(req, res) {
             { mspi: true },
             { ated: 0 },
         ]
-    }))
+    }, res.ok.bind(res))
 }
 
 
@@ -160,7 +160,7 @@ function databaseInfo(req, res) {
             }
 
             if (mlcl.mlit) mlcl.mlit.mimc = number
-            res.ok(daap.build({
+            daap.build({
                 avdb: [
                     { mstt: 200 },
                     { muty: update },
@@ -168,7 +168,7 @@ function databaseInfo(req, res) {
                     { mrco: (update)? 0: 1 },
                     { mlcl: mlcl }
                 ]
-            }))
+            }, res.ok.bind(res))
         })
     })
 }
@@ -184,7 +184,9 @@ function databaseItem(req, res) {
     db.version.get(function (err, version) {
         if (!err && +req.query.delta === version) {
             log.info('sending empty list because nothing updated')
-            res.ok(daap.build(daap.song.item([], query, true)))
+            daap.song.item([], query, true, function (obj) {
+                daap.build(obj, res.ok.bind(res))
+            })
             return
         }
 
@@ -194,7 +196,9 @@ function databaseItem(req, res) {
                 return
             }
 
-            res.ok(daap.build(daap.song.item(songs, query))),
+            daap.song.item(songs, query, false, function (obj) {
+                daap.build(obj, res.ok.bind(res))
+            })
         })
     })
 }
@@ -219,7 +223,7 @@ function containerInfo(req, res) {
                 return
             }
 
-            res.ok(daap.build({
+            daap.build({
                 aply: [
                     { mstt: 200 },
                     { muty: update },
@@ -227,7 +231,7 @@ function containerInfo(req, res) {
                     { mrco: (update)? 0: 1 },
                     { mlcl: mlcl }
                 ]
-            }))
+            }, res.ok.bind(res))
         })
     })
 }
@@ -244,7 +248,9 @@ function containerItem(req, res) {
     db.version.get(function (err, version) {
         if (!err && +req.query.delta === version) {
             log.info('sending empty list because nothing updated')
-            res.ok(daap.build(daap.container.item([], query, true)))
+            daap.container.item([], query, true, function (obj) {
+                daap.build(obj, res.ok.bind(res))
+            })
             return
         }
 
@@ -254,7 +260,9 @@ function containerItem(req, res) {
                 return
             }
 
-            res.ok(daap.build(daap.container.item(songs, query)))
+            daap.container.item(songs, query, false, function (obj) {
+                daap.build(obj, res.ok.bind(res))
+            })
         })
     })
 }

@@ -7,7 +7,10 @@
 var util = require('util')
 
 var defaults = require('defaults')
-var logger = require('hodgepodge-node/logger')
+var hodgepodge = {
+    asyncLoop: require('hodgepodge-node/asyncLoop'),
+    logger:    require('hodgepodge-node/logger')
+}
 
 
 var tag2info = {
@@ -142,7 +145,7 @@ function init(_conf) {
         debug: false
     })
 
-    log = logger.create({
+    log = hodgepodge.logger.create({
         prefix: 'daap',
         level:  (conf.debug)? 'info': 'error'
     })
@@ -241,7 +244,7 @@ function chktype(key, val, type) {
 }
 
 
-function buffer(obj) {
+function buffer(obj, cb) {
     var key = Object.keys(obj)[0]
     var buf = new Buffer(key, 'utf-8')
     var val = obj[key]
@@ -252,32 +255,32 @@ function buffer(obj) {
     switch(tag2info[key].type) {
         case 1:    // char
             chktype(key, val, 'byte')
-            buf = Buffer.concat([ buf, size(1), byte(val) ], buf.length+4+1)
+            cb(Buffer.concat([ buf, size(1), byte(val) ], buf.length+4+1))
             break
         case 3:    // 2-byte integer
             chktype(key, val, 'number')
-            buf = Buffer.concat([ buf, size(2), number2(val) ], buf.length+4+2)
+            cb(Buffer.concat([ buf, size(2), number2(val) ], buf.length+4+2))
             break
         case 5:    // 4-byte integer
             chktype(key, val, 'number')
-            buf = Buffer.concat([ buf, size(4), number4(val) ], buf.length+4+4)
+            cb(Buffer.concat([ buf, size(4), number4(val) ], buf.length+4+4))
             break
         case 7:    // 8-byte integer
             chktype(key, val, 'number')
-            buf = Buffer.concat([ buf, size(8), number8(val) ], buf.length+4+8)
+            cb(Buffer.concat([ buf, size(8), number8(val) ], buf.length+4+8))
             break
         case 9:    // string
             chktype(key, val, 'string')
             val = new Buffer(val, 'utf-8')
-            buf = Buffer.concat([ buf, size(val.length), val ], buf.length+4+val.length)
+            cb(Buffer.concat([ buf, size(val.length), val ], buf.length+4+val.length))
             break
         case 10:    // date (4-byte integer with seconds since 1970)
             chktype(key, val, 'date')
-            buf = Buffer.concat([ buf, size(4), date(val) ], buf.length+4+4)
+            cb(Buffer.concat([ buf, size(4), date(val) ], buf.length+4+4))
             break
         case 11:    // version (2-bytes major version, minor version, patch level)
             chktype(key, val, 'version')
-            buf = Buffer.concat([ buf, size(4), version(val) ], buf.length+4+4)
+            cb(Buffer.concat([ buf, size(4), version(val) ], buf.length+4+4))
             break
         case 12:    // container
             chktype(key, val, 'object')
@@ -291,34 +294,34 @@ function buffer(obj) {
                 val = top
             }
             top = new Buffer(0)
-            for (var i = 0; i < val.length; i++) {
-                nested = buffer(val[i])
-                top = Buffer.concat([ top, nested ], top.length+nested.length)
-            }
-            buf = Buffer.concat([ buf, size(top.length), top ], buf.length+4+top.length)
+            hodgepodge.asyncLoop(val.length, function (loop, i) {
+                buffer(val[i], function (nested) {
+                    top = Buffer.concat([ top, nested ], top.length+nested.length)
+                    loop.next()
+                })
+            }, function () {
+                cb(Buffer.concat([ buf, size(top.length), top ], buf.length+4+top.length))
+            })
             break
         default:
             throw new Error('unknown type: '+tag2info[key].type)
             break
     }
-
-    return buf
 }
 
 
-function build(obj) {
+function build(obj, cb) {
     log.info('building DAAP response from: '+util.inspect(obj))
 
     try {
-        return buffer(obj)
+        buffer(obj, cb)
     } catch(e) {
         log.error(e)
-        return undefined
     }
 }
 
 
-function item(container, songs, query, update) {
+function item(container, songs, query, update, cb) {
     var obj = {}, mlit, key, mlcl
     var top = (container)? 'apso': 'adbs'
 
@@ -330,7 +333,7 @@ function item(container, songs, query, update) {
     ]
 
     mlcl = []
-    for (var i = 0; i < songs.length; i++) {
+    hodgepodge.asyncLoop(songs.length, function (loop, i) {
         mlit = {}
         for (var j = 0; j < query.length; j++) {
             key = desc2tag[query[j]]
@@ -340,11 +343,12 @@ function item(container, songs, query, update) {
         mlcl.push({
             mlit: mlit
         })
-    }
 
-    obj[top].push({ mlcl: mlcl })
-
-    return obj
+        loop.next()
+    }, function () {
+        obj[top].push({ mlcl: mlcl })
+        cb(obj)
+    })
 }
 
 
@@ -352,10 +356,10 @@ module.exports = {
     init: init,
     build: build,
     song: {
-        item: function (songs, query, update) { return item(false, songs, query, update) }
+        item: item.bind(null, false)
     },
     container: {
-        item: function (songs, query, update) { return item(true, songs, query, update) }
+        item: item.bind(null, true)
     }
 }
 
