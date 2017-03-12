@@ -54,9 +54,9 @@ function init(_db, _conf) {
                     needRescan = true
                 }
 
-                monitor.on('created', function (f) { setUpdate(f) })
-                    .on('changed', function (f) { setUpdate(f) })
-                    .on('removed', function (f) { setUpdate(f) })
+                monitor.on('created', setUpdate.bind(null))
+                       .on('changed', setUpdate.bind(null))
+                       .on('removed', setUpdate.bind(null))
             })
         } catch(e) {
             log.error(e)
