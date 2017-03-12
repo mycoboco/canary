@@ -190,7 +190,7 @@ function databaseItem(req, res) {
             return
         }
 
-        db.song.list(function (err, songs) {
+        db.song.listIter(function (err, songs) {
             if (err) {
                 res.err(err)
                 return
@@ -254,7 +254,7 @@ function containerItem(req, res) {
             return
         }
 
-        db.song.list(function (err, songs) {
+        db.song.listIter(function (err, songs) {
             if (err) {
                 res.err(err)
                 return

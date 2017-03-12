@@ -85,8 +85,26 @@ function songCount(cb) {
 }
 
 
-function songList(cb) {
-    Song.find(cb)
+function songListIter(cb) {
+    var songs = []
+    var cursor = Song.find().cursor()
+    var next = function () {
+        cursor.next(function (err, song) {
+            if (err) {
+                cb(err)
+                return
+            }
+
+            if (!song) {
+                cb(null, songs)
+                return
+            }
+            songs.push(song)
+            setImmediate(next)
+        })
+    }
+
+    next()
 }
 
 
@@ -190,13 +208,13 @@ module.exports = {
     init:  init,
     close: close,
     song: {
-        count: songCount,
-        list:  songList,
-        path:  songPath,
-        get:   songGet,
-        add:   songAdd,
-        touch: songTouch,
-        clear: songClear
+        count:    songCount,
+        listIter: songListIter,
+        path:     songPath,
+        get:      songGet,
+        add:      songAdd,
+        touch:    songTouch,
+        clear:    songClear
     },
     version: {
         get: versionGet,
