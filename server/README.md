@@ -28,11 +28,11 @@ but does not support yet:
   - please let me know about them!
 
 The initial scan of songs takes more time than you might expect; 20 mins with
-4,500 songs on my [Gentoo](https://www.gentoo.org/) machine with
+4,500+ songs on my [Gentoo](https://www.gentoo.org/) machine with
 [Intel Atom D525](http://ark.intel.com/products/49490/Intel-Atom-Processor-D525-1M-Cache-1_80-GHz),
 4GB RAM and a 5400-rpm HDD. This is mostly because of modules that
 `canary-server` depends on to collect metadata from files. Once the database
-has been built, however, rescanning is fairly fast; 20 secs on the same
+has been built, however, rescanning is fairly fast; 30 secs on the same
 condition. The server remembers the mtime, modification time of files and
 reads only added or modified files.
 
