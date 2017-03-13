@@ -142,8 +142,8 @@ function serverInfo(req, res) {
 
 function databaseInfo(req, res) {
     db.version.get(function (err, version) {
-        var update = (!err && +req.query.delta === version)
-        var mlcl = (update)? []: {
+        var update = (err || +req.query.delta !== version)
+        var mlcl = (!update)? []: {
             mlit: [
                 { miid: 1 },
                 { mper: 1 },
@@ -164,8 +164,8 @@ function databaseInfo(req, res) {
                 avdb: [
                     { mstt: 200 },
                     { muty: update },
-                    { mtco: (update)? 0: 1 },
-                    { mrco: (update)? 0: 1 },
+                    { mtco: (update)? 1: 0 },
+                    { mrco: (update)? 1: 0 },
                     { mlcl: mlcl }
                 ]
             }, res.ok.bind(res))
@@ -207,8 +207,8 @@ function databaseItem(req, res) {
 // TODO: support smart playlists
 function containerInfo(req, res) {
     db.version.get(function (err, version) {
-        var update = (!err && +req.query.delta === version)
-        var mlcl = (update)? []: {
+        var update = (err || +req.query.delta !== version)
+        var mlcl = (!update)? []: {
             mlit: [
                 { miid: 1 },
                 { mper: 1 },
@@ -227,8 +227,8 @@ function containerInfo(req, res) {
                 aply: [
                     { mstt: 200 },
                     { muty: update },
-                    { mtco: (update)? 0: 1 },
-                    { mrco: (update)? 0: 1 },
+                    { mtco: (update)? 1: 0 },
+                    { mrco: (update)? 1: 0 },
                     { mlcl: mlcl }
                 ]
             }, res.ok.bind(res))
