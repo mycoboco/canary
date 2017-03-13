@@ -158,13 +158,16 @@ function isSong(f) {
 
 function done(cb) {
     log.info('scanning songs finished')
-    db.song.clear(version, function (err) {
+    db.song.clear(++version, function (err) {
         err && log.error(err)
         inProgress = false
-        db.song.count(function (err, count) {
-            !err && log.info(count+' song(s) in database')
+        db.version.inc(function (err) {
+            err && log.error(err)
+            db.song.count(function (err, count) {
+                !err && log.info(count+' song(s) in database')
+            })
+            ;(typeof cb === 'function') && cb()
         })
-        ;(typeof cb === 'function') && cb()
     })
 }
 
@@ -243,14 +246,14 @@ function next(cb) {
                         callback(err)
                         return
                     }
-                    song.version = version
+                    song.version = version+1
                     song.mtime = p.mtime
                     db.song.add(song, function (err) {
                         callback(err)
                     })
                 })
             } else {
-                db.song.touch(id(p.path), version, function (err) {
+                db.song.touch(id(p.path), version+1, function (err) {
                     callback(err)
                 })
             }
@@ -281,18 +284,15 @@ function scan(force, cb) {
     inProgress = true
 
     log.info('starting to scan songs')
-    db.version.inc(function (err) {
-        err && log.error(err)
-        db.version.get(function (err, _version) {
-            if (err) {
-                log.error(err)
-                _version = 1
-            }
-            version = _version
+    db.version.get(function (err, _version) {
+        if (err) {
+            log.error(err)
+            _version = 1
+        }
+        version = _version
 
-            for (var i = 0; i < conf.mp3.path.length; i++) qd.push(conf.mp3.path[i])
-            next(cb)
-        })
+        for (var i = 0; i < conf.mp3.path.length; i++) qd.push(conf.mp3.path[i])
+        next(cb)
     })
 }
 

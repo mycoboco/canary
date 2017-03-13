@@ -321,13 +321,13 @@ function build(obj, cb) {
 }
 
 
-function item(container, songs, query, update, cb) {
+function item(container, songs, query, cb) {
     var obj = {}, mlit, key, mlcl
     var top = (container)? 'apso': 'adbs'
 
     obj[top] = [
         { mstt: 200 },
-        { muty: !!update },
+        { muty: 1 },
         { mtco: songs.length },
         { mrco: songs.length }
     ]

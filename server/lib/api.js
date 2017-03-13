@@ -163,7 +163,7 @@ function databaseInfo(req, res) {
             daap.build({
                 avdb: [
                     { mstt: 200 },
-                    { muty: update },
+                    { muty: 0 },
                     { mtco: (update)? 1: 0 },
                     { mrco: (update)? 1: 0 },
                     { mlcl: mlcl }
@@ -184,7 +184,7 @@ function databaseItem(req, res) {
     db.version.get(function (err, version) {
         if (!err && +req.query.delta === version) {
             log.info('sending empty list because nothing updated')
-            daap.song.item([], query, true, function (obj) {
+            daap.song.item([], query, function (obj) {
                 daap.build(obj, res.ok.bind(res))
             })
             return
@@ -196,7 +196,7 @@ function databaseItem(req, res) {
                 return
             }
 
-            daap.song.item(songs, query, false, function (obj) {
+            daap.song.item(songs, query, function (obj) {
                 daap.build(obj, res.ok.bind(res))
             })
         })
@@ -226,7 +226,7 @@ function containerInfo(req, res) {
             daap.build({
                 aply: [
                     { mstt: 200 },
-                    { muty: update },
+                    { muty: 0 },
                     { mtco: (update)? 1: 0 },
                     { mrco: (update)? 1: 0 },
                     { mlcl: mlcl }
@@ -248,7 +248,7 @@ function containerItem(req, res) {
     db.version.get(function (err, version) {
         if (!err && +req.query.delta === version) {
             log.info('sending empty list because nothing updated')
-            daap.container.item([], query, true, function (obj) {
+            daap.container.item([], query, function (obj) {
                 daap.build(obj, res.ok.bind(res))
             })
             return
@@ -260,7 +260,7 @@ function containerItem(req, res) {
                 return
             }
 
-            daap.container.item(songs, query, false, function (obj) {
+            daap.container.item(songs, query, function (obj) {
                 daap.build(obj, res.ok.bind(res))
             })
         })
