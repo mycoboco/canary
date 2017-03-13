@@ -173,7 +173,7 @@ function usage() {
             uid: 'userid',
             gid: 'groupid'
         },
-        password: 'password',
+        // password: 'password',
         scan: {
             path:  [ '/path/to/mp3/files' ],
             cycle: [ '19:00:00' ],
