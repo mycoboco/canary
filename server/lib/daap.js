@@ -321,7 +321,7 @@ function build(obj, cb) {
 }
 
 
-function item(container, songs, query, cb) {
+function item(container, songs, metas, cb) {
     var obj = {}, mlit, key, mlcl
     var top = (container)? 'apso': 'adbs'
 
@@ -335,8 +335,8 @@ function item(container, songs, query, cb) {
     mlcl = []
     hodgepodge.asyncLoop(songs.length, function (loop, i) {
         mlit = {}
-        for (var j = 0; j < query.length; j++) {
-            key = desc2tag[query[j]]
+        for (var j = 0; j < metas.length; j++) {
+            key = desc2tag[metas[j]]
             if (tag2info[key] && tag2info[key].field) mlit[key] = songs[i][tag2info[key].field]
         }
 

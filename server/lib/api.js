@@ -17,6 +17,7 @@ var mp3 = require('./mp3')
 
 
 var log, db, daap, conf
+var cache = true
 
 
 function init(_db, _daap, _conf) {
@@ -174,32 +175,43 @@ function databaseInfo(req, res) {
 }
 
 
-function databaseItem(req, res) {
-    var query
+function defaultMetas(name, meta) {
+    var d = {
+        container: 'dmap.itemid,dmap.itemname,dmap.persistentid,dmap.parentcontainerid,'+
+                   'com.apple.itunes.smart-playlist',
+        song:      'dmap.itemkind,dmap.itemid,daap.songalbum,daap.songartist,daap.songgenre,'+
+                   'daap.songtime,daap.songtracknumber,daap.songformat'
+    }
 
-    query = req.query.meta || 'dmap.itemkind,dmap.itemid,daap.songalbum,daap.songartist,'+
-                              'daap.songgenre,daap.songtime,daap.songtracknumber,daap.songformat'
-    query = query.split(',')
+    return (meta || d[name]).split(',')
+}
+
+
+function sendList(name, metas, res) {
+    if (cache) {
+        db.cache.exist(name, metas, function (err, exist) {
+            if (!err && exist) db.cache.read(name, metas, res, cacheDisable)
+            else cacheUpdate(name, metas, res)
+        })
+    } else {
+        cacheUpdate(name, metas, res)
+    }
+}
+
+
+function databaseItem(req, res) {
+    var metas = defaultMetas('song', req.query.meta)
 
     db.version.get(function (err, version) {
         if (!err && +req.query.delta === version) {
             log.info('sending empty list because nothing updated')
-            daap.song.item([], query, function (obj) {
+            daap.song.item([], metas, function (obj) {
                 daap.build(obj, res.ok.bind(res))
             })
             return
         }
 
-        db.song.listIter(function (err, songs) {
-            if (err) {
-                res.err(err)
-                return
-            }
-
-            daap.song.item(songs, query, function (obj) {
-                daap.build(obj, res.ok.bind(res))
-            })
-        })
+        sendList('song', metas, res)
     })
 }
 
@@ -238,32 +250,18 @@ function containerInfo(req, res) {
 
 
 function containerItem(req, res) {
-    var query
-
-    query = req.query.meta || 'dmap.itemid,dmap.itemname,dmap.persistentid,'+
-                              'dmap.parentcontainerid,com.apple.itunes.smart-playlist'
-
-    query = query.split(',')
+    var metas = defaultMetas('container', req.query.meta)
 
     db.version.get(function (err, version) {
         if (!err && +req.query.delta === version) {
             log.info('sending empty list because nothing updated')
-            daap.container.item([], query, function (obj) {
+            daap.container.item([], metas, function (obj) {
                 daap.build(obj, res.ok.bind(res))
             })
             return
         }
 
-        db.song.listIter(function (err, songs) {
-            if (err) {
-                res.err(err)
-                return
-            }
-
-            daap.container.item(songs, query, function (obj) {
-                daap.build(obj, res.ok.bind(res))
-            })
-        })
+        sendList('container', metas, res)
     })
 }
 
@@ -335,6 +333,32 @@ function song(req, res) {
 }
 
 
+function cacheUpdate(name, metas, res) {
+    metas = metas || defaultMetas(name)
+
+    db.song.listIter(function (err, songs) {
+        if (err) {
+            res.err(err)
+            return
+        }
+
+        daap[name].item(songs, metas, function (obj) {
+            daap.build(obj, function (buf) {
+                res && res.ok(buf)
+                if (cache) db.cache.write(name, metas, buf, cacheDisable)
+            })
+        })
+    })
+}
+
+
+function cacheDisable(err) {
+    cache = false
+    log.error(err)
+    log.warning('cache disabled')
+}
+
+
 module.exports = {
     init:       init,
     auth:       auth,
@@ -350,7 +374,11 @@ module.exports = {
         info: containerInfo,
         item: containerItem
     },
-    song: song
+    song: song,
+    cache: {
+        disable: cacheDisable,
+        update:  cacheUpdate
+    }
 }
 
 // end of api.js

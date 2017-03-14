@@ -18,12 +18,12 @@ var ontime = require('ontime')
 var logger = require('hodgepodge-node/logger')
 
 
-var log, db, conf
+var log, db, api, conf
 var qd = [], qf = []
 var needRescan, inProgress, version
 
 
-function init(_db, _conf) {
+function init(_db, _api, _conf) {
     conf = defaults(_conf, {
         mp3: {
             path:  [ '/path/to/mp3/files' ],
@@ -39,6 +39,7 @@ function init(_db, _conf) {
     })
 
     db = _db
+    api = _api
 
     for (var i = 0; i < conf.mp3.path.length; i++) {
         try {
@@ -157,6 +158,33 @@ function isSong(f) {
 
 
 function done(cb) {
+    var meta = {    // from iTunes 12.5.5.5
+        container: 'dmap.itemid,dmap.containeritemid',
+        song:      'dmap.itemid,dmap.itemname,dmap.itemkind,dmap.persistentid,daap.songalbum,'+
+                   'daap.songgrouping,daap.songartist,daap.songalbumartist,daap.songbitrate,'+
+                   'daap.songbeatsperminute,daap.songcomment,daap.songcodectype,'+
+                   'daap.songcodecsubtype,daap.songcompilation,daap.songcomposer,'+
+                   'daap.songdateadded,daap.songdatemodified,daap.songdisccount,'+
+                   'daap.songdiscnumber,daap.songdisabled,daap.songeqpreset,daap.songformat,'+
+                   'daap.songgenre,daap.songdescription,daap.songrelativevolume,'+
+                   'daap.songsamplerate,daap.songsize,daap.songstarttime,daap.songstoptime,'+
+                   'daap.songtime,daap.songtrackcount,daap.songtracknumber,daap.songuserrating,'+
+                   'daap.songyear,daap.songdatakind,daap.songdataurl,daap.songcontentrating,'+
+                   'com.apple.itunes.norm-volume,com.apple.itunes.itms-songid,'+
+                   'com.apple.itunes.itms-artistid,com.apple.itunes.itms-playlistid,'+
+                   'com.apple.itunes.itms-composerid,com.apple.itunes.itms-genreid,'+
+                   'com.apple.itunes.itms-storefrontid,'+
+                   'com.apple.itunes.has-videodaap.songcategory,daap.songextradata,'+
+                   'daap.songcontentdescription,daap.songlongcontentdescription,'+
+                   'com.apple.itunes.is-podcast,com.apple.itunes.mediakind,'+
+                   'com.apple.itunes.extended-media-kind,com.apple.itunes.series-name,'+
+                   'com.apple.itunes.episode-num-str,com.apple.itunes.episode-sort,'+
+                   'com.apple.itunes.season-num,daap.songgapless,'+
+                   'com.apple.itunes.gapless-enc-del,com.apple.itunes.gapless-heur,'+
+                   'com.apple.itunes.gapless-enc-dr,com.apple.itunes.gapless-dur,'+
+                   'com.apple.itunes.gapless-resy,com.apple.itunes.content-rating'
+    }
+
     log.info('scanning songs finished')
     db.song.clear(++version, function (err) {
         err && log.error(err)
@@ -167,6 +195,14 @@ function done(cb) {
                 !err && log.info(count+' song(s) in database')
             })
             ;(typeof cb === 'function') && cb()
+        })
+    })
+
+    log.info('invalidating cache')
+    db.cache.clear(function () {
+        log.info('preparing cache for iTunes')
+        Object.keys(meta).forEach(function (name) {
+            api.cache.update(name, meta[name].split(','))
         })
     })
 }

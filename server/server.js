@@ -259,20 +259,21 @@ function usage() {
     db.init({
         db:     conf.db,
         debug:  conf.server.debug
-    })
-    api.init(db, daap, {
-        server: conf.server,
-        debug:  conf.server.debug
-    })
-    mp3.init(db, {
-        mp3:   conf.server.scan,
-        debug: conf.server.debug
-    })
+    }, function () {
+        api.init(db, daap, {
+            server: conf.server,
+            debug:  conf.server.debug
+        })
+        mp3.init(db, api, {
+            mp3:   conf.server.scan,
+            debug: conf.server.debug
+        })
 
-    argv.rescan && mp3.scan(true)
+        argv.rescan && mp3.scan(true)
 
-    server.listen(conf.server.port, '::', function () {
-        log.info('%s listening on port %s', server.name, conf.server.port)
+        server.listen(conf.server.port, '::', function () {
+            log.info('%s listening on port %s', server.name, conf.server.port)
+        })
     })
 
     mdns.init(db, function (err, id) {

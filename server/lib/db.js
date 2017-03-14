@@ -4,11 +4,13 @@
 
 'use strict'
 
+var crypto = require('crypto')
 var util = require('util')
 
 var async = require('async')
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema
+var grid = require('gridfs-stream')
 var defaults = require('defaults')
 var hodgepodge = {
     logger:   require('hodgepodge-node/logger'),
@@ -49,10 +51,10 @@ var songSchema = new Schema({
     Song = mongoose.model('Song', songSchema)
 
 
-var log, conf
+var log, gfs, conf
 
 
-function init(_conf) {
+function init(_conf, cb) {
     conf = defaults(_conf, {
         db: {
             host:          'localhost',
@@ -72,6 +74,12 @@ function init(_conf) {
 
     hodgepodge.mongoose = hodgepodge.mongoose(mongoose, log)
     hodgepodge.mongoose.connect(conf.db)
+
+    grid.mongo = mongoose.mongo
+    mongoose.connection.once('open', function () {
+        gfs = grid(mongoose.connection.db)
+        cb()
+    })
 }
 
 
@@ -204,6 +212,60 @@ function dbIdSet(dbId, cb) {
 }
 
 
+function hashQuery(metas) {
+    var md5sum = crypto.createHash('md5')
+
+    metas.forEach(function (meta) { md5sum.update(meta) })
+    return md5sum.digest('hex')
+}
+
+
+function cacheRead(name, metas, to, cb) {
+    var rs
+
+    name = name+'-'+hashQuery(metas)
+    rs = gfs.createReadStream({ filename: name })
+
+    log.info('reading cache for '+name)
+    rs.on('error', cb)
+    rs.pipe(to)
+}
+
+
+function cacheWrite(name, metas, buffer, cb) {
+    var ws
+
+    name = name+'-'+hashQuery(metas)
+    ws = gfs.createWriteStream({ filename: name })
+
+    log.info('writing cache for '+name)
+    ws.on('error', cb)
+    ws.write(buffer)
+    ws.end()
+}
+
+
+function cacheExist(name, metas, cb) {
+    gfs.exist({ filename: name+'-'+hashQuery(metas) }, cb)
+}
+
+
+function cacheClear(cb) {
+    var db = mongoose.connection.db    // uses underlying driver
+
+    var funcs = [ 'fs.files', 'fs.chucks' ].map(function (name) {
+        return function (callback) {
+            db.collection(name).drop(function (err) {
+                err && log.warning(err)
+                callback()    // errors ignored
+            })
+        }
+    })
+
+    async.parallel(funcs, cb)
+}
+
+
 module.exports = {
     init:  init,
     close: close,
@@ -223,6 +285,12 @@ module.exports = {
     dbId: {
         get: dbIdGet,
         set: dbIdSet
+    },
+    cache: {
+        read:  cacheRead,
+        write: cacheWrite,
+        exist: cacheExist,
+        clear: cacheClear
     }
 }
 
