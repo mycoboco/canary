@@ -160,7 +160,6 @@ the problem concisely.
 - [iTunes](https://www.apple.com/itunes/) (Mac, Windows)
 - [Simple DAAP Client](https://itunes.apple.com/app/simple-daap-client/id369605270)
   (iOS)
-  - the app itself does not work on the recent versions of iOS
 - [DAAP Media Player](https://play.google.com/store/apps/details?id=org.mult.daap)
   (Android)
 - [Music Pump DAAP Player Demo](https://play.google.com/store/apps/details?id=ch.berard.musicpumpdemo)
