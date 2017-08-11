@@ -240,7 +240,7 @@ function usage() {
         }
 
         res.err = function (code, err) {
-            if (typeof code !== 'number' && !err) {
+            if (typeof code !== 'number') {
                 err = code
                 code = 500
             }
