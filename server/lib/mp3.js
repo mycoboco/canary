@@ -148,7 +148,7 @@ function meta(song, cb) {
             }
 
             setMeta(song, {
-                format: {duration: len}
+                format: { duration: len*1000 }
             })
         })
     })
