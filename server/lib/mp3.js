@@ -9,7 +9,7 @@ var path = require('path')
 var util = require('util')
 
 var async = require('async')
-var mm = require('musicmetadata')
+var mm = require('music-metadata')
 var mp3len = require('mp3-duration')
 var FNV = require('fnv').FNV
 var defaults = require('defaults')
@@ -106,47 +106,46 @@ function meta(song, cb) {
         return meta
     }
 
-    mm(fs.createReadStream(song), { duration: true }, function (err, data) {
-        var setMeta = function () {
-            var meta = {
-                id:     id(song),
-                kind:   2,
-                title:  data.title || song,
-                artist: data.artist[0] || '(Unknown Artist)',
-                album:  data.album || '(Unknown Album)',
-                time:   +data.duration*1000,
-                year:   data.year || 0,
-                track:  data.track.no || 0,
-                genre:  data.genre[0] || '(Unknown Genre)',
-                format: path.extname(song).substring(1, song.length-1),
-                path:   song
-            }
-
-            if (!data.duration) {
-                mp3len(song, true, function (err, len) {
-                    err && log.error(err)
-                    meta.time = len*1000 || 0
-                    cb(null, chkmeta(meta))
-                })
-            } else {
-                cb(null, chkmeta(meta))
-            }
+    var setMeta = function (song, data) {
+        var meta = {
+          id:     id(song),
+          kind:   2,
+          title:  data.common.title || song,
+          artist: data.common.albumartist || data.common.artist[0] || '(Unknown Artist)',
+          album:  data.common.album || '(Unknown Album)',
+          time:   +data.format.duration*1000,
+          year:   data.common.year || 0,
+          track:  data.common.track.no || 0,
+          genre:  data.common.genre[0] || '(Unknown Genre)',
+          format: path.extname(song).substring(1, song.length-1),
+          path:   song
         }
 
+      if (!data.duration) {
+        mp3len(song, true, function (err, len) {
+          err && log.error(err)
+          meta.time = len*1000 || 0
+          cb(null, chkmeta(meta))
+        })
+      } else {
+        cb(null, chkmeta(meta))
+      }
+  }
+
+    return mm.parseFile(song, { duration: true, skipCovers: true }).then(function (metadata) {
+        setMeta(song, metadata)
+    }).catch( function(err) {
+      log.error('music-metadata: failed to retrieve meta data from %s: %s', song, err.message)
+      mp3len(song, true, function (err, len) {
         if (err) {
-            mp3len(song, true, function (err, len) {
-                if (err) {
-                    log.error('failed to retrieve meta data from '+song)
-                    cb(err)
-                    return
-                }
-                data.duration = len
-                setMeta()
-            })
-            return
+          log.error('mp3len: failed to retrieve meta data from: %s', song)
+          cb(err)
+          return
         }
-
-        setMeta()
+        setMeta(song, {
+          format: {duration: len}
+        })
+      })
     })
 }
 
