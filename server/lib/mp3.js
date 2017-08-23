@@ -111,7 +111,8 @@ function meta(song, cb) {
             id:     id(song),
             kind:   2,
             title:  data.common.title || song,
-            artist: data.common.albumartist || data.common.artist[0] || '(Unknown Artist)',
+            artist: data.common.albumartist || data.common.artist ||
+                    (data.common.artists && data.common.artists[0]) || '(Unknown Artist)',
             album:  data.common.album || '(Unknown Album)',
             time:   +data.format.duration*1000,
             year:   data.common.year || 0,
