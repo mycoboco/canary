@@ -108,44 +108,48 @@ function meta(song, cb) {
 
     var setMeta = function (song, data) {
         var meta = {
-          id:     id(song),
-          kind:   2,
-          title:  data.common.title || song,
-          artist: data.common.albumartist || data.common.artist[0] || '(Unknown Artist)',
-          album:  data.common.album || '(Unknown Album)',
-          time:   +data.format.duration*1000,
-          year:   data.common.year || 0,
-          track:  data.common.track.no || 0,
-          genre:  data.common.genre[0] || '(Unknown Genre)',
-          format: path.extname(song).substring(1, song.length-1),
-          path:   song
+            id:     id(song),
+            kind:   2,
+            title:  data.common.title || song,
+            artist: data.common.albumartist || data.common.artist[0] || '(Unknown Artist)',
+            album:  data.common.album || '(Unknown Album)',
+            time:   +data.format.duration*1000,
+            year:   data.common.year || 0,
+            track:  data.common.track.no || 0,
+            genre:  data.common.genre[0] || '(Unknown Genre)',
+            format: path.extname(song).substring(1, song.length-1),
+            path:   song
         }
 
-      if (!data.duration) {
-        mp3len(song, true, function (err, len) {
-          err && log.error(err)
-          meta.time = len*1000 || 0
-          cb(null, chkmeta(meta))
-        })
-      } else {
-        cb(null, chkmeta(meta))
-      }
-  }
+        if (!data.duration) {
+            mp3len(song, true, function (err, len) {
+                err && log.error(err)
+                meta.time = len*1000 || 0
+                cb(null, chkmeta(meta))
+            })
+        } else {
+            cb(null, chkmeta(meta))
+        }
+    }
 
-    return mm.parseFile(song, { duration: true, skipCovers: true }).then(function (metadata) {
+    return mm.parseFile(song, {
+        duration:   true,
+        skipCovers: true
+    }).then(function (metadata) {
         setMeta(song, metadata)
-    }).catch( function(err) {
-      log.error('music-metadata: failed to retrieve meta data from %s: %s', song, err.message)
-      mp3len(song, true, function (err, len) {
-        if (err) {
-          log.error('mp3len: failed to retrieve meta data from: %s', song)
-          cb(err)
-          return
-        }
-        setMeta(song, {
-          format: {duration: len}
+    }).catch(function (err) {
+        log.error('music-metadata: failed to retrieve meta data from %s: %s', song, err.message)
+        mp3len(song, true, function (err, len) {
+            if (err) {
+                log.error('mp3len: failed to retrieve meta data from: %s', song)
+                cb(err)
+                return
+            }
+
+            setMeta(song, {
+                format: {duration: len}
+            })
         })
-      })
     })
 }
 
