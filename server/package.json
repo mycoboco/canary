@@ -40,13 +40,10 @@
     "watch": "^0.16.0"
   },
   "devDependencies": {},
-  "engines": {
-    "node": ">=0.12.6"
-  },
+  "engines": { "node": ">=0.12.6" },
   "keywords": [
     "DAAP",
     "iTunes",
-    "music",
-    "streaming"
+    "music", "streaming"
   ]
 }
