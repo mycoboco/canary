@@ -193,7 +193,7 @@ function dbIdGet(cb) {
             return
         }
 
-        cb(null, ids && ids[0].dbId)
+        cb(null, ids && ids[0] && ids[0].dbId)
     })
 }
 
