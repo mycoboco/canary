@@ -111,12 +111,12 @@ function meta(song, cb) {
             kind:   2,
             title:  data.common.title || song,
             artist: data.common.albumartist || data.common.artist ||
-                    (data.common.artists && data.common.artists[0]) || '(Unknown Artist)',
+                    (data.common.artists && data.common.artists.join(', ')) || '(Unknown Artist)',
             album:  data.common.album || '(Unknown Album)',
-            time:   +data.format.duration*1000,
+            time:   Math.floor((data.format && data.format.duration*1000) || 0),
             year:   data.common.year || 0,
-            track:  data.common.track.no || 0,
-            genre:  data.common.genre[0] || '(Unknown Genre)',
+            track:  (data.common.track && data.common.track.no) || 0,
+            genre:  (data.common.genre && data.common.genre.join(', ')) || '(Unknown Genre)',
             format: path.extname(song).substring(1, song.length-1),
             path:   song
         }
