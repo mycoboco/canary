@@ -10,7 +10,6 @@ var util = require('util')
 
 var async = require('async')
 var mm = require('music-metadata')
-var mp3len = require('mp3-duration')
 var FNV = require('fnv').FNV
 var defaults = require('defaults')
 var watch = require('watch')
@@ -122,15 +121,7 @@ function meta(song, cb) {
             path:   song
         }
 
-        if (!data.duration) {
-            mp3len(song, true, function (err, len) {
-                err && log.error(err)
-                meta.time = len*1000 || 0
-                cb(null, chkmeta(meta))
-            })
-        } else {
-            cb(null, chkmeta(meta))
-        }
+        cb(null, chkmeta(meta))
     }
 
     return mm.parseFile(song, {
@@ -139,18 +130,8 @@ function meta(song, cb) {
     }).then(function (metadata) {
         setMeta(song, metadata)
     }).catch(function (err) {
-        log.error('music-metadata: failed to retrieve meta data from %s: %s', song, err.message)
-        mp3len(song, true, function (err, len) {
-            if (err) {
-                log.error('mp3len: failed to retrieve meta data from: %s', song)
-                cb(err)
-                return
-            }
-
-            setMeta(song, {
-                format: { duration: len*1000 }
-            })
-        })
+        log.error('failed to retrieve meta data from %s', song, err)
+        setMeta(song, { common: {} })
     })
 }
 
