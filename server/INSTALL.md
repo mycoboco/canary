@@ -11,6 +11,6 @@ If you have `node.js` in your system,
 brings the latest version of `canary-server` and installs it with its all
 depending packages.
 
-The `--legacy-bundling` option is necessary when using `npm3` because, without
-it, dependent modules are installed at the same nesting level as `canary` into
-`node_modules`.
+_The `--legacy-bundling` option is necessary when using `npm3` because, without
+it, dependent modules will be installed at the same nesting level as `canary`
+into `node_modules`._
