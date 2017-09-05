@@ -93,7 +93,7 @@ function update(req, res) {
         db.version.get(function (err, version) {
             if (err) {
                 log.error(err)
-                version = 1
+                version = 2    // #26
             }
             daap.build({
                 mupd: [

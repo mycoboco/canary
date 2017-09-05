@@ -308,7 +308,7 @@ function scan(force, cb) {
     db.version.get(function (err, _version) {
         if (err) {
             log.error(err)
-            _version = 1
+            _version = 2    // #26
         }
         version = _version
 

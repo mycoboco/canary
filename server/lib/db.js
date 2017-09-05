@@ -166,7 +166,7 @@ function versionGet(cb) {
             cb(err)
             return
         }
-        if (versions.length === 0) versions[0] = { version: 0 }
+        if (versions.length === 0) versions[0] = { version: 2 }    // #26
 
         cb(null, versions[0].version)
     })
