@@ -1,6 +1,6 @@
 {
   "name": "canary",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "a music streaming server with DAAP support",
   "author": {
     "name": "Woong Jun",
