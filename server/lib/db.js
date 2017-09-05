@@ -174,13 +174,29 @@ function versionGet(cb) {
 
 
 function versionInc(cb) {
-    Info.update({
-        type: 'music'
-    }, {
-        $inc: { version: 1 }
-    }, {
-        upsert: true
-    }, cb)
+    async.series([
+        function (callback) {
+            Info.update({
+                type:    'music',
+                version: { $exists: false }
+            }, {
+                $set: { version: 1 }
+            }, {
+                upsert: true
+            }, callback)
+        },
+        function (callback) {
+            Info.update({
+                type: 'music',
+                version: {
+                    $exists: true,
+                    $ne:     null
+                }
+            }, {
+                $inc: { version: 1 }
+            }, callback)
+        }
+    ], cb)
 }
 
 
