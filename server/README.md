@@ -9,6 +9,8 @@ DAAP for streaming and
 advertisement let `canary` work perfectly with
 [iTunes](https://www.apple.com/itunes/).
 
+![running canary and iTunes](http://code.woong.org/common/files/canary-run.png)
+
 This document explains the server. See the files in the `client` directory for
 the client.
 
