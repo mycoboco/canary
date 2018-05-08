@@ -257,8 +257,8 @@ function usage() {
         debug: conf.server.debug
     })
     db.init({
-        db:     conf.db,
-        debug:  conf.server.debug
+        db:    conf.db,
+        debug: conf.server.debug
     }, function () {
         api.init(db, daap, {
             server: conf.server,
