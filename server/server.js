@@ -32,10 +32,16 @@ var hodgepodge = {
 var config = require('konphyg')(path.join(__dirname, argv.c)),
     conf = {
         server: config('server'),
-        db:     config('db')
+        db: {
+            mongo: config('db.mongo'),
+            ne:    config('db.ne')
+        }
     }
 
-var db = require('./lib/db')
+var db = {
+    mongo: require('./lib/db.mongo'),
+    ne:    require('./lib/db.ne')
+}
 var daap = require('./lib/daap')
 var api = require('./lib/api')
 var mp3 = require('./lib/mp3')
@@ -137,6 +143,17 @@ function publishService(services, i) {
             }
         }
     })
+}
+
+
+function selectDb() {
+    if (/mongo/i.test(conf.server.db)) {
+        conf.db = conf.db.mongo
+        db = db.mongo
+    } else {
+        conf.db = conf.db.ne
+        db = db.ne
+    }
 }
 
 
@@ -256,6 +273,7 @@ function usage() {
     daap.init({
         debug: conf.server.debug
     })
+    selectDb()
     db.init({
         db:    conf.db,
         debug: conf.server.debug
