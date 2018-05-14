@@ -11,6 +11,7 @@
         "cycle": [ "17:00:00" ],
         "utc":   false
     },
+    "db":    "nedb",
     "mdns":  "auto",
     "debug": false
 }
