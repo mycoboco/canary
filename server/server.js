@@ -196,6 +196,7 @@ function usage() {
             cycle: [ '19:00:00' ],
             utc:   false
         },
+        db:    'nedb',
         mdns:  'auto',
         debug: false
     })
