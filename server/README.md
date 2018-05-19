@@ -40,7 +40,13 @@ modification time of files and reads only added or modified files.
 
 #### Prerequisites
 
-- [MongoDB](https://www.mongodb.org/)
+- Nothing; [MongoDB](https://www.mongodb.org/) is no longer necessary!
+
+The only thing you need to run `canary` is a node.js environment. `canary`
+started to support a stand-alone DB,
+[NeDB](https://github.com/louischatriot/nedb) as well as MongoDB. You better
+depend on MongoDB, however, if a huge number of songs need to be
+served, because NeDB stores all its indexed data on memory.
 
 `canary` can run with [`avahi`](http://www.avahi.org/) or
 [`dns-sd`](https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man1/dns-sd.1.html),
@@ -93,6 +99,7 @@ The server configuration, `config/server.json` looks like:
         "cycle": [ "17:00:00" ],
         "utc":   false
     },
+    "db":    "neDB",
     "mdns":  "auto",
     "debug": false
 }
@@ -115,12 +122,18 @@ The server configuration, `config/server.json` looks like:
     to [`ontime`](https://www.npmjs.com/package/ontime) for how to specify the
     rescanning schedule. `canary-server` accepts other options for `ontime`
     except `single` that is always set to _true_;
+- `db` selects a DB to store metadata of scanned songs. `neDB` and `mongoDB`
+  (case-insensitive) are supported;
 - `mdns` selects a service for mDNS advertisement. Possible values are `auto`,
   `avahi`, `dns-sd`, `mdns-js` and `off`. See _Prerequisites_ section above;
 - `debug` controls the server's log level. Setting this to _true_ makes the
   server verbose.
 
-`config/db.json` contains:
+One of `config/db.ne.json` and `config/db.mongo.json` is used depending on the
+setting of the `db` field above; both files must exist and be syntactically
+correct.
+
+`config/db.mongo.json` contains:
 
 ```
 {
@@ -139,6 +152,16 @@ omitted.
 
 `reconnectTime` specifies a time interval in _seconds_ for which the server
 waits before trying to reconnect when disconnected from the DB.
+
+`config/db.ne.json' looks like:
+
+```
+{
+    "path": "db"
+}
+```
+
+to specify a path into which persistent DB files go.
 
 
 #### How to run
