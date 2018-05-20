@@ -197,9 +197,6 @@ the problem concisely.
 `canary-server` is implemented in a very short time. It already works well but
 needs many improvements that include, but not limited to:
 
-- support for other DBs, especially [MySQL](https://www.mysql.com) and
-  [sqlite](http://www.sqlite.org); MongoDB is getting popular but there are
-  still many who don't have or are not familiar with it;
 - testing for files with various and sometimes weird meta data; metadata of my
   files are normalized so not enough samples to push the server's metadata
   handling.
