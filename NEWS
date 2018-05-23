@@ -2,8 +2,7 @@ What's new in canary?
 =====================
 
 2018-07-05  0.0.13 released with NeDB support
-2017-09-05  0.0.12 released with bugs fixed
-2017-09-05  0.0.11 released with better collecting of metadata
+2017-09-05  0.0.12 released with better collecting of metadata
 2017-03-14  0.0.9 released with better response cache and other enhancements
 2015-12-15  0.0.8 released with a bug fix
 2015-09-09  0.0.7 released with mDNS advertisement options
