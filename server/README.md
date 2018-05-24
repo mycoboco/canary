@@ -153,7 +153,7 @@ omitted.
 `reconnectTime` specifies a time interval in _seconds_ for which the server
 waits before trying to reconnect when disconnected from the DB.
 
-`config/db.ne.json' looks like:
+`config/db.ne.json` looks like:
 
 ```
 {
