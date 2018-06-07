@@ -163,7 +163,7 @@ function version() {
         'canary server '+VERSION+'\n' +
         'This is free software; see the LICENSE file for more information. There is NO\n' +
         'warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n' +
-        'Written by Jun Woong.')
+        'Written by Woong Jun.')
     exit()
 }
 
