@@ -24,7 +24,6 @@
   },
   "dependencies": {
     "async": "^1.4.2",
-    "defaults": "^1.0.2",
     "fnv": "^0.1.3",
     "gridfs-stream": "^1.1.1",
     "hodgepodge-node": "mycoboco/hodgepodge-node#v0.0.5",

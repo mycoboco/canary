@@ -13,7 +13,6 @@ var Datastore = require('nedb'),
     db = {}
 var async = require('async')
 var mkdirp = require('mkdirp')
-var defaults = require('defaults')
 var logger = require('hodgepodge-node/logger')
 
 
@@ -21,12 +20,12 @@ var log, conf
 
 
 function init(_conf, cb) {
-    conf = defaults(_conf, {
+    conf = Object.assign({
         db: {
             path: 'db'
         },
         debug: false
-    })
+    }, _conf)
 
     log = logger.create({
         prefix: 'db',

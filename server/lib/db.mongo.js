@@ -11,7 +11,6 @@ var async = require('async')
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema
 var grid = require('gridfs-stream')
-var defaults = require('defaults')
 var hodgepodge = {
     logger:   require('hodgepodge-node/logger'),
     mongoose: require('hodgepodge-node/mongoose')
@@ -55,7 +54,7 @@ var log, gfs, conf
 
 
 function init(_conf, cb) {
-    conf = defaults(_conf, {
+    conf = Object.assign({
         db: {
             host:          'localhost',
             port:          27017,
@@ -65,7 +64,7 @@ function init(_conf, cb) {
             reconnectTime: 10
         },
         debug: false
-    })
+    }, _conf)
 
     log = hodgepodge.logger.create({
         prefix: 'db',

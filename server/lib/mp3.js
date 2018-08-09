@@ -11,7 +11,6 @@ var util = require('util')
 var async = require('async')
 var mm = require('music-metadata')
 var FNV = require('fnv').FNV
-var defaults = require('defaults')
 var watch = require('watch')
 var ontime = require('ontime')
 var logger = require('hodgepodge-node/logger')
@@ -23,14 +22,14 @@ var needRescan, inProgress, version
 
 
 function init(_db, _api, _conf) {
-    conf = defaults(_conf, {
+    conf = Object.assign({
         mp3: {
             path:  [ '/path/to/mp3/files' ],
             cycle: [ '19:00:00' ],
             utc:   false
         },
         debug: false
-    })
+    }, _conf)
 
     log = logger.create({
         prefix: 'mp3',

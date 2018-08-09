@@ -24,7 +24,6 @@ var argv = require('optimist')
 
 var restify = require('restify'),
     server
-var defaults = require('defaults')
 var hodgepodge = {
     logger:        require('hodgepodge-node/logger'),
     dropPrivilege: require('hodgepodge-node/dropPrivilege')
@@ -183,7 +182,7 @@ function usage() {
 
 // starts here
 !function () {
-    conf.server = defaults(conf.server, {
+    conf.server = Object.assign({
         name: 'canary music',
         port: 3689,
         runAs: {
@@ -199,7 +198,7 @@ function usage() {
         db:    'nedb',
         mdns:  'auto',
         debug: false
-    })
+    }, conf.server)
     if (!Array.isArray(conf.server.scan.path)) conf.server.scan.path = [ conf.server.scan.path ]
 
     log = hodgepodge.logger.create({

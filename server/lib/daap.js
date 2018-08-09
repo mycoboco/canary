@@ -6,7 +6,6 @@
 
 var util = require('util')
 
-var defaults = require('defaults')
 var hodgepodge = {
     asyncLoop: require('hodgepodge-node/asyncLoop'),
     logger:    require('hodgepodge-node/logger')
@@ -141,9 +140,9 @@ var log, conf
 
 
 function init(_conf) {
-    conf = defaults(_conf, {
+    conf = Object.assign({
         debug: false
-    })
+    }, _conf)
 
     log = hodgepodge.logger.create({
         prefix: 'daap',

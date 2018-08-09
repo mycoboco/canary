@@ -6,7 +6,6 @@
 
 var fs = require('fs')
 
-var defaults = require('defaults')
 var mime = require('mime')
 var hodgepodge = {
     logger: require('hodgepodge-node/logger'),
@@ -21,7 +20,7 @@ var cache = true
 
 
 function init(_db, _daap, _conf) {
-    conf = defaults(_conf, {
+    conf = Object.assign({
         server: {
             name: 'canary',
             scan: {
@@ -29,7 +28,7 @@ function init(_db, _daap, _conf) {
             }
         },
         debug: false
-    })
+    }, _conf)
 
     log = hodgepodge.logger.create({
         prefix: 'api',
