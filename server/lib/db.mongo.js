@@ -13,7 +13,7 @@ var mongoose = require('mongoose'),
 var grid = require('gridfs-stream')
 var hodgepodge = {
     logger:   require('hodgepodge-node/logger'),
-    mongoose: require('hodgepodge-node/mongoose')
+    mongoose: require('hodgepodge-node/mongoose')(mongoose)
 }
 
 var infoSchema = new Schema({
@@ -24,7 +24,7 @@ var infoSchema = new Schema({
         version: Number,
         dbId:    String
     }),
-    Info = mongoose.model('Info', infoSchema)
+    Info
 
 var songSchema = new Schema({
         id:     {
@@ -47,10 +47,10 @@ var songSchema = new Schema({
         path:  String,
         mtime: Date
     }),
-    Song = mongoose.model('Song', songSchema)
+    Song
 
 
-var log, gfs, conf
+var log, db, gfs, conf
 
 
 function init(_conf, cb) {
@@ -71,19 +71,26 @@ function init(_conf, cb) {
         level:  (conf.debug)? 'info': 'error'
     })
 
-    hodgepodge.mongoose = hodgepodge.mongoose(mongoose, log)
-    hodgepodge.mongoose.connect(conf.db)
+    hodgepodge.mongoose.init(log)
+    hodgepodge.mongoose.connect(conf.db, function (err, _db) {
+        if (err) {
+            cb(err)
+            return
+        }
 
-    grid.mongo = mongoose.mongo
-    mongoose.connection.once('open', function () {
-        gfs = grid(mongoose.connection.db)
+        db = _db
+        Info = db.model('Info', infoSchema)
+        Song = db.model('Song', songSchema)
+        grid.mongo = mongoose.mongo
+        gfs = grid(db.db)
+
         cb()
     })
 }
 
 
 function close() {
-    hodgepodge.mongoose.close && hodgepodge.mongoose.close()
+    hodgepodge.mongoose.close()
 }
 
 
@@ -260,11 +267,9 @@ function cacheExist(name, metas, cb) {
 
 
 function cacheClear(cb) {
-    var db = mongoose.connection.db    // uses underlying driver
-
-    var funcs = [ 'fs.files', 'fs.chucks' ].map(function (name) {
+    var funcs = [ 'fs.files', 'fs.chunks' ].map(function (name) {
         return function (callback) {
-            db.collection(name).drop(function (err) {
+            db.db.collection(name).drop(function (err) {    // uses underlying driver
                 err && log.warning(err)
                 callback()    // errors ignored
             })

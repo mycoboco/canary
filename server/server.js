@@ -277,7 +277,30 @@ function usage() {
     db.init({
         db:    conf.db,
         debug: conf.server.debug
-    }, function () {
+    }, function (err) {
+        if (err) {
+            log.error(err)
+            exit()
+        }
+
+        mdns.init(db, function (err, id) {
+            err && log.warning(err)
+            log.info('database id to advertise is '+id)
+
+            if (conf.server.mdns === 'auto') {
+                log.info('detecting tools for service advertisement')
+                publishService([ 'avahi', 'dns-sd', 'mdns-js' ])
+            } else if (conf.server.mdns !== 'off') {
+                if (typeof mdns[conf.server.mdns] === 'function') {
+                    publishService([ conf.server.mdns, 'mdns-js' ])
+                } else {
+                    log.error('\''+conf.server.mdns+'\' not supported for service advertisement')
+                    log.warning('trying to auto-detect')
+                    publishService([ 'avahi', 'dns-sd', 'mdns-js' ])
+                }
+            }
+        })
+
         api.init(db, daap, {
             server: conf.server,
             debug:  conf.server.debug
@@ -292,24 +315,6 @@ function usage() {
         server.listen(conf.server.port, '::', function () {
             log.info('%s listening on port %s', server.name, conf.server.port)
         })
-    })
-
-    mdns.init(db, function (err, id) {
-        err && log.warning(err)
-        log.info('database id to advertise is '+id)
-
-        if (conf.server.mdns === 'auto') {
-            log.info('detecting tools for service advertisement')
-            publishService([ 'avahi', 'dns-sd', 'mdns-js' ])
-        } else if (conf.server.mdns !== 'off') {
-            if (typeof mdns[conf.server.mdns] === 'function') {
-                publishService([ conf.server.mdns, 'mdns-js' ])
-            } else {
-                log.error('\''+conf.server.mdns+'\' not supported for service advertisement')
-                log.warning('trying to auto-detect')
-                publishService([ 'avahi', 'dns-sd', 'mdns-js' ])
-            }
-        }
     })
 }()
 
