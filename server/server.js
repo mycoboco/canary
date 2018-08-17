@@ -57,7 +57,7 @@ function exit() {
         if (typeof service.kill === 'function') service.kill()
         else if (typeof service.stop === 'function') service.stop()
     }
-    db && db.close()
+    db && typeof db.close === 'function' && db.close()
     process.exit(0)
 }
 
