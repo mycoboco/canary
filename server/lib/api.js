@@ -327,7 +327,7 @@ function song(req, res) {
                 rs = fs.createReadStream(songs[0].path)
             }
             res.on('error', function () { rs.close() })
-            res.on('close', function () { rs.close() })
+               .on('close', function () { rs.close() })
             rs.pipe(res)
         })
     })
