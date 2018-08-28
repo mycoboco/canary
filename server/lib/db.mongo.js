@@ -244,6 +244,8 @@ function cacheRead(name, metas, to, cb) {
 
     log.info('reading cache for '+name)
     rs.on('error', cb)
+    to.on('error', function () { rs.close() })
+      .on('close', function () { rs.close() })
     rs.pipe(to)
 }
 
