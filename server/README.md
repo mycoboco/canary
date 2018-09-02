@@ -190,6 +190,8 @@ the problem concisely.
   (Android)
 - [SharePlay](https://play.google.com/store/apps/details?id=com.afqa123.shareplay)
   (Android)
+- [Diapente Music Stream Player](https://play.google.com/store/apps/details?id=net.cequals.daaper)
+  (Android)
 
 
 #### Help needed
