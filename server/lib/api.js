@@ -326,8 +326,12 @@ function song(req, res) {
                 })
                 rs = fs.createReadStream(songs[0].path)
             }
-            res.on('error', function () { rs.close() })
-               .on('close', function () { rs.close() })
+            // workaround for broken pipe; old stream has no destroy()
+            res.on('unpipe', function () {
+                rs.once('readable', function () { rs.close() })
+            })
+            res.on('error', function () { rs.unpipe(res) })
+               .on('close', function () { rs.unpipe(res) })
             rs.pipe(res)
         })
     })
