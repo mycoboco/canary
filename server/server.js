@@ -243,12 +243,9 @@ function usage() {
                 res.end()
             }
 
-            if (!body) {
-                res.send(500)
-                return
-            }
-            log.info('sending response to '+req.method+' '+req.url)
+            if (!body) return res.send(500)
 
+            log.info('sending response to '+req.method+' '+req.url)
             if (/\bgzip\b/.test(req.headers['accept-encoding'])) {
                 zlib.gzip(body, send)
             } else {

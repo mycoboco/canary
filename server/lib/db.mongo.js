@@ -75,10 +75,7 @@ function init(_conf, cb) {
 
     hodgepodge.mongoose.init(log)
     hodgepodge.mongoose.connect(conf.db, function (err, _db) {
-        if (err) {
-            cb(err)
-            return
-        }
+        if (err) return cb(err)
 
         db = _db
         Info = db.model('Info', infoSchema)
@@ -106,15 +103,9 @@ function songListIter(cb) {
     var cursor = Song.find().cursor()
     var next = function () {
         cursor.next(function (err, song) {
-            if (err) {
-                cb(err)
-                return
-            }
+            if (err) return cb(err)
 
-            if (!song) {
-                cb(null, songs)
-                return
-            }
+            if (!song) return cb(null, songs)
             songs.push(song)
             setImmediate(next)
         })
@@ -136,12 +127,10 @@ function songGet(id, cb) {
 
 function songAdd(song, cb) {
     if (typeof song.id !== 'number' || song.id !== song.id) {
-        cb(new Error('invalid song id: '+util.inspect(song.id)))
-        return
+        return cb(new Error('invalid song id: '+util.inspect(song.id)))
     }
     if (typeof song.path !== 'string' || !song.path) {
-        cb(new Error('invalid song path: '+util.inspect(song.path)))
-        return
+        return cb(new Error('invalid song path: '+util.inspect(song.path)))
     }
 
     Song.update({
@@ -170,10 +159,7 @@ function versionGet(cb) {
     Info.find({
         type: 'music'
     }, function (err, versions) {
-        if (err) {
-            cb(err)
-            return
-        }
+        if (err) return cb(err)
         if (versions.length === 0) versions[0] = { version: 2 }    // #26
 
         cb(null, versions[0].version)
@@ -185,10 +171,7 @@ function versionInc(cb) {
     Info.update({ type: 'music' }, {
         $inc: { version: 1 }
     }, function (err, result) {
-        if (err) {
-            cb(err)
-            return
-        }
+        if (err) return cb(err)
 
         if (!result.nModified) {
             Info.update({ type: 'music' }, {
@@ -206,10 +189,7 @@ function dbIdGet(cb) {
     Info.find({
         type: 'music'
     }).select('dbId -_id').exec(function (err, ids) {
-        if (err) {
-            cb(err)
-            return
-        }
+        if (err) return cb(err)
 
         cb(null, ids && ids[0] && ids[0].dbId)
     })
@@ -218,8 +198,7 @@ function dbIdGet(cb) {
 
 function dbIdSet(dbId, cb) {
     if (typeof dbId !== 'string' || !dbId) {
-        cb(new Error('invalid db id: '+util.inspect(dbId)))
-        return
+        return cb(new Error('invalid db id: '+util.inspect(dbId)))
     }
 
     Info.update({

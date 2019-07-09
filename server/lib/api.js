@@ -54,15 +54,11 @@ var nextSession = function () {
 function auth(req, res, next) {
     var p
 
-    if (!conf.server.password) {
-        next()
-        return
-    }
+    if (!conf.server.password) return next()
 
     if (!req.headers.authorization) {
         log.warning('password required')
-        res.send(401)
-        return
+        return res.send(401)
     }
 
     p = req.headers.authorization.substring(5)    // 'Basic ...'
@@ -70,8 +66,7 @@ function auth(req, res, next) {
     p = p.substring(p.indexOf(':'))               // iTunes_12.1:password
     if (p !== ':'+conf.server.password) {
         log.warning('authorization failed')
-        res.send(401)
-        return
+        return res.send(401)
     }
 
     next()
@@ -155,10 +150,7 @@ function databaseInfo(req, res) {
         }
 
         db.song.count(function (err, number) {
-            if (err) {
-                res.err(err)
-                return
-            }
+            if (err) return res.err(err)
 
             if (mlcl.mlit) mlcl.mlit.mimc = number
             daap.build({
@@ -230,10 +222,7 @@ function containerInfo(req, res) {
         }
 
         db.song.count(function (err, number) {
-            if (err) {
-                res.err(err)
-                return
-            }
+            if (err) return res.err(err)
 
             daap.build({
                 aply: [
@@ -270,45 +259,29 @@ function song(req, res) {
     var id, rs
 
     id = /([0-9]+)\.(mp3|ogg)/i.exec(req.params.file)
-    if (!isFinite(+id[1])) {
-        res.err(400)
-        return
-    }
+    if (!isFinite(+id[1])) return res.err(400)
 
     db.song.path(+id[1], function (err, songs) {
         var i
 
-        if (err) {
-            res.err(err)
-            return
-        }
-        if (songs.length === 0) {
-            res.err(404)
-            return
-        }
+        if (err) return res.err(err)
+        if (songs.length === 0) return res.err(404)
 
         for (i = 0; i < conf.server.scan.path.length; i++) {
             if (songs[0].path.indexOf(conf.server.scan.path[0]) === 0) break
         }
         if (i === conf.server.scan.path.length) {
             log.error(new Error('requested file('+songs[0].path+') has no valid path'))
-            res.err(404)
-            return
+            return res.err(404)
         }
 
         fs.stat(songs[0].path, function (err, stats) {
             var r
 
-            if (err) {
-                res.err(404)
-                return
-            }
+            if (err) return res.err(404)
 
             r = hodgepodge.range.parse(req.headers.range, stats)
-            if (r instanceof Error) {
-                res.err(416, r)
-                return
-            }
+            if (r instanceof Error) return res.err(416, r)
 
             if (r) {
                 res.writeHead(206, {
@@ -337,10 +310,7 @@ function cacheUpdate(name, metas, res) {
     metas = metas || defaultMetas(name)
 
     db.song.listIter(function (err, songs) {
-        if (err) {
-            res.err(err)
-            return
-        }
+        if (err) return res.err(err)
 
         daap[name].item(songs, metas, function (obj) {
             daap.build(obj, function (buf) {

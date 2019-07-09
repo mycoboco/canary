@@ -14,8 +14,7 @@ function init(db, cb) {
     db.dbId.get(function (err, dbId) {
         if (!err && dbId) {
             id = dbId
-            cb(null, id)
-            return
+            return cb(null, id)
         }
 
         dbId = (new Date()).valueOf().toString(16) + Math.floor(Math.random()*16).toString(16)

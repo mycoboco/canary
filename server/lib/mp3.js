@@ -211,35 +211,26 @@ function next(cb) {
 
     if (qd.length === 0 && qf.length === 0) {
         qd = [], qf = []
-        done(cb)
-        return
+        return done(cb)
     }
 
     async.parallel([
         function (callback) {
             var p = qd.pop()
-            if (!p) {
-                callback(null)
-                return
-            }
+            if (!p) return callback(null)
 
             fs.readdir(p, function (err, files) {
                 var funcs = []
 
-                if (err) {
-                    callback(err)
-                    return
-                }
+                if (err) return callback(err)
 
                 for (var i = 0; i < files.length; i++) {
                     files[i] = path.join(p, files[i])
                     !function (file) {
                         funcs.push(function (callback) {
                             fs.stat(file, function (err, stats) {
-                                if (err) {
-                                    callback(err)
-                                    return
-                                }
+                                if (err) return callback(err)
+
                                 if (stats.isDirectory()) {
                                     qd.push(file)
                                     callback(null)
@@ -259,17 +250,12 @@ function next(cb) {
         },
         function (callback) {
             var p = qf.pop()
-            if (!p) {
-                callback(null)
-                return
-            }
+            if (!p) return callback(null)
 
             if (p.changed) {
                 meta(p.path, function (err, song) {
-                    if (err) {
-                        callback(err)
-                        return
-                    }
+                    if (err) return callback(err)
+
                     song.version = version+1
                     song.mtime = p.mtime
                     db.song.add(song, function (err) {

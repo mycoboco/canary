@@ -79,12 +79,10 @@ function songGet(id, cb) {
 
 function songAdd(song, cb) {
     if (typeof song.id !== 'number' || song.id !== song.id) {
-        cb(new Error('invalid song id: '+util.inspect(song.id)))
-        return
+        return cb(new Error('invalid song id: '+util.inspect(song.id)))
     }
     if (typeof song.path !== 'string' || !song.path) {
-        cb(new Error('invalid song path: '+util.inspect(song.path)))
-        return
+        return cb(new Error('invalid song path: '+util.inspect(song.path)))
     }
 
     db.song.update({
@@ -113,10 +111,7 @@ function versionGet(cb) {
     db.info.find({
         type: 'music'
     }, function (err, versions) {
-        if (err) {
-            cb(err)
-            return
-        }
+        if (err) return cb(err)
         if (versions.length === 0) versions[0] = { version: 2 }    // #26
 
         cb(null, versions[0].version)
@@ -128,10 +123,7 @@ function versionInc(cb) {
     db.info.update({ type: 'music' }, {
         $inc: { version: 1 }
     }, function (err, nModified) {
-        if (err) {
-            cb(err)
-            return
-        }
+        if (err) return cb(err)
 
         if (!nModified) {
             db.info.update({ type: 'music' }, {
@@ -152,10 +144,7 @@ function dbIdGet(cb) {
         dbId: 1,
         _id: 0
     }, function (err, ids) {
-        if (err) {
-            cb(err)
-            return
-        }
+        if (err) return cb(err)
 
         cb(null, ids && ids[0] && ids[0].dbId)
     })
@@ -164,8 +153,7 @@ function dbIdGet(cb) {
 
 function dbIdSet(dbId, cb) {
     if (typeof dbId !== 'string' || !dbId) {
-        cb(new Error('invalid db id: '+util.inspect(dbId)))
-        return
+        return cb(new Error('invalid db id: '+util.inspect(dbId)))
     }
 
     db.info.update({
@@ -221,8 +209,7 @@ function cacheClear(cb) {
     fs.readdir(conf.db.path, function (err, files) {
         if (err) {
             log.warning(err)
-            cb()    // errors ignored
-            return
+            return cb()    // errors ignored
         }
 
         funcs = files.filter(function (f) { return /^cache-/.test(f) })
