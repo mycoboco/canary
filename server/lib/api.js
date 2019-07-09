@@ -13,6 +13,7 @@ var hodgepodge = {
 }
 
 var mp3 = require('./mp3')
+var safePipe = require('./safePipe')
 
 
 var log, db, daap, conf
@@ -326,13 +327,7 @@ function song(req, res) {
                 })
                 rs = fs.createReadStream(songs[0].path)
             }
-            // workaround for broken pipe; old stream has no destroy()
-            res.on('unpipe', function () {
-                rs.once('readable', function () { rs.close() })
-            })
-            res.on('error', function () { rs.unpipe(res) })
-               .on('close', function () { rs.unpipe(res) })
-            rs.pipe(res)
+            safePipe(rs, res, function (err) { log.error(err) })
         })
     })
 }

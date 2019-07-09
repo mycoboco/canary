@@ -15,6 +15,8 @@ var async = require('async')
 var mkdirp = require('mkdirp')
 var logger = require('hodgepodge-node/logger')
 
+var safePipe = require('./safePipe')
+
 
 var log, conf
 
@@ -189,10 +191,7 @@ function cacheRead(name, metas, to, cb) {
     rs = fs.createReadStream(name)
 
     log.info('reading cache for '+name)
-    rs.on('error', cb)
-    to.on('error', function () { rs.close() })
-      .on('close', function () { rs.close() })
-    rs.pipe(to)
+    safePipe(rs, to, cb)
 }
 
 

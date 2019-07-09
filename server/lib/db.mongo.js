@@ -16,6 +16,8 @@ var hodgepodge = {
     mongoose: require('hodgepodge-node/mongoose')(mongoose)
 }
 
+var safePipe = require('./safePipe')
+
 var infoSchema = new Schema({
         type: {
             index: true,
@@ -243,10 +245,7 @@ function cacheRead(name, metas, to, cb) {
     rs = gfs.createReadStream({ filename: name })
 
     log.info('reading cache for '+name)
-    rs.on('error', cb)
-    to.on('error', function () { rs.close() })
-      .on('close', function () { rs.close() })
-    rs.pipe(to)
+    safePipe(rs, to, cb)
 }
 
 
