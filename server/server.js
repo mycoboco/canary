@@ -206,8 +206,13 @@ function usage() {
         level:  (conf.server.debug)? 'info': 'error'
     })
 
-    process.on('SIGINT', exit)
-           .on('SIGTERM', exit)
+    process
+        .on('SIGINT', exit)
+        .on('SIGTERM', exit)
+        .on('uncaughtException', function (err) {
+            log.error(err)
+            exit()
+        })
     process.on('SIGUSR2', mp3.scan.bind(mp3, true))
 
     hodgepodge.dropPrivilege(conf.server.runAs, log, exit)
