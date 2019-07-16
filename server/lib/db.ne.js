@@ -212,13 +212,17 @@ function cacheClear(cb) {
             return cb()    // errors ignored
         }
 
-        funcs = files.filter(function (f) { return /^cache-/.test(f) })
-                     .map(function (f) {
-            return function (callback) {
-                fs.unlink(path.join(conf.db.path, f), function (err) { err && log.warning(err) })
-                callback()    // errors ignored
-            }
-        })
+        funcs = files
+            .filter(function (f) { return /^cache-/.test(f) })
+            .map(function (f) {
+                return function (callback) {
+                    fs.unlink(
+                        path.join(conf.db.path, f),
+                        function (err) { err && log.warning(err) }
+                    )
+                    callback()    // errors ignored
+                }
+            })
 
         async.parallel(funcs, cb)
     })
