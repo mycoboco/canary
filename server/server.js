@@ -58,7 +58,7 @@ function exit() {
         else if (typeof service.stop === 'function') service.stop()
     }
     db && typeof db.close === 'function' && db.close()
-    process.exit(0)
+    setTimeout(function () { process.exit(0) }, 1*1000)
 }
 
 
