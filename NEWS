@@ -1,6 +1,10 @@
 What's new in canary?
 =====================
 
+2019-07-17  0.0.17 released with better exception handling
+2019-06-02  0.0.16 released for security vulnerabilities
+2018-12-17  0.0.15 released for security vulnerabilities
+2018-09-14  0.0.14 released with min. node version changed
 2018-07-05  0.0.13 released with NeDB support
 2017-09-05  0.0.12 released with better collecting of metadata
 2017-03-14  0.0.9 released with better response cache and other enhancements
