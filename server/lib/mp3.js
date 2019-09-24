@@ -11,14 +11,14 @@ var util = require('util')
 var async = require('async')
 var mm = require('music-metadata')
 var FNV = require('fnv').FNV
-var watch = require('watch')
+var chokidar = require('chokidar')
 var ontime = require('ontime')
 var logger = require('hodgepodge-node/logger')
 
 
 var log, db, api, conf
 var qd = [], qf = []
-var needRescan, inProgress, version
+var watch, needRescan, inProgress, version
 
 
 function init(_db, _api, _conf) {
@@ -39,28 +39,23 @@ function init(_db, _api, _conf) {
     db = _db
     api = _api
 
-    for (var i = 0; i < conf.mp3.path.length; i++) {
-        try {
-            conf.mp3.path[i] = fs.realpathSync(conf.mp3.path[i])
-            log.info('monitoring changes on '+conf.mp3.path[i])
-            watch.createMonitor(conf.mp3.path[i], {
-                ignoreDotFiles:      true,
-                ignoreUnreadableDir: true,
-                ignoreNotPermitted:  true
-            }, function (monitor) {
-                var setUpdate = function (f) {
-                    log.info('change detected on '+f+'; rescan scheduled')
-                    needRescan = true
-                }
-
-                monitor.on('created', setUpdate.bind(null))
-                       .on('changed', setUpdate.bind(null))
-                       .on('removed', setUpdate.bind(null))
-            })
-        } catch(e) {
-            log.error(e)
-        }
+    try {
+        conf.mp3.path = conf.mp3.path.map(function (p) {
+           return fs.realpathSync(p)
+        })
+    } catch(e) {
+        log.error(e)
     }
+    watch = chokidar.watch(conf.mp3.path, {
+        ignoreInitial:          true,
+        ignored:                '**/.*',
+        usePolling:             false,
+        ignorePermissionErrors: true
+    })
+    watch.on('all', function (event, f) {
+        log.info('change detected on '+f+'; rescan scheduled')
+        needRescan = true
+    })
 
     log.info('rescan scheduled with '+util.inspect(conf.mp3))
     conf.mp3.single = true
@@ -307,9 +302,15 @@ function scan(force, cb) {
 }
 
 
+function close() {
+    watch && watch.close()
+}
+
+
 module.exports = {
-    init: init,
-    scan: scan
+    init:  init,
+    scan:  scan,
+    close: close
 }
 
 // end of mp3.js
