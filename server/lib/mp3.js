@@ -52,10 +52,12 @@ function init(_db, _api, _conf) {
         usePolling:             false,
         ignorePermissionErrors: true
     })
-    watch.on('all', function (event, f) {
-        log.info('change detected on '+f+'; rescan scheduled')
-        needRescan = true
-    })
+    watch
+        .on('all', function (event, f) {
+            log.info('change detected on '+f+'; rescan scheduled')
+            needRescan = true
+        })
+        .on('error', err => log.error(err))
 
     log.info('rescan scheduled with '+util.inspect(conf.mp3))
     conf.mp3.single = true
