@@ -52,7 +52,7 @@ var log
 
 
 function exit() {
-    mp3.close()
+    mp3 && mp3.close()
     if (service) {
         log.info('stopping service advertisement')
         if (typeof service.kill === 'function') service.kill()
