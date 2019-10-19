@@ -2,32 +2,30 @@
  *  DB wrapper for NeDB
  */
 
-'use strict'
+const crypto = require('crypto')
+const { inspect } = require('util')
+const fs = require('fs')
+const path = require('path')
 
-var crypto = require('crypto')
-var util = require('util')
-var fs = require('fs')
-var path = require('path')
-
-var Datastore = require('nedb'),
-    db = {}
-var async = require('async')
-var mkdirp = require('mkdirp')
-var logger = require('hodgepodge-node/logger')
-
-var safePipe = require('./safePipe')
+const Datastore = require('nedb')
+let db = {}
+const async = require('async')
+const mkdirp = require('mkdirp')
+const { logger } = require('@hodgepodge-node/server')
+const { safePipe } = require('@hodgepodge-node/util')
 
 
-var log, conf
+let log, conf
 
 
 function init(_conf, cb) {
-    conf = Object.assign({
+    conf = {
         db: {
             path: 'db'
         },
-        debug: false
-    }, _conf)
+        debug: false,
+        ..._conf
+    }
 
     log = logger.create({
         prefix: 'db',
@@ -79,15 +77,13 @@ function songGet(id, cb) {
 
 function songAdd(song, cb) {
     if (typeof song.id !== 'number' || song.id !== song.id) {
-        return cb(new Error('invalid song id: '+util.inspect(song.id)))
+        return cb(new Error(`invalid song id: ${inspect(song.id)}`))
     }
     if (typeof song.path !== 'string' || !song.path) {
-        return cb(new Error('invalid song path: '+util.inspect(song.path)))
+        return cb(new Error(`invalid song path: ${inspect(song.path)}`))
     }
 
-    db.song.update({
-        id: song.id
-    }, song, { upsert: true }, cb)
+    db.song.update({ id: song.id }, song, { upsert: true }, cb)
 }
 
 
@@ -100,17 +96,13 @@ function songTouch(id, version, cb) {
 
 function songClear(version, cb) {
     db.song.remove({
-        version: {
-            $lt: version
-        }
+        version: { $lt: version }
     }, cb)
 }
 
 
 function versionGet(cb) {
-    db.info.find({
-        type: 'music'
-    }, function (err, versions) {
+    db.info.find({ type: 'music' }, (err, versions) => {
         if (err) return cb(err)
         if (versions.length === 0) versions[0] = { version: 2 }    // #26
 
@@ -122,7 +114,7 @@ function versionGet(cb) {
 function versionInc(cb) {
     db.info.update({ type: 'music' }, {
         $inc: { version: 1 }
-    }, function (err, nModified) {
+    }, (err, nModified) => {
         if (err) return cb(err)
 
         if (!nModified) {
@@ -138,12 +130,10 @@ function versionInc(cb) {
 
 
 function dbIdGet(cb) {
-    db.info.find({
-        type: 'music'
-    }, {
+    db.info.find({ type: 'music' }, {
         dbId: 1,
         _id: 0
-    }, function (err, ids) {
+    }, (err, ids) => {
         if (err) return cb(err)
 
         cb(null, ids && ids[0] && ids[0].dbId)
@@ -153,43 +143,37 @@ function dbIdGet(cb) {
 
 function dbIdSet(dbId, cb) {
     if (typeof dbId !== 'string' || !dbId) {
-        return cb(new Error('invalid db id: '+util.inspect(dbId)))
+        return cb(new Error(`invalid db id: ${inspect(dbId)}`))
     }
 
-    db.info.update({
-        type: 'music'
-    }, {
+    db.info.update({ type: 'music' }, {
         $set: { dbId: dbId }
     }, cb)
 }
 
 
 function cacheName(name, metas) {
-    var md5sum = crypto.createHash('md5')
+    const md5sum = crypto.createHash('md5')
 
-    metas.forEach(function (meta) { md5sum.update(meta) })
-    return path.join(conf.db.path, 'cache-'+name+'-'+md5sum.digest('hex'))
+    metas.forEach(meta => md5sum.update(meta))
+    return path.join(conf.db.path, `cache-${name}-${md5sum.digest('hex')}`)
 }
 
 
 function cacheRead(name, metas, to, cb) {
-    var rs
-
     name = cacheName(name, metas)
-    rs = fs.createReadStream(name)
+    const rs = fs.createReadStream(name)
 
-    log.info('reading cache for '+name)
+    log.info(`reading cache for ${name}`)
     safePipe(rs, to, cb)
 }
 
 
 function cacheWrite(name, metas, buffer, cb) {
-    var ws
-
     name = cacheName(name, metas)
-    ws = fs.createWriteStream(name)
+    const ws = fs.createWriteStream(name)
 
-    log.info('writing cache for '+name)
+    log.info(`writing cache for ${name}`)
     ws.on('error', cb)
     ws.write(buffer)
     ws.end()
@@ -197,41 +181,37 @@ function cacheWrite(name, metas, buffer, cb) {
 
 
 function cacheExist(name, metas, cb) {
-    fs.stat(cacheName(name, metas), function (err, stats) {
+    fs.stat(cacheName(name, metas), (err, stats) => {
         cb(err, !!stats)
     })
 }
 
 
 function cacheClear(cb) {
-    var funcs
-
-    fs.readdir(conf.db.path, function (err, files) {
+    fs.readdir(conf.db.path, (err, files) => {
         if (err) {
             log.warning(err)
             return cb()    // errors ignored
         }
 
-        funcs = files
-            .filter(function (f) { return /^cache-/.test(f) })
-            .map(function (f) {
-                return function (callback) {
-                    fs.unlink(
-                        path.join(conf.db.path, f),
-                        function (err) { err && log.warning(err) }
-                    )
-                    callback()    // errors ignored
-                }
-            })
-
-        async.parallel(funcs, cb)
+        async.parallel(
+            files
+                .filter(f => /^cache-/.test(f))
+                .map(f =>
+                    callback => {
+                        fs.unlink(path.join(conf.db.path, f), err => { err && log.warning(err) })
+                        callback()    // errors ignored
+                    }
+                ),
+            cb
+        )
     })
 }
 
 
 module.exports = {
-    init:  init,
-    close: close,
+    init,
+    close,
     song: {
         count:    songCount,
         listIter: songListIter,

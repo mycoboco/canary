@@ -2,36 +2,35 @@
  *  server APIs
  */
 
-'use strict'
+const fs = require('fs')
 
-var fs = require('fs')
+const mime = require('mime')
+const hodgepodge = {
+    logger,
+    range
+} = require('@hodgepodge-node/server')
+const { safePipe } = require('@hodgepodge-node/util')
 
-var mime = require('mime')
-var hodgepodge = {
-    logger: require('hodgepodge-node/logger'),
-    range:  require('hodgepodge-node/range')
-}
-
-var mp3 = require('./mp3')
-var safePipe = require('./safePipe')
+const mp3 = require('./mp3')
 
 
-var log, db, daap, conf
-var cache = true
+let log, db, daap, conf
+let cache = true
 
 
 function init(_db, _daap, _conf) {
-    conf = Object.assign({
+    conf = {
         server: {
             name: 'canary',
             scan: {
                 path: [ '/path/to/mp3/files' ]
             }
         },
-        debug: false
-    }, _conf)
+        debug: false,
+        ..._conf
+    }
 
-    log = hodgepodge.logger.create({
+    log = logger.create({
         prefix: 'api',
         level:  (conf.debug)? 'info': 'error'
     })
@@ -41,19 +40,17 @@ function init(_db, _daap, _conf) {
 }
 
 
-var nextSession = function () {
-    var session = 1
+const nextSession = (() => {
+    let session = 1
 
-    return function () {
+    return () => {
         if (session > Math.pow(2, 31)-1) session = 1
         return session++
     }
-}()
+})()
 
 
 function auth(req, res, next) {
-    var p
-
     if (!conf.server.password) return next()
 
     if (!req.headers.authorization) {
@@ -61,10 +58,11 @@ function auth(req, res, next) {
         return res.send(401)
     }
 
-    p = req.headers.authorization.substring(5)    // 'Basic ...'
-    p = new Buffer(p, 'base64').toString()
-    p = p.substring(p.indexOf(':'))               // iTunes_12.1:password
-    if (p !== ':'+conf.server.password) {
+    let p = req.headers.authorization.substring(5)    // 'Basic ...'
+    p = new Buffer(p, 'base64')
+        .toString()
+        .substring(p.indexOf(':'))                    // iTunes_12.1:password
+    if (p !== `:${conf.server.password}`) {
         log.warning('authorization failed')
         return res.send(401)
     }
@@ -84,8 +82,8 @@ function login(req, res) {
 
 
 function update(req, res) {
-    var run = function () {
-        db.version.get(function (err, version) {
+    function run() {
+        db.version.get((err, version) => {
             if (err) {
                 log.error(err)
                 version = 2    // #26
@@ -110,7 +108,7 @@ function logout(req, res) {
 
 
 function serverInfo(req, res) {
-    var auth = (conf.server.password)? 2: 0;    // 2: password only
+    const auth = (conf.server.password)? 2: 0;    // 2: password only
 
     daap.build({
         msrv: [
@@ -137,9 +135,9 @@ function serverInfo(req, res) {
 
 
 function databaseInfo(req, res) {
-    db.version.get(function (err, version) {
-        var update = (err || +req.query.delta !== version)
-        var mlcl = (!update)? []: {
+    db.version.get((err, version) => {
+        const update = (err || +req.query.delta !== version)
+        const mlcl = (!update)? []: {
             mlit: [
                 { miid: 1 },
                 { mper: 1 },
@@ -149,7 +147,7 @@ function databaseInfo(req, res) {
             ]
         }
 
-        db.song.count(function (err, number) {
+        db.song.count((err, number) => {
             if (err) return res.err(err)
 
             if (mlcl.mlit) mlcl.mlit.mimc = number
@@ -168,7 +166,7 @@ function databaseInfo(req, res) {
 
 
 function defaultMetas(name, meta) {
-    var d = {
+    const d = {
         container: 'dmap.itemid,dmap.itemname,dmap.persistentid,dmap.parentcontainerid,'+
                    'com.apple.itunes.smart-playlist',
         song:      'dmap.itemkind,dmap.itemid,daap.songalbum,daap.songartist,daap.songgenre,'+
@@ -181,7 +179,7 @@ function defaultMetas(name, meta) {
 
 function sendList(name, metas, res) {
     if (cache) {
-        db.cache.exist(name, metas, function (err, exist) {
+        db.cache.exist(name, metas, (err, exist) => {
             if (!err && exist) db.cache.read(name, metas, res, cacheDisable)
             else cacheUpdate(name, metas, res)
         })
@@ -192,15 +190,12 @@ function sendList(name, metas, res) {
 
 
 function databaseItem(req, res) {
-    var metas = defaultMetas('song', req.query.meta)
+    const metas = defaultMetas('song', req.query.meta)
 
-    db.version.get(function (err, version) {
+    db.version.get((err, version) => {
         if (!err && +req.query.delta === version) {
             log.info('sending empty list because nothing updated')
-            daap.song.item([], metas, function (obj) {
-                daap.build(obj, res.ok.bind(res))
-            })
-            return
+            return daap.song.item([], metas, obj => daap.build(obj, res.ok.bind(res)))
         }
 
         sendList('song', metas, res)
@@ -210,9 +205,9 @@ function databaseItem(req, res) {
 
 // TODO: support smart playlists
 function containerInfo(req, res) {
-    db.version.get(function (err, version) {
-        var update = (err || +req.query.delta !== version)
-        var mlcl = (!update)? []: {
+    db.version.get((err, version) => {
+        const update = (err || +req.query.delta !== version)
+        const mlcl = (!update)? []: {
             mlit: [
                 { miid: 1 },
                 { mper: 1 },
@@ -221,7 +216,7 @@ function containerInfo(req, res) {
             ]
         }
 
-        db.song.count(function (err, number) {
+        db.song.count((err, number) => {
             if (err) return res.err(err)
 
             daap.build({
@@ -239,15 +234,12 @@ function containerInfo(req, res) {
 
 
 function containerItem(req, res) {
-    var metas = defaultMetas('container', req.query.meta)
+    const metas = defaultMetas('container', req.query.meta)
 
-    db.version.get(function (err, version) {
+    db.version.get((err, version) => {
         if (!err && +req.query.delta === version) {
             log.info('sending empty list because nothing updated')
-            daap.container.item([], metas, function (obj) {
-                daap.build(obj, res.ok.bind(res))
-            })
-            return
+            return daap.container.item([], metas, obj => daap.build(obj, res.ok.bind(res)))
         }
 
         sendList('container', metas, res)
@@ -256,38 +248,30 @@ function containerItem(req, res) {
 
 
 function song(req, res) {
-    var id, rs
-
-    id = /([0-9]+)\.(mp3|ogg)/i.exec(req.params.file)
+    const id = /([0-9]+)\.(mp3|ogg)/i.exec(req.params.file)
     if (!isFinite(+id[1])) return res.err(400)
 
-    db.song.path(+id[1], function (err, songs) {
-        var i
-
+    db.song.path(+id[1], (err, songs) => {
         if (err) return res.err(err)
         if (songs.length === 0) return res.err(404)
 
-        for (i = 0; i < conf.server.scan.path.length; i++) {
-            if (songs[0].path.indexOf(conf.server.scan.path[0]) === 0) break
-        }
-        if (i === conf.server.scan.path.length) {
-            log.error(new Error('requested file('+songs[0].path+') has no valid path'))
+        if (!conf.server.scan.path.some(p => songs[0].path.indexOf(p) === 0)) {
+            log.error(new Error(`requested file(${songs[0].path}) has no valid path`))
             return res.err(404)
         }
 
-        fs.stat(songs[0].path, function (err, stats) {
-            var r
-
+        fs.stat(songs[0].path, (err, stats) => {
             if (err) return res.err(404)
 
-            r = hodgepodge.range.parse(req.headers.range, stats)
+            const r = range.parse(req.headers.range, stats)
             if (r instanceof Error) return res.err(416, r)
 
+            let rs
             if (r) {
                 res.writeHead(206, {
                     'Content-Length': r.e-r.s+1,
                     'Content-Type':   mime.lookup(req.params.file),
-                    'Content-Range':  hodgepodge.range.header(r, stats)
+                    'Content-Range':  range.header(r, stats)
                 })
                 rs = fs.createReadStream(songs[0].path, {
                     start: r.s,
@@ -300,20 +284,18 @@ function song(req, res) {
                 })
                 rs = fs.createReadStream(songs[0].path)
             }
-            safePipe(rs, res, function (err) { log.error(err) })
+            safePipe(rs, res, err => log.error(err))
         })
     })
 }
 
 
-function cacheUpdate(name, metas, res) {
-    metas = metas || defaultMetas(name)
-
-    db.song.listIter(function (err, songs) {
+function cacheUpdate(name, metas = defaultMetas(name), res) {
+    db.song.listIter((err, songs) => {
         if (err) return res.err(err)
 
-        daap[name].item(songs, metas, function (obj) {
-            daap.build(obj, function (buf) {
+        daap[name].item(songs, metas, obj => {
+            daap.build(obj, buf => {
                 res && res.ok(buf)
                 if (cache) db.cache.write(name, metas, buf, cacheDisable)
             })
@@ -330,12 +312,12 @@ function cacheDisable(err) {
 
 
 module.exports = {
-    init:       init,
-    auth:       auth,
-    login:      login,
-    update:     update,
-    logout:     logout,
-    serverInfo: serverInfo,
+    init,
+    auth,
+    login,
+    update,
+    logout,
+    serverInfo,
     database: {
         info: databaseInfo,
         item: databaseItem
@@ -344,7 +326,7 @@ module.exports = {
         info: containerInfo,
         item: containerItem
     },
-    song: song,
+    song,
     cache: {
         disable: cacheDisable,
         update:  cacheUpdate

@@ -2,34 +2,33 @@
  *  mp3 scanner
  */
 
-'use strict'
+const fs = require('fs')
+const path = require('path')
+const { inspect } = require('util')
 
-var fs = require('fs')
-var path = require('path')
-var util = require('util')
-
-var async = require('async')
-var mm = require('music-metadata')
-var FNV = require('fnv').FNV
-var chokidar = require('chokidar')
-var ontime = require('ontime')
-var logger = require('hodgepodge-node/logger')
+const async = require('async')
+const mm = require('music-metadata')
+const { FNV } = require('fnv')
+const ontime = require('ontime')
+const { logger } = require('@hodgepodge-node/server')
+const { recursiveWatch: rwatch } = require('@hodgepodge-node/util')
 
 
-var log, db, api, conf
-var qd = [], qf = []
-var watch, needRescan, inProgress, version
+let log, db, api, conf
+let qd = [], qf = []
+let watch, needRescan, inProgress, version
 
 
 function init(_db, _api, _conf) {
-    conf = Object.assign({
+    conf = {
         mp3: {
             path:  [ '/path/to/mp3/files' ],
             cycle: [ '19:00:00' ],
             utc:   false
         },
-        debug: false
-    }, _conf)
+        debug: false,
+        ..._conf
+    }
 
     log = logger.create({
         prefix: 'mp3',
@@ -40,35 +39,25 @@ function init(_db, _api, _conf) {
     api = _api
 
     try {
-        conf.mp3.path = conf.mp3.path.map(function (p) {
-           return fs.realpathSync(p)
-        })
+        conf.mp3.path = conf.mp3.path.map(p => fs.realpathSync(p))
     } catch(e) {
         log.error(e)
     }
-    watch = chokidar.watch(conf.mp3.path, {
-        ignoreInitial:          true,
-        ignored:                '**/.*',
-        usePolling:             false,
-        ignorePermissionErrors: true
-    })
-    watch
-        .on('all', function (event, f) {
-            log.info('change detected on '+f+'; rescan scheduled')
+    rwatch(conf.mp3.path, { ignoreHiddenDirs: true })
+        .on('change', () => {
+            log.info('change detected; rescan scheduled')
             needRescan = true
         })
         .on('error', err => log.error(err))
 
-    log.info('rescan scheduled with '+util.inspect(conf.mp3))
+    log.info(`rescan scheduled with ${inspect(conf.mp3)}`)
     conf.mp3.single = true
-    ontime(conf.mp3, function (ot) {
-        scan(ot.done.bind(ot))
-    })
+    ontime(conf.mp3, ot => scan(ot.done.bind(ot)))
 }
 
 
 function id(s) {
-    var fnv = new FNV()
+    let fnv = new FNV()
     fnv.update(Buffer(s))
     fnv = fnv.value()
     if (fnv < 0) fnv = Math.pow(2, 32) - fnv
@@ -77,9 +66,7 @@ function id(s) {
 
 
 function meta(song, cb) {
-    var chkmeta = function (meta) {
-        var genre
-
+    function chkmeta(meta) {
         if (!isFinite(+meta.year)) {
             meta.year = /^\s*([0-9]{2,4})/.exec(meta.year)
             if (meta.year) meta.year = meta.year[1]
@@ -94,28 +81,28 @@ function meta(song, cb) {
 
         // handles "Ballad/Ballad"
         if (meta.genre.indexOf('/') !== -1) {
-            genre = /^([^\/]+)\/([^\/]+)$/.exec(meta.genre)
+            const genre = /^([^\/]+)\/([^\/]+)$/.exec(meta.genre)
             if (genre && genre[1] === genre[2]) meta.genre = genre[1]
         }
 
         return meta
     }
 
-    var setMeta = function (song, data) {
-        var meta = {
+    function setMeta(song, data) {
+        const meta = {
             id:     id(song),
             kind:   2,
             title:  data.common.title || song,
             artist: data.common.albumartist || data.common.artist ||
                     (data.common.artists &&
-                     data.common.artists.filter(function (a) { return a }).join(', ')) ||
+                     data.common.artists.filter(a => a).join(', ')) ||
                     '(Unknown Artist)',
             album:  data.common.album || '(Unknown Album)',
             time:   Math.floor((data.format && data.format.duration*1000) || 0),
             year:   data.common.year || 0,
             track:  (data.common.track && data.common.track.no) || 0,
             genre:  (data.common.genre &&
-                     data.common.genre.filter(function (g) { return g }).join(', ')) ||
+                     data.common.genre.filter(g => g).join(', ')) ||
                     '(Unknown Genre)',
             format: path.extname(song).substring(1, song.length-1),
             path:   song
@@ -127,9 +114,9 @@ function meta(song, cb) {
     return mm.parseFile(song, {
         duration:   true,
         skipCovers: true
-    }).then(function (metadata) {
-        setMeta(song, metadata)
-    }).catch(function (err) {
+    })
+    .then(metadata => setMeta(song, metadata))
+    .catch(err => {
         log.error('failed to retrieve meta data from %s', song, err)
         setMeta(song, { common: {} })
     })
@@ -137,13 +124,13 @@ function meta(song, cb) {
 
 
 function isSong(f) {
-    var ext = path.extname(f).toLowerCase()
+    const ext = path.extname(f).toLowerCase()
     return (ext === '.mp3' || ext === '.ogg')
 }
 
 
 function done(cb) {
-    var meta = {    // from iTunes 12.5.5.5
+    const meta = {    // from iTunes 12.5.5.5
         container: 'dmap.itemid,dmap.containeritemid',
         song:      'dmap.itemid,dmap.itemname,dmap.itemkind,dmap.persistentid,daap.songalbum,'+
                    'daap.songgrouping,daap.songartist,daap.songalbumartist,daap.songbitrate,'+
@@ -171,31 +158,27 @@ function done(cb) {
     }
 
     log.info('scanning songs finished')
-    db.song.clear(++version, function (err) {
+    db.song.clear(++version, err => {
         err && log.error(err)
         inProgress = false
-        db.version.inc(function (err) {
+        db.version.inc(err => {
             err && log.error(err)
-            db.song.count(function (err, count) {
-                !err && log.info(count+' song(s) in database')
-            })
+            db.song.count((err, count) => !err && log.info(`${count} song(s) in database`))
             ;(typeof cb === 'function') && cb()
         })
     })
 
     log.info('invalidating cache')
-    db.cache.clear(function () {
+    db.cache.clear(() => {
         log.info('preparing cache for iTunes')
-        Object.keys(meta).forEach(function (name) {
-            api.cache.update(name, meta[name].split(','))
-        })
+        Object.keys(meta).forEach(name => api.cache.update(name, meta[name].split(',')))
     })
 }
 
 
 function next(cb) {
-    var addSong = function (file, stats, cb) {
-        db.song.get(id(file), function (err, songs) {
+    function addSong(file, stats, cb) {
+        db.song.get(id(file), (err, songs) => {
             err && log.error(err)
             qf.push({
                 path:    file,
@@ -212,60 +195,53 @@ function next(cb) {
     }
 
     async.parallel([
-        function (callback) {
-            var p = qd.pop()
+        callback => {
+            const p = qd.pop()
             if (!p) return callback(null)
 
-            fs.readdir(p, function (err, files) {
-                var funcs = []
-
+            fs.readdir(p, (err, files) => {
                 if (err) return callback(err)
 
-                for (var i = 0; i < files.length; i++) {
-                    files[i] = path.join(p, files[i])
-                    !function (file) {
-                        funcs.push(function (callback) {
-                            fs.stat(file, function (err, stats) {
-                                if (err) return callback(err)
+                async.parallel(
+                    files
+                        .map(f => path.join(p, f))
+                        .map(f =>
+                            callback => {
+                                fs.stat(f, (err, stats) => {
+                                    if (err) return callback(err)
 
-                                if (stats.isDirectory()) {
-                                    qd.push(file)
-                                    callback(null)
-                                } else if (isSong(file)) {
-                                    addSong(file, stats, callback)
-                                } else {
-                                    callback(null)
-                                }
-                            })
-                        })
-                    }(files[i])
-                }
-                async.parallel(funcs, function (err) {
-                    callback(err)
-                })
+                                    if (stats.isDirectory()) {
+                                        qd.push(f)
+                                        callback(null)
+                                    } else if (isSong(f)) {
+                                        addSong(f, stats, callback)
+                                    } else {
+                                        callback(null)
+                                    }
+                                })
+                            }
+                        ),
+                    err => callback(err)
+                )
             })
         },
-        function (callback) {
-            var p = qf.pop()
+        callback => {
+            const p = qf.pop()
             if (!p) return callback(null)
 
             if (p.changed) {
-                meta(p.path, function (err, song) {
+                meta(p.path, (err, song) => {
                     if (err) return callback(err)
 
                     song.version = version+1
                     song.mtime = p.mtime
-                    db.song.add(song, function (err) {
-                        callback(err)
-                    })
+                    db.song.add(song, err => callback(err))
                 })
             } else {
-                db.song.touch(id(p.path), version+1, function (err) {
-                    callback(err)
-                })
+                db.song.touch(id(p.path), version+1, err => callback(err))
             }
         }
-    ], function (err) {
+    ], err => {
         err && log.error(err)
         next(cb)
     })
@@ -291,28 +267,28 @@ function scan(force, cb) {
     inProgress = true
 
     log.info('starting to scan songs')
-    db.version.get(function (err, _version) {
+    db.version.get((err, _version) => {
         if (err) {
             log.error(err)
             _version = 2    // #26
         }
         version = _version
 
-        for (var i = 0; i < conf.mp3.path.length; i++) qd.push(conf.mp3.path[i])
+        Array.prototype.push.apply(qd, conf.mp3.path)
         next(cb)
     })
 }
 
 
 function close() {
-    watch && watch.close()
+    // nothing to do
 }
 
 
 module.exports = {
-    init:  init,
-    scan:  scan,
-    close: close
+    init,
+    scan,
+    close
 }
 
 // end of mp3.js

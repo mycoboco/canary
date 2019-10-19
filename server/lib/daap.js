@@ -2,17 +2,13 @@
  *  DAAP response
  */
 
-'use strict'
+const { inspect } = require('util')
 
-var util = require('util')
-
-var hodgepodge = {
-    asyncLoop: require('hodgepodge-node/asyncLoop'),
-    logger:    require('hodgepodge-node/logger')
-}
+const { asyncLoop } = require('@hodgepodge-node/util')
+const { logger } = require('@hodgepodge-node/server')
 
 
-var tag2info = {
+const tag2info = {
     miid: { desc: 'dmap.itemid',                          type: 5, field: 'id'     },
     minm: { desc: 'dmap.itemname',                        type: 9, field: 'title'  },
     mikd: { desc: 'dmap.itemkind',                        type: 1, field: 'kind'   },
@@ -130,31 +126,32 @@ var tag2info = {
     aeSP: { desc: 'com.apple.itunes.smart-playlist',      type: 1  }
 }, desc2tag = {}
 
-var max = {
+const max = {
     byte1: Math.pow(2, 8)-1,
     byte2: Math.pow(2, 16)-1,
     byte4: Math.pow(2, 32)-1
 }
-var verTmpl = /([0-9]+)\.([0-9]+)(?:\.([0-9]+))?/
-var log, conf
+const verTmpl = /([0-9]+)\.([0-9]+)(?:\.([0-9]+))?/
+let log, conf
 
 
 function init(_conf) {
-    conf = Object.assign({
-        debug: false
-    }, _conf)
+    conf = {
+        debug: false,
+        ..._conf
+    }
 
-    log = hodgepodge.logger.create({
+    log = logger.create({
         prefix: 'daap',
         level:  (conf.debug)? 'info': 'error'
     })
 
-    for (var key in tag2info) desc2tag[tag2info[key].desc] = key
+    Object.keys(tag2info).forEach(key => desc2tag[tag2info[key].desc] = key)
 }
 
 
 function number2(n) {
-    var buf = new Buffer(2)
+    const buf = new Buffer(2)
     n = Math.min(max.byte2, Math.max(0, n))
     buf.writeUInt16BE(n, 0)
 
@@ -163,7 +160,7 @@ function number2(n) {
 
 
 function number4(n) {
-    var buf = new Buffer(4)
+    const buf = new Buffer(4)
     n = Math.min(max.byte4, Math.max(0, n))
     buf.writeUInt32BE(n, 0)
 
@@ -177,7 +174,7 @@ function size(n) {
 
 
 function number8(n) {
-    var buf = new Buffer(8)
+    const buf = new Buffer(8)
     n = Math.min(max.byte4, Math.max(0, n))
     buf.writeUInt32BE(0, 0)
     buf.writeUInt32BE(n, 4)
@@ -187,7 +184,7 @@ function number8(n) {
 
 
 function byte(n) {
-    var buf = new Buffer(1)
+    const buf = new Buffer(1)
     n = +n
     n = Math.min(max.byte1, Math.max(0, n))
     buf.writeUInt8(n, 0)
@@ -197,7 +194,7 @@ function byte(n) {
 
 
 function date(d) {
-    var buf = new Buffer(4)
+    const buf = new Buffer(4)
     buf.writeUInt32BE(d.valueOf() / 1000, 0)
 
     return buf
@@ -205,8 +202,8 @@ function date(d) {
 
 
 function version(v) {
-    var version = verTmpl.exec(v)
-    var buf = new Buffer(4)
+    const version = verTmpl.exec(v)
+    const buf = new Buffer(4)
 
     version[1] = Math.min(max.byte2, Math.max(0, +version[1]))
     version[2] = Math.min(max.byte1, Math.max(0, +version[2]))
@@ -238,18 +235,16 @@ function chktype(key, val, type) {
             break
     }
 
-    throw new Error('val('+val+') has invalid type('+(typeof val)+') for '+key+
-                    '; should be '+type)
+    throw new Error(`val(${val}) has invalid type(${typeof val}) for ${key}; should be ${type}`)
 }
 
 
 function buffer(obj, cb) {
-    var key = Object.keys(obj)[0]
-    var buf = new Buffer(key, 'utf-8')
-    var val = obj[key]
-    var top, nested
+    const key = Object.keys(obj)[0]
+    const buf = new Buffer(key, 'utf-8')
+    let val = obj[key]
 
-    if (!tag2info[key]) throw new Error('unknown key: '+key)
+    if (!tag2info[key]) throw new Error(`unknown key: ${key}`)
 
     switch(tag2info[key].type) {
         case 1:    // char
@@ -282,35 +277,34 @@ function buffer(obj, cb) {
             cb(Buffer.concat([ buf, size(4), version(val) ], buf.length+4+4))
             break
         case 12:    // container
+            let top, nested
             chktype(key, val, 'object')
             if (!Array.isArray(val)) {
                 top = []
-                for (var key in val) {
+                Object.keys(val).forEach(key => {
                     nested = {}
                     nested[key] = val[key]
                     top.push(nested)
-                }
+                })
                 val = top
             }
             top = new Buffer(0)
-            hodgepodge.asyncLoop(val.length, function (loop, i) {
-                buffer(val[i], function (nested) {
+            asyncLoop(val.length, (loop, i) => {
+                buffer(val[i], nested => {
                     top = Buffer.concat([ top, nested ], top.length+nested.length)
                     loop.next()
                 })
-            }, function () {
-                cb(Buffer.concat([ buf, size(top.length), top ], buf.length+4+top.length))
-            })
+            }, () => cb(Buffer.concat([ buf, size(top.length), top ], buf.length+4+top.length)))
             break
         default:
-            throw new Error('unknown type: '+tag2info[key].type)
+            throw new Error(`unknown type: ${tag2info[key].type}`)
             break
     }
 }
 
 
 function build(obj, cb) {
-    log.info('building DAAP response from: '+util.inspect(obj))
+    log.info(`building DAAP response from: ${inspect(obj)}`)
 
     try {
         buffer(obj, cb)
@@ -321,8 +315,8 @@ function build(obj, cb) {
 
 
 function item(container, songs, metas, cb) {
-    var obj = {}, mlit, key, mlcl
-    var top = (container)? 'apso': 'adbs'
+    const obj = {}
+    const top = (container)? 'apso': 'adbs'
 
     obj[top] = [
         { mstt: 200 },
@@ -331,20 +325,16 @@ function item(container, songs, metas, cb) {
         { mrco: songs.length }
     ]
 
-    mlcl = []
-    hodgepodge.asyncLoop(songs.length, function (loop, i) {
-        mlit = {}
-        for (var j = 0; j < metas.length; j++) {
-            key = desc2tag[metas[j]]
+    const mlcl = []
+    asyncLoop(songs.length, (loop, i) => {
+        const mlit = {}
+        metas.forEach(meta => {
+            const key = desc2tag[meta]
             if (tag2info[key] && tag2info[key].field) mlit[key] = songs[i][tag2info[key].field]
-        }
-
-        mlcl.push({
-            mlit: mlit
         })
-
+        mlcl.push({ mlit: mlit })
         loop.next()
-    }, function () {
+    }, () => {
         obj[top].push({ mlcl: mlcl })
         cb(obj)
     })
@@ -352,8 +342,8 @@ function item(container, songs, metas, cb) {
 
 
 module.exports = {
-    init: init,
-    build: build,
+    init,
+    build,
     song: {
         item: item.bind(null, false)
     },
