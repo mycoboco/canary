@@ -164,7 +164,7 @@ function version() {
         'This is free software; see the LICENSE file for more information. There is NO\n' +
         'warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n' +
         'Written by Woong Jun.')
-    exit()
+    process.exit()    // cannot use exit()
 }
 
 
@@ -177,7 +177,7 @@ function usage() {
                 '      --help            display this help and exit\n' +
                 '      --version         display version information and exit\n')
     console.log('For bug reporting instructions, please see: <http://code.woong.org/>.')
-    exit()
+    process.exit()    // cannot use exit()
 }
 
 
