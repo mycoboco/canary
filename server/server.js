@@ -55,8 +55,10 @@ function exit() {
     mp3 && mp3.close()
     if (service) {
         log.info('stopping service advertisement')
-        if (typeof service.kill === 'function') service.kill()
-        else if (typeof service.stop === 'function') service.stop()
+        const _service = service
+        service = null
+        if (typeof _service.kill === 'function') _service.kill()
+        else if (typeof _service.stop === 'function') _service.stop()
     }
     db && typeof db.close === 'function' && db.close()
     setTimeout(function () { process.exit(0) }, 1*1000)
@@ -132,7 +134,7 @@ function publishService(services, i) {
 
     log.info('running \''+services[i]+'\'')
     service = mdns[services[i]](conf.server.name, conf.server.port, function (err) {
-        if (i < services.length-1) {    // something went wrong
+        if (service && i < services.length-1) {    // something went wrong
             service = null
             if (!err || !err.signal) {
                 log.warning('seems not to have \''+services[i]+'\'')
