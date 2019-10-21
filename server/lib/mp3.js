@@ -43,7 +43,8 @@ function init(_db, _api, _conf) {
     } catch(e) {
         log.error(e)
     }
-    rwatch(conf.mp3.path, { ignoreHiddenDirs: true })
+    watch = rwatch(conf.mp3.path, { ignoreHiddenDirs: true })
+    watch
         .on('change', () => {
             log.info('change detected; rescan scheduled')
             needRescan = true
@@ -267,6 +268,7 @@ function scan(force, cb) {
     inProgress = true
 
     log.info('starting to scan songs')
+    watch.sync()
     db.version.get((err, _version) => {
         if (err) {
             log.error(err)
