@@ -59,9 +59,8 @@ function auth(req, res, next) {
     }
 
     let p = req.headers.authorization.substring(5)    // 'Basic ...'
-    p = new Buffer(p, 'base64')
-        .toString()
-        .substring(p.indexOf(':'))                    // iTunes_12.1:password
+    p = new Buffer(p, 'base64').toString()
+    p = p.substring(p.indexOf(':'))                   // iTunes_12.1:password
     if (p !== `:${conf.server.password}`) {
         log.warning('authorization failed')
         return res.send(401)
