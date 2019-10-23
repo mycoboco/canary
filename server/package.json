@@ -38,7 +38,8 @@
     "nedb": "^1.8.0",
     "ontime": "^0.0.3",
     "optimist": "^0.6.1",
-    "restify": "^4.0.0"
+    "restify": "^4.0.0",
+    "which": "^2.0.1"
   },
   "devDependencies": {},
   "engines": {
@@ -47,7 +48,6 @@
   "keywords": [
     "DAAP",
     "iTunes",
-    "music",
-    "streaming"
+    "music", "streaming"
   ]
 }
