@@ -6,11 +6,19 @@ except using [`npm`](http://npmjs.org/package/ontime.js) because
 `canary-server` is intended to runs on top of [`node.js`](http://nodejs.org).
 If you have `node.js` in your system,
 
-    npm install --legacy-bundling canary
+    npm install canary
 
 brings the latest version of `canary-server` and installs it with its all
 depending packages.
 
-_The `--legacy-bundling` option is necessary when using `npm3` because, without
-it, dependent modules will be installed at the same nesting level as `canary`
-into `node_modules`._
+The executable `canary` is placed into `node_modules/.bin`. You can run it with
+
+    npx canary -c config
+
+if you have 5.2.0 or a later version of `npm` installed, or
+
+    $(npm bin)/canary -c config
+
+otherwise. The `config` directory refers to the sample configuration directory
+`node_modules/canary/config` and you should edit files there before running the
+server.
