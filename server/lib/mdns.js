@@ -2,7 +2,9 @@
  *  service advertisement via mDNS
  */
 
-const { exec } = require('child_process')
+const { execFile } = require('child_process')
+
+const which = require('which')
 const mdns = require('mdns-js')
 let service
 
@@ -26,7 +28,6 @@ function init(db, cb) {
 
 function escape(s) {
     return s.replace(/-/g, '\\-')
-            .replace(/\"/g, '\\"')
 }
 
 
@@ -36,12 +37,32 @@ function getTxt() {
 
 
 function avahi(name, port, cb) {
-    return exec(`avahi-publish-service "${escape(name)}" _daap._tcp ${port} ${getTxt()}`, cb)
+    return execFile(
+        which.sync('avahi-publish-service', { nothrow: true }) || 'avahi-publish-service',
+        [
+            escape(name),
+            '_daap._tcp',
+            port,
+            getTxt()
+        ],
+        cb
+    )
 }
 
 
 function dnssd(name, port, cb) {
-    return exec(`dns-sd -R "${escape(name)}" _daap._tcp local ${port} ${getTxt()}`, cb)
+    return execFile(
+        which.sync('dns-sd', { nothrow: true }) || 'dns-sd',
+        [
+            '-R',
+            escape(name),
+            '_daap._tcp',
+            'local',
+            port,
+            getTxt()
+        ],
+        cb
+    )
 }
 
 
