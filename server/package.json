@@ -18,6 +18,9 @@
     "email": "woong.jun@gmail.com"
   },
   "license": "MIT",
+  "bin": {
+    "canary": "./server.js"
+  },
   "main": "server.js",
   "scripts": {
     "start": "node server.js -c config"
@@ -48,7 +51,6 @@
   "keywords": [
     "DAAP",
     "iTunes",
-    "music",
-    "streaming"
+    "music", "streaming"
   ]
 }
