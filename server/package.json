@@ -26,7 +26,7 @@
     "start": "node server.js -c config"
   },
   "dependencies": {
-    "@hodgepodge-node/db": "^0.3.6",
+    "@hodgepodge-node/db": "^0.3.7",
     "@hodgepodge-node/server": "^0.4.4",
     "@hodgepodge-node/util": "^0.4.9",
     "async": "^1.4.2",
