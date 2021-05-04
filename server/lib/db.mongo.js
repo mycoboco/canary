@@ -218,7 +218,7 @@ function cacheWrite(name, metas, buffer, cb) {
     const ws = gfs.createWriteStream({ filename: name })
 
     log.info(`writing cache for ${name}`)
-    ws.on('error', cb)
+    ws.on('error', (err) => err && cb(err))
     ws.write(buffer)
     ws.end()
 }
