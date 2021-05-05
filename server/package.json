@@ -39,7 +39,7 @@
     "mongoose": "^5.12.7",
     "music-metadata": "^0.8.4",
     "nedb": "^1.8.0",
-    "ontime": "^0.0.3",
+    "ontime": "^0.0.7",
     "optimist": "^0.6.1",
     "restify": "^4.0.0",
     "which": "^2.0.1"
