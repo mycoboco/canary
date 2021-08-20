@@ -7,7 +7,7 @@ const { inspect } = require('util')
 const fs = require('fs')
 const path = require('path')
 
-const Datastore = require('nedb')
+const Datastore = require('@seald-io/nedb')
 let db = {}
 const async = require('async')
 const mkdirp = require('mkdirp')
