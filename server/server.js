@@ -217,10 +217,13 @@ function usage() {
 
     dropPrivilege(conf.server.runAs, log, exit)
 
-    server = restify.createServer({ name: conf.server.name })
-    server.use(restify.acceptParser(server.acceptable))
-    server.use(restify.queryParser())
-    server.use(restify.bodyParser())
+    server = restify.createServer({
+        name:    'canary',
+        version: VERSION
+    })
+    server.use(restify.plugins.acceptParser(server.acceptable))
+    server.use(restify.plugins.queryParser())
+    server.use(restify.plugins.bodyParser())
     server.use((req, res, next) => {
         log.info(`<< ${req.method} ${req.url} >>`)
 
