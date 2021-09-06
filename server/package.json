@@ -26,7 +26,7 @@
     "start": "node server.js -c config"
   },
   "dependencies": {
-    "@hodgepodge-node/db": "^0.3.7",
+    "@hodgepodge-node/db": "^0.3.8",
     "@hodgepodge-node/server": "^0.4.4",
     "@hodgepodge-node/util": "^0.4.9",
     "@seald-io/nedb": "^2.0.4",
@@ -39,7 +39,7 @@
     "mkdirp": "^0.5.1",
     "mongoose": "^5.12.7",
     "music-metadata": "^0.8.4",
-    "ontime": "^0.0.7",
+    "ontime": "^0.0.8",
     "optimist": "^0.6.1",
     "restify": "^8.5.1",
     "which": "^2.0.1"
