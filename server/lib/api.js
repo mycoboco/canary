@@ -70,7 +70,7 @@ function auth(req, res, next) {
 }
 
 
-function login(req, res) {
+function login(req, res, _next) {
     daap.build({
         mlog: [
             { mstt: 200 },
@@ -80,7 +80,7 @@ function login(req, res) {
 }
 
 
-function update(req, res) {
+function update(req, res, _next) {
     function run() {
         db.version.get((err, version) => {
             if (err) {
@@ -101,12 +101,12 @@ function update(req, res) {
 }
 
 
-function logout(req, res) {
+function logout(req, res, _next) {
     res.ok(new Buffer(0))
 }
 
 
-function serverInfo(req, res) {
+function serverInfo(req, res, _next) {
     const auth = (conf.server.password)? 2: 0;    // 2: password only
 
     daap.build({
@@ -133,7 +133,7 @@ function serverInfo(req, res) {
 }
 
 
-function databaseInfo(req, res) {
+function databaseInfo(req, res, _next) {
     db.version.get((err, version) => {
         const update = (err || +req.query.delta !== version)
         const mlcl = (!update)? []: {
@@ -188,7 +188,7 @@ function sendList(name, metas, res) {
 }
 
 
-function databaseItem(req, res) {
+function databaseItem(req, res, _next) {
     const metas = defaultMetas('song', req.query.meta)
 
     db.version.get((err, version) => {
@@ -203,7 +203,7 @@ function databaseItem(req, res) {
 
 
 // TODO: support smart playlists
-function containerInfo(req, res) {
+function containerInfo(req, res, _next) {
     db.version.get((err, version) => {
         const update = (err || +req.query.delta !== version)
         const mlcl = (!update)? []: {
@@ -232,7 +232,7 @@ function containerInfo(req, res) {
 }
 
 
-function containerItem(req, res) {
+function containerItem(req, res, _next) {
     const metas = defaultMetas('container', req.query.meta)
 
     db.version.get((err, version) => {
@@ -246,7 +246,7 @@ function containerItem(req, res) {
 }
 
 
-function song(req, res) {
+function song(req, res, _next) {
     const id = /([0-9]+)\.(mp3|ogg)/i.exec(req.params.file)
     if (!isFinite(+id[1])) return res.err(400)
 
