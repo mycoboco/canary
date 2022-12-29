@@ -46,7 +46,7 @@
   },
   "devDependencies": {},
   "engines": {
-    "node": ">=6.4.0"
+    "node": ">=14.0.0"
   },
   "keywords": [
     "DAAP",
