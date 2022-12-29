@@ -41,7 +41,7 @@
     "music-metadata": "^3.8.0",
     "ontime": "^0.0.8",
     "optimist": "^0.5.2",
-    "restify": "^8.5.1",
+    "restify": "^10.0.0",
     "which": "^2.0.1"
   },
   "devDependencies": {},
