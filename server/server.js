@@ -29,8 +29,10 @@ const {
     logger,
     dropPrivilege
 } = require('@hodgepodge-node/server')
-const config = require('konphyg')(path.join(__dirname, argv.c)),
-      conf = {
+const config = require('konphyg')(
+          path.isAbsolute(argv.c[0])? argv.c: path.join(__dirname, argv.c)
+      )
+const conf = {
           server: config('server'),
           db: {
               mongo: config('db.mongo'),
