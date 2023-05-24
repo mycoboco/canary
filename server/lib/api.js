@@ -258,7 +258,7 @@ async function song(req, res, next) {
     if (r) {
       res.writeHead(206, {
         'Content-Length': r.e - r.s + 1,
-        'Content-Type': mime.lookup(req.params.file),
+        'Content-Type': mime.getType(req.params.file),
         'Content-Range': range.header(r, stats),
       });
       rs = createReadStream(songs[0].path, {
@@ -268,7 +268,7 @@ async function song(req, res, next) {
     } else {
       res.writeHead(200, {
         'Content-Length': stats.size,
-        'Content-Type': mime.lookup(req.params.file),
+        'Content-Type': mime.getType(req.params.file),
       });
       rs = createReadStream(songs[0].path);
     }
