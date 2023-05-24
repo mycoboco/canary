@@ -182,12 +182,9 @@ function cacheWrite(name, metas, buffer, handler) {
 }
 
 async function cacheExist(name, metas) {
-  return new Promise((resolve, reject) => {
-    Bucket.findOne({filename: `${name}-${hashQuery(metas)}`}, (err, file) => {
-      if (err) return reject(err);
-      resolve(!!file);
-    });
-  });
+  // cannot use Bucket.findOne() because of no support for Promise
+  // use underlying driver instead
+  return db.db.collection('fs.files').findOne({filename: `${name}-${hashQuery(metas)}`});
 }
 
 async function cacheClear() {
