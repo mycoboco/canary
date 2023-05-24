@@ -191,7 +191,7 @@ async function next() {
 
     try {
       const songs = await db.song.get(id(file));
-      changed = !songs[0] || songs[0].mtime !== stats.mtime;
+      changed = !songs[0] || songs[0].mtime.valueOf() !== stats.mtime.valueOf();
     } catch (err) {
       log.error(err);
       changed = true;
