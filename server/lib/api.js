@@ -163,7 +163,6 @@ async function sendList(name, metas, res, next) {
   if (cache) {
     try {
       const exist = await db.cache.exist(name, metas);
-      console.log(exist);
       if (exist) return db.cache.read(name, metas, res, cacheDisable);
     } catch (err) {
       // fall through
