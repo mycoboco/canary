@@ -2,334 +2,322 @@
  *  server APIs
  */
 
-const fs = require('fs')
+const fs = require('fs').promises;
+const {createReadStream} = require('fs');
 
-const mime = require('mime')
-const hodgepodge = {
-    logger,
-    range
-} = require('@hodgepodge-node/server')
-const { safePipe } = require('@hodgepodge-node/util')
+const mime = require('mime');
+const {
+  logger,
+  range,
+  ServerError,
+} = require('@hodgepodge-node/server');
+const {safePipe} = require('@hodgepodge-node/util');
 
-const mp3 = require('./mp3')
+const config = require('../config');
+const db = require('./db');
+const daap = require('./daap');
 
-
-let log, db, daap, conf
-let cache = true
-
-
-function init(_db, _daap, _conf) {
-    conf = {
-        server: {
-            name: 'canary',
-            scan: {
-                path: [ '/path/to/mp3/files' ]
-            }
-        },
-        debug: false,
-        ..._conf
-    }
-
-    log = logger.create({
-        prefix: 'api',
-        level:  (conf.debug)? 'info': 'error'
-    })
-
-    db = _db
-    daap = _daap
-}
-
+const log = logger.create({
+  prefix: 'api',
+  level: config.debug ? 'info' : 'error',
+});
+let cache = true;
 
 const nextSession = (() => {
-    let session = 1
+  let session = 1;
 
-    return () => {
-        if (session > Math.pow(2, 31)-1) session = 1
-        return session++
-    }
-})()
-
+  return () => {
+    if (session > Math.pow(2, 31) - 1) session = 1;
+    return session++;
+  };
+})();
 
 function auth(req, res, next) {
-    if (!conf.server.password) return next()
+  if (!config.server.password) return next();
 
-    if (!req.headers.authorization) {
-        log.warning('password required')
-        return res.send(401)
+  if (!req.headers.authorization) {
+    log.warning('password required');
+    return res.sendStatus(401);
+  }
+
+  let p = req.headers.authorization.substring(5); // 'Basic ...'
+  p = Buffer.from(p, 'base64').toString();
+  p = p.substring(p.indexOf(':')); // iTunes_12.1:password
+  if (p !== `:${config.server.password}`) {
+    log.warning('authorization failed');
+    return res.sendStatus(401);
+  }
+
+  next();
+}
+
+async function login(_req, res, _next) {
+  res.ok(await daap.build({
+    mlog: [
+      {mstt: 200},
+      {mlid: nextSession()},
+    ],
+  }));
+}
+
+async function update(req, res, _next) {
+  const run = async () => {
+    let version;
+
+    try {
+      version = await db.version.get();
+    } catch (err) {
+      log.error(err);
+      version = 2; // #26
     }
 
-    let p = req.headers.authorization.substring(5)    // 'Basic ...'
-    p = new Buffer(p, 'base64').toString()
-    p = p.substring(p.indexOf(':'))                   // iTunes_12.1:password
-    if (p !== `:${conf.server.password}`) {
-        log.warning('authorization failed')
-        return res.send(401)
-    }
+    res.ok(await daap.build({
+      mupd: [
+        {mstt: 200},
+        {musr: version},
+      ],
+    }));
+  };
 
-    next()
+  if (+req.query.delta > 0) setTimeout(run, 30 * 1000);
+  else run();
 }
 
-
-function login(req, res, _next) {
-    daap.build({
-        mlog: [
-            { mstt: 200 },
-            { mlid: nextSession() }
-        ]
-    }, res.ok.bind(res))
+function logout(_req, res, _next) {
+  res.ok(Buffer.alloc(0));
 }
 
+async function serverInfo(_req, res, _next) {
+  const auth = config.server.password ? 2 : 0; // 2: password only
 
-function update(req, res, _next) {
-    function run() {
-        db.version.get((err, version) => {
-            if (err) {
-                log.error(err)
-                version = 2    // #26
-            }
-            daap.build({
-                mupd: [
-                    { mstt: 200 },
-                    { musr: version }
-                ]
-            }, res.ok.bind(res))
-        })
-    }
-
-    if (+req.query.delta > 0) setTimeout(run, 30*1000)
-    else run()
+  res.ok(await daap.build({
+    msrv: [
+      {mstt: 200},
+      {mpro: '2.0.0'},
+      {apro: '3.0.0'},
+      {minm: config.server.name},
+      {mslr: !!auth},
+      {msau: auth},
+      {mstm: 1800},
+      {msex: false},
+      {msix: false},
+      {msbr: false},
+      {msqy: false},
+      {msup: false},
+      {msrs: false},
+      {msdc: 1},
+      {msal: false},
+      {mspi: true},
+      {ated: 0},
+    ],
+  }));
 }
 
+async function databaseInfo(req, res, next) {
+  let update;
+  try {
+    const version = await db.version.get();
+    update = +req.query.delta !== version;
+  } catch (err) {
+    update = true;
+  }
+  const mlcl = !update ? [] : {
+    mlit: [
+      {miid: 1},
+      {mper: 1},
+      {minm: config.server.name},
+      {mimc: 1}, // updated later
+      {mctc: 1},
+    ],
+  };
 
-function logout(req, res, _next) {
-    res.ok(new Buffer(0))
+  try {
+    const number = await db.song.count();
+    if (mlcl.mlit) mlcl.mlit.mimc = number;
+    res.ok(await daap.build({
+      avdb: [
+        {mstt: 200},
+        {muty: 0},
+        {mtco: update ? 1 : 0},
+        {mrco: update ? 1 : 0},
+        {mlcl},
+      ],
+    }));
+  } catch (err) {
+    next(err);
+  }
 }
-
-
-function serverInfo(req, res, _next) {
-    const auth = (conf.server.password)? 2: 0;    // 2: password only
-
-    daap.build({
-        msrv: [
-            { mstt: 200 },
-            { mpro: '2.0.0' },
-            { apro: '3.0.0' },
-            { minm: conf.server.name },
-            { mslr: !!auth },
-            { msau: auth },
-            { mstm: 1800 },
-            { msex: false },
-            { msix: false },
-            { msbr: false },
-            { msqy: false },
-            { msup: false },
-            { msrs: false },
-            { msdc: 1 },
-            { msal: false },
-            { mspi: true },
-            { ated: 0 },
-        ]
-    }, res.ok.bind(res))
-}
-
-
-function databaseInfo(req, res, _next) {
-    db.version.get((err, version) => {
-        const update = (err || +req.query.delta !== version)
-        const mlcl = (!update)? []: {
-            mlit: [
-                { miid: 1 },
-                { mper: 1 },
-                { minm: conf.server.name },
-                { mimc: 1 },    // updated later
-                { mctc: 1 }
-            ]
-        }
-
-        db.song.count((err, number) => {
-            if (err) return res.err(err)
-
-            if (mlcl.mlit) mlcl.mlit.mimc = number
-            daap.build({
-                avdb: [
-                    { mstt: 200 },
-                    { muty: 0 },
-                    { mtco: (update)? 1: 0 },
-                    { mrco: (update)? 1: 0 },
-                    { mlcl: mlcl }
-                ]
-            }, res.ok.bind(res))
-        })
-    })
-}
-
 
 function defaultMetas(name, meta) {
-    const d = {
-        container: 'dmap.itemid,dmap.itemname,dmap.persistentid,dmap.parentcontainerid,'+
-                   'com.apple.itunes.smart-playlist',
-        song:      'dmap.itemkind,dmap.itemid,daap.songalbum,daap.songartist,daap.songgenre,'+
-                   'daap.songtime,daap.songtracknumber,daap.songformat'
+  const d = {
+    container: 'dmap.itemid,dmap.itemname,dmap.persistentid,dmap.parentcontainerid,' +
+      'com.apple.itunes.smart-playlist',
+    song: 'dmap.itemkind,dmap.itemid,daap.songalbum,daap.songartist,daap.songgenre,daap.songtime,' +
+      'daap.songtracknumber,daap.songformat',
+  };
+
+  return (meta || d[name]).split(',');
+}
+
+async function sendList(name, metas, res, next) {
+  if (cache) {
+    try {
+      const exist = await db.cache.exist(name, metas);
+      console.log(exist);
+      if (exist) return db.cache.read(name, metas, res, cacheDisable);
+    } catch (err) {
+      // fall through
     }
-
-    return (meta || d[name]).split(',')
+  }
+  cacheUpdate(name, metas, res, next);
 }
 
+async function databaseItem(req, res, next) {
+  const metas = defaultMetas('song', req.query.meta);
 
-function sendList(name, metas, res) {
-    if (cache) {
-        db.cache.exist(name, metas, (err, exist) => {
-            if (!err && exist) db.cache.read(name, metas, res, cacheDisable)
-            else cacheUpdate(name, metas, res)
-        })
-    } else {
-        cacheUpdate(name, metas, res)
+  try {
+    const version = await db.version.get();
+    if (+req.query.delta === version) {
+      log.info('sending empty list because nothing updated');
+      return res.ok(
+        await daap.build(
+          await daap.song.item([], metas),
+        ),
+      );
     }
+  } catch (err) {
+    // fall through
+  }
+  await sendList('song', metas, res, next);
 }
-
-
-function databaseItem(req, res, _next) {
-    const metas = defaultMetas('song', req.query.meta)
-
-    db.version.get((err, version) => {
-        if (!err && +req.query.delta === version) {
-            log.info('sending empty list because nothing updated')
-            return daap.song.item([], metas, obj => daap.build(obj, res.ok.bind(res)))
-        }
-
-        sendList('song', metas, res)
-    })
-}
-
 
 // TODO: support smart playlists
-function containerInfo(req, res, _next) {
-    db.version.get((err, version) => {
-        const update = (err || +req.query.delta !== version)
-        const mlcl = (!update)? []: {
-            mlit: [
-                { miid: 1 },
-                { mper: 1 },
-                { minm: conf.server.name },
-                { mimc: 1 }
-            ]
-        }
+async function containerInfo(req, res, _next) {
+  let update;
+  try {
+    const version = await db.version.get();
+    update = +req.query.delta !== version;
+  } catch (err) {
+    update = true;
+  }
 
-        db.song.count((err, number) => {
-            if (err) return res.err(err)
+  const mlcl = !update ? [] : {
+    mlit: [
+      {miid: 1},
+      {mper: 1},
+      {minm: config.server.name},
+      {mimc: 1},
+    ],
+  };
 
-            daap.build({
-                aply: [
-                    { mstt: 200 },
-                    { muty: 0 },
-                    { mtco: (update)? 1: 0 },
-                    { mrco: (update)? 1: 0 },
-                    { mlcl: mlcl }
-                ]
-            }, res.ok.bind(res))
-        })
-    })
+  res.ok(await daap.build({
+    aply: [
+      {mstt: 200},
+      {muty: 0},
+      {mtco: update ? 1 : 0},
+      {mrco: update ? 1 : 0},
+      {mlcl},
+    ],
+  }));
 }
 
+async function containerItem(req, res, next) {
+  const metas = defaultMetas('container', req.query.meta);
 
-function containerItem(req, res, _next) {
-    const metas = defaultMetas('container', req.query.meta)
-
-    db.version.get((err, version) => {
-        if (!err && +req.query.delta === version) {
-            log.info('sending empty list because nothing updated')
-            return daap.container.item([], metas, obj => daap.build(obj, res.ok.bind(res)))
-        }
-
-        sendList('container', metas, res)
-    })
+  try {
+    const version = await db.version.get();
+    if (+req.query.delta === version) {
+      log.info('sending empty list because nothing updated');
+      return res.ok(
+        await daap.build(
+          await daap.container.item([], metas),
+        ),
+      );
+    }
+  } catch (err) {
+    // fall through
+  }
+  await sendList('container', metas, res, next);
 }
 
+async function song(req, res, next) {
+  try {
+    const id = /([0-9]+)\.(mp3|ogg)/i.exec(req.params.file);
+    if (!isFinite(+id[1])) throw new ServerError(400, `invaild song id: ${id[1]}`);
 
-function song(req, res, _next) {
-    const id = /([0-9]+)\.(mp3|ogg)/i.exec(req.params.file)
-    if (!isFinite(+id[1])) return res.err(400)
+    const songs = await db.song.path(+id[1]);
+    if (songs.length === 0) throw new Error('no songs found');
 
-    db.song.path(+id[1], (err, songs) => {
-        if (err) return res.err(err)
-        if (songs.length === 0) return res.err(404)
+    if (!config.server.scan.path.some((p) => songs[0].path.indexOf(p) === 0)) {
+      throw new Error(`requested file(${songs[0].path}) has no valid path`);
+    }
+    const stats = await fs.stat(songs[0].path);
+    const r = range.parse(req.headers.range, stats);
+    if (r instanceof Error) throw new ServerError(416, r);
 
-        if (!conf.server.scan.path.some(p => songs[0].path.indexOf(p) === 0)) {
-            log.error(new Error(`requested file(${songs[0].path}) has no valid path`))
-            return res.err(404)
-        }
-
-        fs.stat(songs[0].path, (err, stats) => {
-            if (err) return res.err(404)
-
-            const r = range.parse(req.headers.range, stats)
-            if (r instanceof Error) return res.err(416, r)
-
-            let rs
-            if (r) {
-                res.writeHead(206, {
-                    'Content-Length': r.e-r.s+1,
-                    'Content-Type':   mime.lookup(req.params.file),
-                    'Content-Range':  range.header(r, stats)
-                })
-                rs = fs.createReadStream(songs[0].path, {
-                    start: r.s,
-                    end:   r.e
-                })
-            } else {
-                res.writeHead(200, {
-                    'Content-Length': stats.size,
-                    'Content-Type':   mime.lookup(req.params.file)
-                })
-                rs = fs.createReadStream(songs[0].path)
-            }
-            safePipe(rs, res, err => log.error(err))
-        })
-    })
+    let rs;
+    if (r) {
+      res.writeHead(206, {
+        'Content-Length': r.e - r.s + 1,
+        'Content-Type': mime.lookup(req.params.file),
+        'Content-Range': range.header(r, stats),
+      });
+      rs = createReadStream(songs[0].path, {
+        start: r.s,
+        end: r.e,
+      });
+    } else {
+      res.writeHead(200, {
+        'Content-Length': stats.size,
+        'Content-Type': mime.lookup(req.params.file),
+      });
+      rs = createReadStream(songs[0].path);
+    }
+    safePipe(rs, res, (err) => log.error(err));
+  } catch (err) {
+    if (!err.statusCode) err.statusCode = 404;
+    next(err);
+  }
 }
 
-
-function cacheUpdate(name, metas = defaultMetas(name), res) {
-    db.song.listIter((err, songs) => {
-        if (err) return res.err(err)
-
-        daap[name].item(songs, metas, obj => {
-            daap.build(obj, buf => {
-                res && res.ok(buf)
-                if (cache) db.cache.write(name, metas, buf, cacheDisable)
-            })
-        })
-    })
+async function cacheUpdate(name, metas = defaultMetas(name), res, next) {
+  try {
+    const songs = await db.song.list();
+    const buf = await daap.build(
+      await daap[name].item(songs, metas),
+    );
+    if (res) res.ok(buf);
+    if (cache) db.cache.write(name, metas, buf, cacheDisable);
+  } catch (err) {
+    if (next) next(err);
+  }
 }
-
 
 function cacheDisable(err) {
-    cache = false
-    log.error(err)
-    log.warning('cache disabled')
+  cache = false;
+  log.error(err);
+  log.warning('cache disabled');
 }
-
 
 module.exports = {
-    init,
-    auth,
-    login,
-    update,
-    logout,
-    serverInfo,
-    database: {
-        info: databaseInfo,
-        item: databaseItem
-    },
-    container: {
-        info: containerInfo,
-        item: containerItem
-    },
-    song,
-    cache: {
-        disable: cacheDisable,
-        update:  cacheUpdate
-    }
-}
+  auth,
+  login,
+  update,
+  logout,
+  serverInfo,
+  database: {
+    info: databaseInfo,
+    item: databaseItem,
+  },
+  container: {
+    info: containerInfo,
+    item: containerItem,
+  },
+  song,
+  cache: {
+    disable: cacheDisable,
+    update: cacheUpdate,
+  },
+};
 
 // end of api.js

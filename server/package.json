@@ -26,27 +26,28 @@
     "start": "node server.js -c config"
   },
   "dependencies": {
-    "@hodgepodge-node/db": "^0.3.8",
-    "@hodgepodge-node/server": "^0.4.4",
-    "@hodgepodge-node/util": "^0.4.9",
-    "@seald-io/nedb": "^2.0.4",
-    "async": "^3.2.2",
+    "@hodgepodge-node/db": "^0.4.4",
+    "@hodgepodge-node/server": "^0.5.6",
+    "@hodgepodge-node/util": "^0.5.2",
+    "@seald-io/nedb": "^4.0.2",
+    "express": "^4.18.2",
     "fnv": "^0.1.3",
-    "gridfs-stream": "^1.1.1",
-    "konphyg": "^1.4.0",
-    "mdns-js": "^0.5.0",
-    "mime": "^1.3.4",
-    "mkdirp": "^0.5.1",
-    "mongoose": "^5.12.7",
-    "music-metadata": "^3.8.0",
-    "ontime": "^0.0.8",
-    "optimist": "^0.5.2",
-    "restify": "^10.0.0",
-    "which": "^2.0.1"
+    "konphyg": "^1.5.0",
+    "mdns-js": "^1.0.3",
+    "mime": "^3.0.0",
+    "mkdirp": "^3.0.1",
+    "mongoose-gridfs": "^1.3.0",
+    "music-metadata": "^7.13.0",
+    "ontime": "^0.1.1",
+    "which": "^3.0.1",
+    "yargs": "^17.7.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^8.41.0",
+    "eslint-config-google": "^0.14.0"
+  },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "keywords": [
     "DAAP",

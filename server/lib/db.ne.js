@@ -2,239 +2,192 @@
  *  DB wrapper for NeDB
  */
 
-const crypto = require('crypto')
-const { inspect } = require('util')
-const fs = require('fs')
-const path = require('path')
+const crypto = require('crypto');
+const {inspect} = require('util');
+const fs = require('fs').promises;
+const {createReadStream, createWriteStream} = require('fs');
+const path = require('path');
 
-const Datastore = require('@seald-io/nedb')
-let db = {}
-const async = require('async')
-const mkdirp = require('mkdirp')
-const { logger } = require('@hodgepodge-node/server')
-const { safePipe } = require('@hodgepodge-node/util')
+const Datastore = require('@seald-io/nedb');
+let db = {};
+const {mkdirp} = require('mkdirp');
+const {logger} = require('@hodgepodge-node/server');
+const {safePipe} = require('@hodgepodge-node/util');
 
+const config = require('../config');
 
-let log, conf
+let log;
 
+async function init(_conf, cb) {
+  log = logger.create({
+    prefix: 'db',
+    level: config.debug ? 'info' : 'error',
+  });
 
-function init(_conf, cb) {
-    conf = {
-        db: {
-            path: 'db'
-        },
-        debug: false,
-        ..._conf
-    }
+  db = {
+    song: new Datastore({
+      filename: path.join(config.db.path, 'songs.db'),
+      autoload: true,
+    }),
+    info: new Datastore({
+      filename: path.join(config.db.path, 'info.db'),
+      autoload: true,
+    }),
+  };
+  db.info.ensureIndex({fieldName: 'type'});
+  db.song.ensureIndex({fieldName: 'id'});
+  db.song.ensureIndex({fieldName: 'version'});
 
-    log = logger.create({
-        prefix: 'db',
-        level:  (conf.debug)? 'info': 'error'
-    })
-
-    db = {
-        song: new Datastore({
-            filename: path.join(conf.db.path, 'songs.db'),
-            autoload: true
-        }),
-        info: new Datastore({
-            filename: path.join(conf.db.path, 'info.db'),
-            autoload: true
-        })
-    }
-    db.info.ensureIndex({ fieldName: 'type' })
-    db.song.ensureIndex({ fieldName: 'id' })
-    db.song.ensureIndex({ fieldName: 'version' })
-
-    mkdirp(conf.db.path, cb)
+  await mkdirp(config.db.path);
 }
-
 
 function close() {
-    // nothing to do
+  // nothing to do
 }
 
-
-function songCount(cb) {
-    db.song.count({}, cb)
+async function songCount() {
+  return db.song.countAsync({});
 }
 
-
-function songListIter(cb) {
-    db.song.find({}, cb)
+async function songList() {
+  return db.song.findAsync({});
 }
 
-
-function songPath(id, cb) {
-    db.song.find({ id: id }, { _id: 0, path: 1 }, cb)
+async function songPath(id) {
+  return db.song.findAsync({id}, {_id: 0, path: 1});
 }
 
-
-function songGet(id, cb) {
-    db.song.find({ id: id }, { _id: 0 }, cb)
+async function songGet(id) {
+  return db.song.findAsync({id}, {_id: 0});
 }
 
+async function songAdd(song) {
+  if (typeof song.id !== 'number' || song.id !== song.id) {
+    throw new Error(`invalid song id: ${inspect(song.id)}`);
+  }
+  if (typeof song.path !== 'string' || !song.path) {
+    throw new Error(`invalid song path: ${inspect(song.path)}`);
+  }
 
-function songAdd(song, cb) {
-    if (typeof song.id !== 'number' || song.id !== song.id) {
-        return cb(new Error(`invalid song id: ${inspect(song.id)}`))
-    }
-    if (typeof song.path !== 'string' || !song.path) {
-        return cb(new Error(`invalid song path: ${inspect(song.path)}`))
-    }
-
-    db.song.update({ id: song.id }, song, { upsert: true }, cb)
+  return db.song.updateAsync({id: song.id}, song, {upsert: true});
 }
 
-
-function songTouch(id, version, cb) {
-    db.song.update({ id: id }, {
-        $set: { version: version }
-    }, cb)
+async function songTouch(id, version) {
+  return db.song.updateAsync({id}, {
+    $set: {version},
+  });
 }
 
-
-function songClear(version, cb) {
-    db.song.remove({
-        version: { $lt: version }
-    }, cb)
+async function songClear(version) {
+  return db.song.removeAsync({
+    version: {$lt: version},
+  });
 }
 
-
-function versionGet(cb) {
-    db.info.find({ type: 'music' }, (err, versions) => {
-        if (err) return cb(err)
-        if (versions.length === 0) versions[0] = { version: 2 }    // #26
-
-        cb(null, versions[0].version)
-    })
+async function versionGet() {
+  const versions = await db.info.findAsync({type: 'music'});
+  if (versions.length === 0) versions[0] = {version: 2}; // #26
+  return versions[0].version;
 }
 
-
-function versionInc(cb) {
-    db.info.update({ type: 'music' }, {
-        $inc: { version: 1 }
-    }, (err, nModified) => {
-        if (err) return cb(err)
-
-        if (!nModified) {
-            db.info.update({ type: 'music' }, {
-                $set: { version: 2 }
-            }, { upsert: true }, cb)
-            return
-        }
-
-        cb()
-    })
+async function versionInc(cb) {
+  const nModified = await db.info.updateAsync({type: 'music'}, {
+    $inc: {version: 1},
+  });
+  if (!nModified) {
+    return db.info.updateAsync({type: 'music'}, {
+      $set: {version: 2},
+    }, {upsert: true});
+  }
 }
 
-
-function dbIdGet(cb) {
-    db.info.find({ type: 'music' }, {
-        dbId: 1,
-        _id: 0
-    }, (err, ids) => {
-        if (err) return cb(err)
-
-        cb(null, ids && ids[0] && ids[0].dbId)
-    })
+async function dbIdGet() {
+  const ids = await db.info.findAsync({type: 'music'}, {
+    dbId: 1,
+    _id: 0,
+  });
+  return ids && ids[0] && ids[0].dbId;
 }
 
+async function dbIdSet(dbId) {
+  if (typeof dbId !== 'string' || !dbId) {
+    throw new Error(`invalid db id: ${inspect(dbId)}`);
+  }
 
-function dbIdSet(dbId, cb) {
-    if (typeof dbId !== 'string' || !dbId) {
-        return cb(new Error(`invalid db id: ${inspect(dbId)}`))
-    }
-
-    db.info.update({ type: 'music' }, {
-        $set: { dbId: dbId }
-    }, cb)
+  return db.info.updateAsync({type: 'music'}, {
+    $set: {dbId},
+  });
 }
-
 
 function cacheName(name, metas) {
-    const md5sum = crypto.createHash('md5')
+  const md5sum = crypto.createHash('md5');
 
-    metas.forEach(meta => md5sum.update(meta))
-    return path.join(conf.db.path, `cache-${name}-${md5sum.digest('hex')}`)
+  metas.forEach((meta) => md5sum.update(meta));
+  return path.join(config.db.path, `cache-${name}-${md5sum.digest('hex')}`);
 }
 
+function cacheRead(name, metas, to, handler) {
+  name = cacheName(name, metas);
+  const rs = createReadStream(name);
 
-function cacheRead(name, metas, to, cb) {
-    name = cacheName(name, metas)
-    const rs = fs.createReadStream(name)
-
-    log.info(`reading cache for ${name}`)
-    safePipe(rs, to, cb)
+  log.info(`reading cache for ${name}`);
+  safePipe(rs, to, handler);
 }
 
+function cacheWrite(name, metas, buffer, handler) {
+  name = cacheName(name, metas);
+  const ws = createWriteStream(name);
 
-function cacheWrite(name, metas, buffer, cb) {
-    name = cacheName(name, metas)
-    const ws = fs.createWriteStream(name)
-
-    log.info(`writing cache for ${name}`)
-    ws.on('error', (err) => err && cb(err))
-    ws.write(buffer)
-    ws.end()
+  log.info(`writing cache for ${name}`);
+  ws.on('error', (err) => handler(err));
+  ws.write(buffer);
+  ws.end();
 }
 
-
-function cacheExist(name, metas, cb) {
-    fs.stat(cacheName(name, metas), (err, stats) => {
-        cb(err, !!stats)
-    })
+async function cacheExist(name, metas) {
+  return fs.stat(cacheName(name, metas));
 }
 
-
-function cacheClear(cb) {
-    fs.readdir(conf.db.path, (err, files) => {
-        if (err) {
-            log.warning(err)
-            return cb()    // errors ignored
-        }
-
-        async.parallel(
-            files
-                .filter(f => /^cache-/.test(f))
-                .map(f =>
-                    callback => {
-                        fs.unlink(path.join(conf.db.path, f), err => { err && log.warning(err) })
-                        callback()    // errors ignored
-                    }
-                ),
-            cb
-        )
-    })
+async function cacheClear() {
+  try {
+    const files = await fs.readdir(config.db.path);
+    return Promise.all(
+      files
+        .filter((f) => /^cache-/.test(f))
+        .map((f) => fs.unlink(path.join(config.db.path, f))),
+    )
+      .catch((err) => log.warning(err)); // errors ignored
+  } catch (err) {
+    log.warning(err); // errors ignored
+  }
 }
-
 
 module.exports = {
-    init,
-    close,
-    song: {
-        count:    songCount,
-        listIter: songListIter,
-        path:     songPath,
-        get:      songGet,
-        add:      songAdd,
-        touch:    songTouch,
-        clear:    songClear
-    },
-    version: {
-        get: versionGet,
-        inc: versionInc
-    },
-    dbId: {
-        get: dbIdGet,
-        set: dbIdSet
-    },
-    cache: {
-        read:  cacheRead,
-        write: cacheWrite,
-        exist: cacheExist,
-        clear: cacheClear
-    }
-}
+  init,
+  close,
+  song: {
+    count: songCount,
+    list: songList,
+    path: songPath,
+    get: songGet,
+    add: songAdd,
+    touch: songTouch,
+    clear: songClear,
+  },
+  version: {
+    get: versionGet,
+    inc: versionInc,
+  },
+  dbId: {
+    get: dbIdGet,
+    set: dbIdSet,
+  },
+  cache: {
+    read: cacheRead,
+    write: cacheWrite,
+    exist: cacheExist,
+    clear: cacheClear,
+  },
+};
 
 // end of db.ne.js

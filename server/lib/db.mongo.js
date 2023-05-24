@@ -2,274 +2,228 @@
  *  DB wrapper for MongoDB
  */
 
-const crypto = require('crypto')
-const { insepct } = require('util')
+const crypto = require('crypto');
+const {inspect} = require('util');
 
-const async = require('async')
-const _mongoose = require('mongoose'),
-      Schema = _mongoose.Schema
-const grid = require('gridfs-stream')
-const { logger } = require('@hodgepodge-node/server')
-const mongoose = require('@hodgepodge-node/db/mongoose')(_mongoose)
-const { safePipe } = require('@hodgepodge-node/util')
+const _mongoose = require('mongoose');
+const {Schema} = _mongoose;
+const {createBucket} = require('mongoose-gridfs');
+const {logger} = require('@hodgepodge-node/server');
+const mongoose = require('@hodgepodge-node/db/mongoose')(_mongoose);
+const {safePipe} = require('@hodgepodge-node/util');
+
+const config = require('../config');
 
 const infoSchema = new Schema({
-        type: {
-            index: true,
-            type:  String
-        },
-        version: Number,
-        dbId:    String
-    })
-let Info
+  type: {
+    index: true,
+    type: String,
+  },
+  version: Number,
+  dbId: String,
+});
+let Info;
 
 const songSchema = new Schema({
-        id: {
-            index: true,
-            type:  Number
-        },
-        kind:    Number,
-        title:   String,
-        artist:  String,
-        album:   String,
-        time:    Number,
-        year:    Number,
-        track:   Number,
-        genre:   String,
-        format:  String,
-        version: {
-            index: true,
-            type:  Number
-        },
-        path:  String,
-        mtime: Date
-    })
-let Song
+  id: {
+    index: true,
+    type: Number,
+  },
+  kind: Number,
+  title: String,
+  artist: String,
+  album: String,
+  time: Number,
+  year: Number,
+  track: Number,
+  genre: String,
+  format: String,
+  version: {
+    index: true,
+    type: Number,
+  },
+  path: String,
+  mtime: Date,
+});
+let Song;
+let Bucket;
 
+let log;
+let db;
 
-let log, db, gfs, conf
+async function init() {
+  log = logger.create({
+    prefix: 'db',
+    level: config.debug ? 'info' : 'error',
+  });
 
+  mongoose.init(log);
+  db = await mongoose.connect(config.db);
 
-function init(_conf, cb) {
-    conf = {
-        db: {
-            host:          'localhost',
-            port:          27017,
-            db:            'canary',
-            // user:          'user',
-            // password:      'password',
-            reconnectTime: 10
-        },
-        debug: false,
-        ..._conf
-    }
-
-    log = logger.create({
-        prefix: 'db',
-        level:  (conf.debug)? 'info': 'error'
-    })
-
-    mongoose.init(log)
-    mongoose.connect(conf.db, (err, _db) => {
-        if (err) return cb(err)
-
-        db = _db
-        Info = db.model('Info', infoSchema)
-        Song = db.model('Song', songSchema)
-        grid.mongo = _mongoose.mongo
-        gfs = grid(db.db)
-
-        cb()
-    })
+  Info = db.model('Info', infoSchema);
+  Song = db.model('Song', songSchema);
+  Bucket = createBucket({connection: db});
 }
-
 
 function close() {
-    mongoose.close()
+  mongoose.close();
 }
 
-
-function songCount(cb) {
-    Song.count(cb)
+async function songCount() {
+  return Song.count();
 }
 
-
-function songListIter(cb) {
-    const songs = []
-    const cursor = Song.find().cursor()
-    function next() {
-        cursor.next((err, song) => {
-            if (err) return cb(err)
-
-            if (!song) return cb(null, songs)
-            songs.push(song)
-            setImmediate(next)
-        })
-    }
-
-    next()
+async function songList() {
+  return Song.find();
 }
 
-
-function songPath(id, cb) {
-    Song.find({ id: id }).select('-_id path').exec(cb)
+async function songPath(id) {
+  return Song.find({id}).select('-_id path');
 }
 
-
-function songGet(id, cb) {
-    Song.find({ id: id }).select('-_id').exec(cb)
+async function songGet(id) {
+  return Song.find({id}).select('-_id');
 }
 
+async function songAdd(song) {
+  if (typeof song.id !== 'number' || song.id !== song.id) {
+    throw new Error(`invalid song id: ${inspect(song.id)}`);
+  }
+  if (typeof song.path !== 'string' || !song.path) {
+    throw new Error(`invalid song path: ${inspect(song.path)}`);
+  }
 
-function songAdd(song, cb) {
-    if (typeof song.id !== 'number' || song.id !== song.id) {
-        return cb(new Error(`invalid song id: ${inspect(song.id)}`))
-    }
-    if (typeof song.path !== 'string' || !song.path) {
-        return cb(new Error(`invalid song path: ${inspect(song.path)}`))
-    }
-
-    Song.update({ id: song.id }, song, { upsert: true }, cb)
+  await Song.updateOne({id: song.id}, song, {upsert: true});
 }
 
-
-function songTouch(id, version, cb) {
-    Song.update({ id: id }, {
-        $set: { version: version }
-    }, cb)
+async function songTouch(id, version) {
+  return Song.updateOne(
+    {id},
+    {
+      $set: {version},
+    },
+  );
 }
 
-
-function songClear(version, cb) {
-    Song.remove({
-        version: { $lt: version }
-    }, cb)
+async function songClear(version) {
+  return Song.deleteMany({
+    version: {$lt: version},
+  });
 }
 
-
-function versionGet(cb) {
-    Info.find({ type: 'music' }, (err, versions) => {
-        if (err) return cb(err)
-        if (versions.length === 0) versions[0] = { version: 2 }    // #26
-
-        cb(null, versions[0].version)
-    })
+async function versionGet() {
+  const versions = await Info.find({type: 'music'});
+  if (versions.length === 0) versions[0] = {version: 2}; // #26
+  return versions[0].version;
 }
 
+async function versionInc() {
+  const result = await Info.updateOne(
+    {type: 'music'},
+    {
+      $inc: {version: 1},
+    },
+  );
 
-function versionInc(cb) {
-    Info.update({ type: 'music' }, {
-        $inc: { version: 1 }
-    }, (err, result) => {
-        if (err) return cb(err)
-
-        if (!result.nModified) {
-            return Info.update({ type: 'music' }, {
-                $set: { version: 2 }
-            }, { upsert: true }, cb)
-        }
-
-        cb()
-    })
+  if (!result.nModified) {
+    return Info.updateOne(
+      {type: 'music'},
+      {
+        $set: {version: 2},
+      },
+      {upsert: true},
+    );
+  }
 }
 
-
-function dbIdGet(cb) {
-    Info.find({ type: 'music' })
-        .select('dbId -_id')
-        .exec((err, ids) => {
-            if (err) return cb(err)
-
-            cb(null, ids && ids[0] && ids[0].dbId)
-        })
+async function dbIdGet() {
+  const ids = await Info
+    .find({type: 'music'})
+    .select('dbId -_id');
+  return ids && ids[0] && ids[0].dbId;
 }
 
+async function dbIdSet(dbId) {
+  if (typeof dbId !== 'string' || !dbId) {
+    throw new Error(`invalid db id: ${inspect(dbId)}`);
+  }
 
-function dbIdSet(dbId, cb) {
-    if (typeof dbId !== 'string' || !dbId) {
-        return cb(new Error(`invalid db id: ${inspect(dbId)}`))
-    }
-
-    Info.update({ type: 'music' }, {
-        $set: { dbId: dbId }
-    }, cb)
+  return Info.updateOne(
+    {type: 'music'},
+    {
+      $set: {dbId},
+    },
+  );
 }
-
 
 function hashQuery(metas) {
-    const md5sum = crypto.createHash('md5')
+  const md5sum = crypto.createHash('md5');
 
-    metas.forEach(meta => md5sum.update(meta))
-    return md5sum.digest('hex')
+  metas.forEach((meta) => md5sum.update(meta));
+  return md5sum.digest('hex');
 }
 
+function cacheRead(name, metas, to, handler) {
+  name = `${name}-${hashQuery(metas)}`;
+  const rs = Bucket.createReadStream({filename: name});
 
-function cacheRead(name, metas, to, cb) {
-    name = `${name}-${hashQuery(metas)}`
-    const rs = gfs.createReadStream({ filename: name })
-
-    log.info(`reading cache for ${name}`)
-    safePipe(rs, to, cb)
+  log.info(`reading cache for ${name}`);
+  safePipe(rs, to, handler);
 }
 
+function cacheWrite(name, metas, buffer, handler) {
+  name = `${name}-${hashQuery(metas)}`;
+  const ws = Bucket.createWriteStream({filename: name});
 
-function cacheWrite(name, metas, buffer, cb) {
-    name = `${name}-${hashQuery(metas)}`
-    const ws = gfs.createWriteStream({ filename: name })
-
-    log.info(`writing cache for ${name}`)
-    ws.on('error', (err) => err && cb(err))
-    ws.write(buffer)
-    ws.end()
+  log.info(`writing cache for ${name}`);
+  ws.on('error', (err) => handler(err));
+  ws.write(buffer);
+  ws.end();
 }
 
-
-function cacheExist(name, metas, cb) {
-    gfs.exist({ filename: `${name}-${hashQuery(metas)}` }, cb)
+async function cacheExist(name, metas) {
+  return new Promise((resolve, reject) => {
+    Bucket.findOne({filename: `${name}-${hashQuery(metas)}`}, (err, file) => {
+      if (err) return reject(err);
+      resolve(!!file);
+    });
+  });
 }
 
-
-function cacheClear(cb) {
-    async.parallel(
-        [ 'fs.files', 'fs.chunks' ].map(name =>
-            (callback) => {
-                db.db.collection(name).drop(err => {    // uses underlying driver
-                    err && log.warning(err)
-                    callback()    // errors ignored
-                })
-            }
-        ),
-        cb
-    )
+async function cacheClear() {
+  return Promise.all(
+    // uses underlying driver
+    ['fs.files', 'fs.chunks'].map((name) => db.db.collection(name).drop()),
+  )
+    .catch((err) => log.warning(err)); // errors igrnored
 }
-
 
 module.exports = {
-    init,
-    close,
-    song: {
-        count:    songCount,
-        listIter: songListIter,
-        path:     songPath,
-        get:      songGet,
-        add:      songAdd,
-        touch:    songTouch,
-        clear:    songClear
-    },
-    version: {
-        get: versionGet,
-        inc: versionInc
-    },
-    dbId: {
-        get: dbIdGet,
-        set: dbIdSet
-    },
-    cache: {
-        read:  cacheRead,
-        write: cacheWrite,
-        exist: cacheExist,
-        clear: cacheClear
-    }
-}
+  init,
+  close,
+  song: {
+    count: songCount,
+    list: songList,
+    path: songPath,
+    get: songGet,
+    add: songAdd,
+    touch: songTouch,
+    clear: songClear,
+  },
+  version: {
+    get: versionGet,
+    inc: versionInc,
+  },
+  dbId: {
+    get: dbIdGet,
+    set: dbIdSet,
+  },
+  cache: {
+    read: cacheRead,
+    write: cacheWrite,
+    exist: cacheExist,
+    clear: cacheClear,
+  },
+};
 
 // end of db.mongo.js

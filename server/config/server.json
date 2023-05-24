@@ -1,17 +1,17 @@
 {
-    "name":     "canary music",
-    "port":     3689,
-    "runAs": {
-        "uid": "userid",
-        "gid": "groupid"
-    },
-    "password": "password",
-    "scan": {
-        "path":  [ "/path/to/mp3/files" ],
-        "cycle": [ "17:00:00" ],
-        "utc":   false
-    },
-    "db":    "nedb",
-    "mdns":  "auto",
-    "debug": false
+  "name": "canary music",
+  "port": 3689,
+  "runAs": {
+    "uid": "userid",
+    "gid": "groupid"
+  },
+  "password": "password",
+  "scan": {
+    "path": ["/path/to/mp3/files"],
+    "cycle": ["17:00:00"],
+    "utc": false
+  },
+  "db": "nedb",
+  "mdns": "auto",
+  "debug": false
 }

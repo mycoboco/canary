@@ -4,320 +4,201 @@
  *  canary server
  */
 
-const { version: VERSION } = require('./package.json')
+const {version: VERSION} = require('./package.json');
 
-const path = require('path')
-const util = require('util')
-const zlib = require('zlib')
+const config = require('./config');
+const {argv} = config;
+(function() {
+  if (argv.version) version();
+  if (!argv.c || argv.help) usage();
+})();
 
-const argv = require('optimist')
-    .string('c')
-    .alias('c', 'config')
-    .default('rescan', true)
-    .argv
+const zlib = require('zlib');
 
-// checks for program arguments must be done before konphyg
-!function () {
-    argv.version && version()
-    ;(!argv.c || argv.help) && usage()
-}()
-
-const restify = require('restify')
-let server
-
+const express = require('express');
+const app = express();
 const {
-    logger,
-    dropPrivilege
-} = require('@hodgepodge-node/server')
-const config = require('konphyg')(
-          path.isAbsolute(argv.c[0])? argv.c: path.join(__dirname, argv.c)
-      )
-const conf = {
-          server: config('server'),
-          db: {
-              mongo: config('db.mongo'),
-              ne:    config('db.ne')
-          }
-      }
+  logger,
+  dropPrivilege,
+} = require('@hodgepodge-node/server');
 
-let db = {
-    mongo: require('./lib/db.mongo'),
-    ne:    require('./lib/db.ne')
-}
-const daap = require('./lib/daap')
-const api = require('./lib/api')
-const mp3 = require('./lib/mp3')
-const mdns = require('./lib/mdns')
-let service
+const db = require('./lib/db');
+const api = require('./lib/api');
+const mp3 = require('./lib/mp3');
+const mdns = require('./lib/mdns');
+let service;
 
-
-let log
-
+let log;
 
 function exit() {
-    mp3 && mp3.close()
-    if (service) {
-        log.info('stopping service advertisement')
-        const _service = service
-        service = null
-        if (typeof _service.kill === 'function') _service.kill()
-        else if (typeof _service.stop === 'function') _service.stop()
-    }
-    db && typeof db.close === 'function' && db.close()
-    setTimeout(() => process.exit(0), 1*1000)
+  if (mp3) mp3.close();
+  if (service) {
+    log.info('stopping service advertisement');
+    const _service = service;
+    service = null;
+    _service.stop();
+  }
+  if (db) db.close();
+  setTimeout(() => process.exit(0), 1 * 1000);
 }
-
 
 function installRoute() {
-    const route = [
-        '1.0.0',
-        {
-            'get': [
-                {
-                    path: '/server-info',
-                    func: api.serverInfo
-                },
-                {
-                    path: '/login',
-                    func: [ api.auth, api.login ]
-                },
-                {
-                    path: '/update',
-                    func: [ api.auth, api.update ]
-                },
-                {
-                    path: '/logout',
-                    func: api.logout
-                },
-                {
-                    path: '/databases',
-                    func: [ api.auth, api.database.info ]
-                },
-                {
-                    path: '/databases/1/items',
-                    func: [ api.auth, api.database.item ]
-                },
-                {
-                    path: '/databases/1/containers',
-                    func: [ api.auth, api.container.info ]
-                },
-                {
-                    path: '/databases/1/containers/:pl/items',
-                    func: [ api.auth, api.container.item ]
-                },
-                {
-                    path: '/databases/:num/items/:file',
-                    func: api.song    // iTunes sends no password
-                }
-            ],
-        },
-    ]
+  const route = {
+    'get': {
+      '/server-info': [api.serverInfo],
+      '/login': [api.auth, api.login],
+      '/update': [api.auth, api.update],
+      '/logout': [api.logout],
+      '/databases': [api.auth, api.database.info],
+      '/databases/1/items': [api.auth, api.database.item],
+      '/databases/1/containers': [api.auth, api.container.info],
+      '/databases/1/containers/:pl/items': [api.auth, api.container.item],
+      '/databases/:num/items/:file': [api.song], // iTunes sends no password
+    },
+  };
 
-    for (let i = 0; i < route.length; i += 2) {
-        const version = route[i]
-        const methods = route[i+1]
-
-        Object.keys(methods).forEach(method => {
-            methods[method].forEach(rule => {
-                server[method].apply( server, [{
-                    path: rule.path,
-                    version
-                }].concat(rule.func))
-            })
-        })
-    }
+  Object.entries(route).forEach(([method, set]) => {
+    Object.entries(set).forEach(([path, handlers]) => {
+      app[method](path, ...handlers);
+    });
+  });
 }
-
 
 function publishService(services, i = 0) {
-    log.info(`running '${services[i]}'`)
-    service = mdns[services[i]](conf.server.name, conf.server.port, err => {
-        if (service && i < services.length-1) {    // something went wrong
-            service = null
-            if (!err || !err.signal) {
-                log.warning(`seems not to have '${services[i]}'`)
-                ;(i+1 === services.length-1) && log.warning(`fall back to '${services[i+1]}'`)
-                publishService(services, i+1)
-            } else {    // probably killed for a reason
-                log.error(`'${services[i]}' has suddenly stopped`)
-            }
-        }
-    })
-}
-
-
-function selectDb() {
-    if (/mongo/i.test(conf.server.db)) {
-        conf.db = conf.db.mongo
-        db = db.mongo
-    } else {
-        conf.db = conf.db.ne
-        db = db.ne
+  const s = services[i];
+  log.info(`running ${s}`);
+  service = mdns[s](config.server.name, config.server.port, (err) => {
+    if (service && i < services.length - 1) { // something went wrong
+      service = null;
+      if (!err || !err.signal) {
+        log.warning(`seems not to have '${s}'`);
+        if (i + 1 === services.length - 1) log.warning(`fall back to '${services[i + 1]}'`);
+        publishService(services, i + 1);
+      } else { // probably killed for a reason
+        log.error(`'${s}' has suddenly stopped`);
+      }
     }
+  });
 }
-
 
 function version() {
-    //   12345678911234567892123456789312345678941234567895123456789612345678971234567898
-    console.log(
-        `canary server ${VERSION}\n` +
-        'This is free software; see the LICENSE file for more information. There is NO\n' +
-        'warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n' +
-        'Written by Woong Jun.')
-    process.exit()    // cannot use exit()
+  // 12345678911234567892123456789312345678941234567895123456789612345678971234567898
+  console.log(
+    `canary server ${VERSION}\n` +
+    'This is free software; see the LICENSE file for more information. There is NO\n' +
+    'warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n' +
+    'Written by Woong Jun.',
+  );
+  process.exit(); // cannot use exit()
 }
-
 
 function usage() {
-    //           12345678911234567892123456789312345678941234567895123456789612345678971234567898
-    console.log('Usage: node server <OPTION>...\n\n' +
-                'Mandatory arguments to long options are mandatory for short options too.\n' +
-                '  -c, --config DIR      directory for configurations [required]\n' +
-                '      --no-rescan       do not scan songs immediately after server starts\n' +
-                '      --help            display this help and exit\n' +
-                '      --version         display version information and exit\n')
-    console.log('For bug reporting instructions, please see: <http://code.woong.org/>.')
-    process.exit()    // cannot use exit()
+  // 12345678911234567892123456789312345678941234567895123456789612345678971234567898
+  console.log(
+    'Usage: node server <OPTION>...\n\n' +
+    'Mandatory arguments to long options are mandatory for short options too.\n' +
+    '  -c, --config DIR      directory for configurations [required]\n' +
+    '      --no-rescan       do not scan songs immediately after server starts\n' +
+    '      --help            display this help and exit\n' +
+    '      --version         display version information and exit\n',
+  );
+  console.log('For bug reporting instructions, please see: <http://code.woong.org/>.');
+  process.exit(); // cannot use exit()
 }
 
-
 // starts here
-!function () {
-    conf.server = {
-        name: 'canary music',
-        port: 3689,
-        runAs: {
-            uid: 'userid',
-            gid: 'groupid'
-        },
-        // password: 'password',
-        scan: {
-            path:  [ '/path/to/mp3/files' ],
-            cycle: [ '19:00:00' ],
-            utc:   false
-        },
-        db:    'nedb',
-        mdns:  'auto',
-        debug: false,
-        ...conf.server
-    }
-    if (!Array.isArray(conf.server.scan.path)) conf.server.scan.path = [ conf.server.scan.path ]
+(async function() {
+  log = logger.create({
+    prefix: 'server',
+    level: config.debug ? 'info' : 'error',
+  });
 
-    log = logger.create({
-        prefix: 'server',
-        level:  (conf.server.debug)? 'info': 'error'
-    })
+  if (!Array.isArray(config.server.scan.path)) {
+    config.server.scan.path = [config.server.scan.path];
+  }
 
-    process
-        .on('SIGINT', exit)
-        .on('SIGTERM', exit)
-        .on('uncaughtException', err => {
-            log.error(err)
-            exit()
-        })
-    process.on('SIGUSR2', mp3.scan.bind(mp3, true))
+  process
+    .on('SIGINT', exit)
+    .on('SIGTERM', exit)
+    .on('uncaughtException', (err) => {
+      log.error(err);
+      exit();
+    });
+  process.on('SIGUSR2', mp3.scan.bind(mp3, true));
 
-    dropPrivilege(conf.server.runAs, log, exit)
+  dropPrivilege(config.server.runAs, log, exit);
 
-    server = restify.createServer({
-        name:    'canary',
-        version: VERSION
-    })
-    server.use(restify.plugins.acceptParser(server.acceptable))
-    server.use(restify.plugins.queryParser())
-    server.use(restify.plugins.bodyParser())
-    server.use((req, res, next) => {
-        log.info(`<< ${req.method} ${req.url} >>`)
+  app.use((req, res, next) => {
+    log.info(`<< ${req.method} ${req.url} >>`);
 
-        res.ok = body => {
-            function send(err, buffer) {
-                const header = {
-                    'DAAP-Server':   `canary/${VERSION}`,
-                    'Content-Type':  'application/x-dmap-tagged',
-                    'Accept-Ranges': 'bytes',
-                }
+    res.ok = (body) => {
+      const send = (err, buffer) => {
+        const header = {
+          'DAAP-Server': `canary/${VERSION}`,
+          'Content-Type': 'application/x-dmap-tagged',
+          'Accept-Ranges': 'bytes',
+        };
 
-                if (err) {
-                    log.error(err)
-                    log.warning('uncompressed response sent instead')
-                } else if (buffer) {
-                    header['Content-Encoding'] = 'gzip'
-                    body = buffer
-                }
-                header['Content-Length'] = body.length
-                res.writeHead(200, header)
-                res.write(body)
-                res.end()
-            }
-
-            if (!body) return res.send(500)
-
-            log.info(`sending response to ${req.method} ${req.url}`)
-            if (/\bgzip\b/.test(req.headers['accept-encoding'])) {
-                zlib.gzip(body, send)
-            } else {
-                send(null, null)
-            }
-        }
-
-        res.err = (code, err) => {
-            if (typeof code !== 'number') {
-                err = code
-                code = 500
-            }
-            log.warning(`error occurred while handling ${req.method} ${req.url}`)
-            err && log.error(err)
-            res.send(code)
-        }
-
-        next()
-    })
-    installRoute()
-
-    daap.init({ debug: conf.server.debug })
-    selectDb()
-    db.init({
-        db:    conf.db,
-        debug: conf.server.debug
-    }, err => {
         if (err) {
-            log.error(err)
-            exit()
+          log.error(err);
+          log.warning('uncompressed response sent instead');
+        } else if (buffer) {
+          header['Content-Encoding'] = 'gzip';
+          body = buffer;
         }
+        header['Content-Length'] = body.length;
+        res.writeHead(200, header);
+        res.write(body);
+        res.end();
+      };
 
-        mdns.init(db, (err, id) => {
-            err && log.warning(err)
-            log.info(`database id to advertise is ${id}`)
+      if (!body) return res.sendStatus(500);
 
-            if (conf.server.mdns === 'auto') {
-                log.info('detecting tools for service advertisement')
-                publishService([ 'avahi', 'dns-sd', 'mdns-js' ])
-            } else if (conf.server.mdns !== 'off') {
-                if (typeof mdns[conf.server.mdns] === 'function') {
-                    publishService([ conf.server.mdns, 'mdns-js' ])
-                } else {
-                    log.error(`'${conf.server.mdns}' not supported for service advertisement`)
-                    log.warning('trying to auto-detect')
-                    publishService([ 'avahi', 'dns-sd', 'mdns-js' ])
-                }
-            }
-        })
+      log.info(`sending response to ${req.method} ${req.url}`);
+      if (/\bgzip\b/.test(req.headers['accept-encoding'])) {
+        zlib.gzip(body, send);
+      } else {
+        send();
+      }
+    };
 
-        api.init(db, daap, {
-            server: conf.server,
-            debug:  conf.server.debug
-        })
-        mp3.init(db, api, {
-            mp3:   conf.server.scan,
-            debug: conf.server.debug
-        })
+    next();
+  });
+  installRoute();
+  // handles errors
+  app.use((err, req, res, _next) => {
+    log.warning(`error occurred while handling ${req.method} ${req.url}`);
+    log.error(err);
+    res.status(isFinite(err.statusCode) ? err.statusCode : 500).send(err.message);
+  });
 
-        argv.rescan && mp3.scan(true)
+  try {
+    await db.init();
+    const id = await mdns.init();
+    log.info(`database id to advertise is ${id}`);
 
-        server.listen(conf.server.port, '::', () => {
-            log.info('%s listening on port %s', server.name, conf.server.port)
-        })
-    })
-}()
+    const {mdns: mdnsConfig} = config.server;
+    if (mdnsConfig === 'auto') {
+      log.info('detecting tools for service advertisement');
+      publishService(['avahi', 'dns-sd', 'mdns-js']);
+    } else if (mdnsConfig !== 'off') {
+      if (typeof mdns[mdnsConfig] === 'function') {
+        publishService([mdnsConfig, 'mdns-js']);
+      } else {
+        log.error(`'${mdnsConfig}' not supported for service advertisement`);
+        log.warning('trying to auto-detect');
+        publishService(['avahi', 'dns-sd', 'mdns-js']);
+      }
+    }
+
+    mp3.init();
+    if (argv.rescan) mp3.scan(true);
+    app.listen(config.server.port, '::', () => {
+      log.info(`listening on port ${config.server.port}`);
+    });
+  } catch (err) {
+    log.warning(err);
+  }
+})();
 
 // end of server.js
