@@ -68,7 +68,7 @@ publication.
 - `off`: no service advertisement activated.
 
 If your system have `avahi` or `dns-sd`, please make sure that
-`avahi-publish-service` or `dns-sd` is accessible not specifying a path from
+`avahi-publish-service` or `dns-sd` is accessible without specifying a path from
 the location `canary` runs.
 
 Whenever `avahi` or `dns-sd` fails to start, `mdns-js` is selected as a
@@ -105,15 +105,15 @@ The server configuration, `config/server.json` looks like:
 }
 ```
 
-- the `name` of the server will be published and broadcast via Avahi. If your
-  client knows DNS-SD, it will appear on it;
+- the `name` of the server will be published and broadcast. If your client knows
+  DNS-SD, it will appear on it;
 - the server will run on `port`; it must be set to the default port 3689 for
-  iTunes to work with the server;
+  iTunes to find the server;
 - `runAs`, if specified, makes the server drop privileges by changing its `uid`
   and `gid` to the given ones, which is useful when the server initially runs
   as `root`, for example, by an `init.d` script. If not specified, running the
   server as `root` will be warned;
-- if `password` is a non-empty string, the server requires a client to send the
+- if `password` has a non-empty string, the server requires a client to send the
   password on every request. This, for example, forces iTunes ask a password on
   its initial connection to the server;
 - `scan` specifies the schedule for rescanning files:
