@@ -45,7 +45,7 @@ function avahi(name, port, handler) {
     handler,
   );
 
-  return {stop: () => service.kill()};
+  return {stop: async () => service.kill()};
 }
 
 function dnssd(name, port, handler) {
@@ -62,7 +62,7 @@ function dnssd(name, port, handler) {
     handler,
   );
 
-  return {stop: () => service.kill()};
+  return {stop: async () => service.kill()};
 }
 
 function mdnsjs(name, port, handler) {
@@ -76,7 +76,11 @@ function mdnsjs(name, port, handler) {
   service.start();
   handler();
 
-  return service;
+  return {
+    stop: () => new Promise((resolve) => {
+      service.stop(resolve);
+    }),
+  };
 }
 
 module.exports = {

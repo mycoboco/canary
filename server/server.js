@@ -30,16 +30,16 @@ let service;
 
 let log;
 
-function exit() {
+async function exit() {
   if (mp3) mp3.close();
   if (service) {
     log.info('stopping service advertisement');
     const _service = service;
     service = null;
-    _service.stop();
+    await _service.stop();
   }
   if (db) db.close();
-  setTimeout(() => process.exit(0), 1 * 1000);
+  process.exit(0);
 }
 
 function installRoute() {
