@@ -51,7 +51,10 @@ function init() {
   ontime({
     ...scanConfig,
     single: true,
-  }, (ot) => scan(ot.done.bind(ot)));
+  }, async (ot) => {
+    await scan();
+    ot.done();
+  });
 }
 
 function id(s) {
