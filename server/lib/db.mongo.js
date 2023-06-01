@@ -125,7 +125,7 @@ async function versionInc() {
     },
   );
 
-  if (!result.nModified) {
+  if (result.modifiedCount === 0) {
     return Info.updateOne(
       {type: 'music'},
       {

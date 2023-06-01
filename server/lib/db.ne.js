@@ -73,9 +73,12 @@ async function songAdd(song) {
 }
 
 async function songTouch(id, version) {
-  return db.song.updateAsync({id}, {
-    $set: {version},
-  });
+  return db.song.updateAsync(
+    {id},
+    {
+      $set: {version},
+    },
+  );
 }
 
 async function songClear(version) {
@@ -91,21 +94,31 @@ async function versionGet() {
 }
 
 async function versionInc(cb) {
-  const nModified = await db.info.updateAsync({type: 'music'}, {
-    $inc: {version: 1},
-  });
-  if (!nModified) {
-    return db.info.updateAsync({type: 'music'}, {
-      $set: {version: 2},
-    }, {upsert: true});
+  const result = await db.info.updateAsync(
+    {type: 'music'},
+    {
+      $inc: {version: 1},
+    },
+  );
+  if (result.numAffected === 0) {
+    return db.info.updateAsync(
+      {type: 'music'},
+      {
+        $set: {version: 2},
+      },
+      {upsert: true},
+    );
   }
 }
 
 async function dbIdGet() {
-  const ids = await db.info.findAsync({type: 'music'}, {
-    dbId: 1,
-    _id: 0,
-  });
+  const ids = await db.info.findAsync(
+    {type: 'music'},
+    {
+      dbId: 1,
+      _id: 0,
+    },
+  );
   return ids && ids[0] && ids[0].dbId;
 }
 
@@ -114,9 +127,12 @@ async function dbIdSet(dbId) {
     throw new Error(`invalid db id: ${inspect(dbId)}`);
   }
 
-  return db.info.updateAsync({type: 'music'}, {
-    $set: {dbId},
-  });
+  return db.info.updateAsync(
+    {type: 'music'},
+    {
+      $set: {dbId},
+    },
+  );
 }
 
 function cacheName(name, metas) {
