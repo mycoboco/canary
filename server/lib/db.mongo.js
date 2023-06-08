@@ -78,11 +78,11 @@ async function songList() {
 }
 
 async function songPath(id) {
-  return Song.find({id}).select('-_id path');
+  return Song.findOne({id}).select('-_id path');
 }
 
 async function songGet(id) {
-  return Song.find({id}).select('-_id');
+  return Song.findOne({id}).select('-_id');
 }
 
 async function songAdd(song) {

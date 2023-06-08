@@ -244,13 +244,13 @@ async function song(req, res, next) {
     const id = /([0-9]+)\.(mp3|ogg)/i.exec(req.params.file);
     if (!isFinite(+id[1])) throw new ServerError(400, `invaild song id: ${id[1]}`);
 
-    const songs = await db.song.path(+id[1]);
-    if (songs.length === 0) throw new Error('no songs found');
+    const song = await db.song.path(+id[1]);
+    if (!song) throw new Error('no songs found');
 
-    if (!config.server.scan.path.some((p) => songs[0].path.indexOf(p) === 0)) {
-      throw new Error(`requested file(${songs[0].path}) has no valid path`);
+    if (!config.server.scan.path.some((p) => song.path.indexOf(p) === 0)) {
+      throw new Error(`requested file(${song.path}) has no valid path`);
     }
-    const stats = await fs.stat(songs[0].path);
+    const stats = await fs.stat(song.path);
     const r = range.parse(req.headers.range, stats);
     if (r instanceof Error) throw new ServerError(416, r);
 
@@ -261,7 +261,7 @@ async function song(req, res, next) {
         'Content-Type': mime.getType(req.params.file),
         'Content-Range': range.header(r, stats),
       });
-      rs = createReadStream(songs[0].path, {
+      rs = createReadStream(song.path, {
         start: r.s,
         end: r.e,
       });
@@ -270,7 +270,7 @@ async function song(req, res, next) {
         'Content-Length': stats.size,
         'Content-Type': mime.getType(req.params.file),
       });
-      rs = createReadStream(songs[0].path);
+      rs = createReadStream(song.path);
     }
     safePipe(rs, res, (err) => log.error(err));
   } catch (err) {
