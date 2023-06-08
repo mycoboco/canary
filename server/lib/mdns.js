@@ -29,8 +29,8 @@ function escape(s) {
   return s.replace(/-/g, '\\-');
 }
 
-function getTxt() {
-  return `"txtvers=1" "Database ID=${id}"`;
+function getTxts() {
+  return ['txtvers=1', `Database ID=${id}`];
 }
 
 function avahi(name, port, handler) {
@@ -40,7 +40,7 @@ function avahi(name, port, handler) {
       escape(name),
       '_daap._tcp',
       port,
-      getTxt(),
+      ...getTxts(),
     ],
     handler,
   );
@@ -57,7 +57,7 @@ function dnssd(name, port, handler) {
       '_daap._tcp',
       'local',
       port,
-      getTxt(),
+      ...getTxts(),
     ],
     handler,
   );
@@ -66,13 +66,19 @@ function dnssd(name, port, handler) {
 }
 
 function mdnsjs(name, port, handler) {
-  const service = mdns.createAdvertisement('_daap._tcp', port, {
-    name,
-    txt: {
-      'txtvers': '1',
-      'Database ID': id,
+  const service = mdns.createAdvertisement(
+    '_daap._tcp',
+    port,
+    {
+      name,
+      txt: getTxts()
+        .map((t) => t.split('='))
+        .reduce((acc, [k, v]) => {
+          acc[k] = v;
+          return acc;
+        }, {}),
     },
-  });
+  );
   service.start();
   handler();
 
