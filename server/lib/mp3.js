@@ -130,7 +130,7 @@ async function meta(song) {
   try {
     const metadata = await mm.parseFile(song, {
       duration: true,
-      skipCovers: !config.server.cover,
+      skipCovers: !config.server.useMongo, // cover only supported with MongoDB
     });
     return setMeta(song, metadata);
   } catch (err) {
@@ -193,13 +193,13 @@ async function done() {
   Object.entries(meta).forEach(([k, v]) => api.cache.update(k, v.split(',')));
 }
 
-async function next() {
+async function next(update) {
   const addSong = async (file, stats) => {
     let changed;
 
     try {
       const song = await db.song.get(id(file));
-      changed = !song || song.mtime.valueOf() !== stats.mtime.valueOf();
+      changed = update || !song || song.mtime.valueOf() !== stats.mtime.valueOf();
     } catch (err) {
       log.error(err);
       changed = true;
@@ -253,10 +253,10 @@ async function next() {
     }),
   ])
     .catch((err) => log.error(err));
-  await next();
+  await next(update);
 }
 
-async function scan(force) {
+async function scan(force, update) {
   if (!force && !needRescan) {
     log.info('rescan is not necessary');
     return;
@@ -278,7 +278,7 @@ async function scan(force) {
   }
 
   qd.push(...config.server.scan.path);
-  await next();
+  await next(update);
 }
 
 function close() {

@@ -13,7 +13,13 @@ const {argv} = require('yargs')
       type: 'boolean',
       default: true,
     },
+    'rebuild': {
+      type: 'boolean',
+      default: false,
+    },
   });
+
+if (argv.rebuild) argv.rescan = true;
 
 if (argv.c) {
   const config = require('konphyg')(
@@ -21,12 +27,11 @@ if (argv.c) {
   );
 
   const server = config('server');
-  const useMongo = /mongo/i.test(server.db);
-  if (!useMongo && server.cover) server.cover = false;
+  server.useMongo = /mongo/i.test(server.db);
 
   module.exports = {
     server,
-    db: useMongo ? config('db.mongo') : config('db.ne'),
+    db: server.useMongo ? config('db.mongo') : config('db.ne'),
     debug: server.debug,
   };
 }

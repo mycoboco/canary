@@ -100,6 +100,7 @@ function usage() {
     'Mandatory arguments to long options are mandatory for short options too.\n' +
     '  -c, --config DIR      directory for configurations [required]\n' +
     '      --no-rescan       do not scan songs immediately after server starts\n' +
+    '      --rebuild         rebuild database; overrides --no-rescan\n' +
     '      --help            display this help and exit\n' +
     '      --version         display version information and exit\n',
   );
@@ -193,7 +194,7 @@ function usage() {
     }
 
     mp3.init();
-    if (argv.rescan) mp3.scan(true);
+    if (argv.rescan) mp3.scan(true, argv.rebuild);
     app.listen(config.server.port, '::', () => {
       log.info(`listening on port ${config.server.port}`);
     });
