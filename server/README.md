@@ -16,7 +16,7 @@ the client.
 
 The server supports, among other things:
 
-- iTunes as a client,
+- Apple Music/iTunes as a client,
 - rescan of songs based on a schedule,
   - it cleverly does nothing unless files or directories change
 - authorization via a password,
@@ -30,11 +30,11 @@ but does not support yet:
   - please let me know about them!
 
 The initial scan of songs is fairly fast thanks to high performance of the
-[`music-metadata`](https://www.npmjs.com/package/music-metadata) module; 7 mins
-with 4,500+ songs on my [Gentoo](https://www.gentoo.org/) machine with
+[`music-metadata`](https://www.npmjs.com/package/music-metadata) module; about 7 mins
+with 5,000+ songs on my [Gentoo](https://www.gentoo.org/) machine with
 [Intel Atom D525](http://ark.intel.com/products/49490/Intel-Atom-Processor-D525-1M-Cache-1_80-GHz),
 4GB RAM and a 5400-rpm HDD. Once the database has been built, rescanning is
-even faster; 30 secs on the same condition. The server remembers the mtime,
+even faster; about 1 min on the same condition. The server remembers the mtime,
 modification time of files and reads only added or modified files.
 
 
@@ -173,6 +173,8 @@ As other node.js programs, you can run `canary-server` with
 where the `-c` option (or `--config`) specifies a configuration directory the
 server will use.
 
+Since version 0.2.2, `canary` extracts cover images from media files. If you have database built by a previous version, the `--rebuild` option will help cover images be prepared.
+
 
 #### Clients tested
 
@@ -181,7 +183,8 @@ favorite client is not on the list or does not work with the server, please
 [open](https://github.com/mycoboco/canary/issues/new) a new issue to describe
 the problem concisely.
 
-- [iTunes](https://www.apple.com/itunes/) (Mac, Windows)
+- [iTunes](https://www.apple.com/itunes/) (Windows)
+- [Apple Music](https://music.apple.com/) (Mac)
 - [Simple DAAP Client](https://itunes.apple.com/app/simple-daap-client/id369605270)
   (iOS)
 - [DAAP Media Player](https://play.google.com/store/apps/details?id=org.mult.daap)
