@@ -173,7 +173,9 @@ As other node.js programs, you can run `canary-server` with
 where the `-c` option (or `--config`) specifies a configuration directory the
 server will use.
 
-Since version 0.2.2, `canary` extracts cover images from media files. If you have database built by a previous version, the `--rebuild` option will help cover images be prepared.
+Since version 0.2.2, `canary` extracts cover images from media files. If you
+have database built by a previous version, the `--rebuild` option will help
+cover images be prepared.
 
 
 #### Clients tested
