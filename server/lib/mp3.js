@@ -102,6 +102,7 @@ async function meta(song) {
       year,
       track,
       genre,
+      picture,
     } = common;
 
     const meta = {
@@ -117,6 +118,10 @@ async function meta(song) {
       genre: (genre && genre.filter((g) => g).join(', ')) || '(Unknown Genre)',
       format: path.extname(song).substring(1, song.length - 1),
       path: song,
+      cover: picture && {
+        format: picture[0].format,
+        image: picture[0].data,
+      },
     };
 
     return chkmeta(meta);
@@ -125,7 +130,7 @@ async function meta(song) {
   try {
     const metadata = await mm.parseFile(song, {
       duration: true,
-      skipCovers: true,
+      skipCovers: !config.server.cover,
     });
     return setMeta(song, metadata);
   } catch (err) {

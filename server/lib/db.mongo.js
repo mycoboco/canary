@@ -46,6 +46,21 @@ const songSchema = new Schema({
   mtime: Date,
 });
 let Song;
+
+const coverSchema = new Schema({
+  id: {
+    index: true,
+    type: Number,
+  },
+  format: String,
+  image: Buffer,
+  version: {
+    index: true,
+    type: Number,
+  },
+});
+let Cover;
+
 let Bucket;
 
 let log;
@@ -62,6 +77,7 @@ async function init() {
 
   Info = db.model('Info', infoSchema);
   Song = db.model('Song', songSchema);
+  Cover = db.model('Cover', coverSchema);
   Bucket = createBucket({connection: db});
 }
 
@@ -85,6 +101,10 @@ async function songGet(id) {
   return Song.findOne({id}).select('-_id');
 }
 
+async function coverGet(id) {
+  return Cover.findOne({id}).select('-_id');
+}
+
 async function songAdd(song) {
   if (typeof song.id !== 'number' || song.id !== song.id) {
     throw new Error(`invalid song id: ${inspect(song.id)}`);
@@ -93,22 +113,49 @@ async function songAdd(song) {
     throw new Error(`invalid song path: ${inspect(song.path)}`);
   }
 
-  await Song.updateOne({id: song.id}, song, {upsert: true});
+  const {cover} = song;
+  delete song.cover;
+
+  if (cover) {
+    Cover.updateOne(
+      {id: song.id},
+      {
+        id: song.id,
+        ...cover,
+        version: song.version,
+      },
+      {upsert: true},
+    ).catch((err) => log.error(err));
+  }
+  return Song.updateOne({id: song.id}, song, {upsert: true});
 }
 
 async function songTouch(id, version) {
-  return Song.updateOne(
-    {id},
-    {
-      $set: {version},
-    },
-  );
+  return Promise.all([
+    Cover.updateOne(
+      {id},
+      {
+        $set: {version},
+      },
+    ),
+    Song.updateOne(
+      {id},
+      {
+        $set: {version},
+      },
+    ),
+  ]);
 }
 
 async function songClear(version) {
-  return Song.deleteMany({
-    version: {$lt: version},
-  });
+  return Promise.allSettled([
+    Cover.deleteMany({
+      version: {$lt: version},
+    }),
+    Song.deleteMany({
+      version: {$lt: version},
+    }),
+  ]);
 }
 
 async function versionGet() {
@@ -206,6 +253,9 @@ module.exports = {
     add: songAdd,
     touch: songTouch,
     clear: songClear,
+  },
+  cover: {
+    get: coverGet,
   },
   version: {
     get: versionGet,

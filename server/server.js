@@ -54,6 +54,7 @@ function installRoute() {
       '/databases/1/containers': [api.auth, api.container.info],
       '/databases/1/containers/:pl/items': [api.auth, api.container.item],
       '/databases/1/items/:file': [api.song], // iTunes sends no password
+      '/databases/1/items/:id/extra_data/artwork': [api.cover],
     },
   };
 

@@ -21,9 +21,12 @@ if (argv.c) {
   );
 
   const server = config('server');
+  const useMongo = /mongo/i.test(server.db);
+  if (!useMongo && server.cover) server.cover = false;
+
   module.exports = {
     server,
-    db: /mongo/i.test(server.db) ? config('db.mongo') : config('db.ne'),
+    db: useMongo ? config('db.mongo') : config('db.ne'),
     debug: server.debug,
   };
 }

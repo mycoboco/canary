@@ -299,6 +299,18 @@ function cacheDisable(err) {
   log.warning('cache disabled');
 }
 
+async function cover(req, res, next) {
+  try {
+    const {id} = req.params;
+    const cover = await db.cover.get(+id);
+    if (!cover) return res.sendStatus(404); // ignored
+    res.writeHead(200, {'Content-Type': cover.format});
+    res.end(Buffer.from(cover.image));
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   auth,
   login,
@@ -318,6 +330,7 @@ module.exports = {
     disable: cacheDisable,
     update: cacheUpdate,
   },
+  cover,
 };
 
 // end of api.js

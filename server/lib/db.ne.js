@@ -69,6 +69,8 @@ async function songAdd(song) {
     throw new Error(`invalid song path: ${inspect(song.path)}`);
   }
 
+  delete song.cover;
+
   return db.song.updateAsync({id: song.id}, song, {upsert: true});
 }
 
@@ -189,6 +191,9 @@ module.exports = {
     add: songAdd,
     touch: songTouch,
     clear: songClear,
+  },
+  cover: {
+    get: async () => null,
   },
   version: {
     get: versionGet,
