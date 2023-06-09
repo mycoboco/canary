@@ -54,11 +54,11 @@ async function songList() {
 }
 
 async function songPath(id) {
-  return db.song.findAsync({id}, {_id: 0, path: 1});
+  return db.song.findOneAsync({id}, {_id: 0, path: 1});
 }
 
 async function songGet(id) {
-  return db.song.findAsync({id}, {_id: 0});
+  return db.song.findOneAsync({id}, {_id: 0});
 }
 
 async function songAdd(song) {
