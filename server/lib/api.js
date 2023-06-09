@@ -42,7 +42,8 @@ function auth(req, res, next) {
 
   let p = req.headers.authorization.substring(5); // 'Basic ...'
   p = Buffer.from(p, 'base64').toString();
-  p = p.substring(p.indexOf(':')); // iTunes_12.1:password
+  // iTunes_Music/1.2.5 (Macintosh; OS X 12.6) AppleWebKit/613.3.9.1.16 build/7 (dt:1):password
+  p = p.substring(p.lastIndexOf(':'));
   if (p !== `:${config.server.password}`) {
     log.warning('authorization failed');
     return res.sendStatus(401);
