@@ -26,7 +26,7 @@
     "start": "node server.js -c config"
   },
   "dependencies": {
-    "@hodgepodge-node/db": "^0.4.4",
+    "@hodgepodge-node/db": "^0.4.5",
     "@hodgepodge-node/server": "^0.5.7",
     "@hodgepodge-node/util": "^0.5.2",
     "@seald-io/nedb": "^4.0.2",
