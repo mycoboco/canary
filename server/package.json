@@ -46,6 +46,15 @@
     "eslint": "^8.41.0",
     "eslint-config-google": "^0.14.0"
   },
+  "overrides": {
+    "mongoose-gridfs": {
+      "@lykmapipo/mongoose-common": {
+        "@lykmapipo/common": {
+          "flat": "^5.0.2"
+        }
+      }
+    }
+  },
   "engines": {
     "node": ">=16.15.1"
   },
