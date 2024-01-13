@@ -195,7 +195,9 @@ function usage() {
 
     mp3.init();
     if (argv.rescan) mp3.scan(true, argv.rebuild);
-    app.listen(config.server.port, '::', () => {
+
+    const server = require('http').createServer({requireHostHeader: false}, app);
+    server.listen(config.server.port, () => {
       log.info(`listening on port ${config.server.port}`);
     });
   } catch (err) {
