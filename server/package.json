@@ -36,7 +36,6 @@
     "mdns-js": "^1.0.3",
     "mime": "^3.0.0",
     "mkdirp": "^3.0.1",
-    "mongoose-gridfs": "^1.3.0",
     "music-metadata": "^3.8.0",
     "ontime": "^0.1.1",
     "which": "^3.0.1",
@@ -45,9 +44,6 @@
   "devDependencies": {
     "eslint": "^8.41.0",
     "eslint-config-google": "^0.14.0"
-  },
-  "overrides": {
-    "flat": "^5.0.2"
   },
   "engines": {
     "node": ">=16.15.1"

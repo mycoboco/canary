@@ -7,7 +7,6 @@ const {inspect} = require('util');
 
 const _mongoose = require('mongoose');
 const {Schema} = _mongoose;
-const {createBucket} = require('mongoose-gridfs');
 const {logger} = require('@hodgepodge-node/server');
 const mongoose = require('@hodgepodge-node/db/mongoose')(_mongoose);
 const {safePipe} = require('@hodgepodge-node/util');
@@ -61,7 +60,7 @@ const coverSchema = new Schema({
 });
 let Cover;
 
-let Bucket;
+let bucket;
 
 let log;
 let db;
@@ -78,7 +77,7 @@ async function init() {
   Info = db.model('Info', infoSchema);
   Song = db.model('Song', songSchema);
   Cover = db.model('Cover', coverSchema);
-  Bucket = createBucket({connection: db});
+  bucket = new _mongoose.mongo.GridFSBucket(db.db);
 }
 
 function close() {
@@ -212,7 +211,7 @@ function hashQuery(metas) {
 
 function cacheRead(name, metas, to, handler) {
   name = `${name}-${hashQuery(metas)}`;
-  const rs = Bucket.createReadStream({filename: name});
+  const rs = bucket.openDownloadStreamByName(name);
 
   log.info(`reading cache for ${name}`);
   safePipe(rs, to, handler);
@@ -220,7 +219,7 @@ function cacheRead(name, metas, to, handler) {
 
 function cacheWrite(name, metas, buffer, handler) {
   name = `${name}-${hashQuery(metas)}`;
-  const ws = Bucket.createWriteStream({filename: name});
+  const ws = bucket.openUploadStream(name);
 
   log.info(`writing cache for ${name}`);
   ws.on('error', (err) => handler(err));
@@ -229,9 +228,7 @@ function cacheWrite(name, metas, buffer, handler) {
 }
 
 async function cacheExist(name, metas) {
-  // cannot use Bucket.findOne() because of no support for Promise
-  // use underlying driver instead
-  return db.db.collection('fs.files').findOne({filename: `${name}-${hashQuery(metas)}`});
+  return bucket.find({filename: `${name}-${hashQuery(metas)}`}).count({limit: 1});
 }
 
 async function cacheClear() {
