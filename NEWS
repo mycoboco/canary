@@ -1,6 +1,15 @@
 What's new in canary?
 =====================
 
+2024-01-13  0.2.5  fix to run with Apple Music and iTunes
+2023-06-09  0.2.2  support cover images
+2023-06-09  0.2.1  update min node version
+2023-05-25  0.2.0  use express
+2021-09-06  0.1.5  released for security
+2021-05-05  0.1.4  released for security
+2019-10-23  0.1.3  add .bin and stop dns-sd on termination
+2019-10-21  0.1.2  released to support ES6 features
+2019-09-24  0.0.18 replace watch with chokidar
 2019-07-17  0.0.17 released with better exception handling
 2019-06-02  0.0.16 released for security vulnerabilities
 2018-12-17  0.0.15 released for security vulnerabilities
