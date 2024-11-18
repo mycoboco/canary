@@ -2,23 +2,23 @@
  *  DB wrapper for NeDB
  */
 
-const crypto = require('crypto');
-const {inspect} = require('util');
-const fs = require('fs').promises;
-const {createReadStream, createWriteStream} = require('fs');
-const path = require('path');
+import * as crypto from 'node:crypto';
+import {inspect} from 'node:util';
+import * as fs from 'node:fs/promises';
+import {createReadStream, createWriteStream} from 'node:fs';
+import * as path from 'node:path';
 
-const Datastore = require('@seald-io/nedb');
+import Datastore from '@seald-io/nedb';
 let db = {};
-const {mkdirp} = require('mkdirp');
-const {logger} = require('@hodgepodge-node/server');
-const {safePipe} = require('@hodgepodge-node/util');
+import {mkdirp} from 'mkdirp';
+import {logger} from '@hodgepodge-node/server';
+import {safePipe} from '@hodgepodge-node/util';
 
-const config = require('../config');
+import config from '../config.js';
 
 let log;
 
-async function init(_conf, cb) {
+export async function init() {
   log = logger.create({
     prefix: 'db',
     level: config.debug ? 'info' : 'error',
@@ -41,28 +41,28 @@ async function init(_conf, cb) {
   await mkdirp(config.db.path);
 }
 
-function close() {
+export function close() {
   // nothing to do
 }
 
-async function songCount() {
+export async function songCount() {
   return db.song.countAsync({});
 }
 
-async function songList() {
+export async function songList() {
   return db.song.findAsync({});
 }
 
-async function songPath(id) {
+export async function songPath(id) {
   return db.song.findOneAsync({id}, {_id: 0, path: 1});
 }
 
-async function songGet(id) {
+export async function songGet(id) {
   return db.song.findOneAsync({id}, {_id: 0});
 }
 
-async function songAdd(song) {
-  if (typeof song.id !== 'number' || song.id !== song.id) {
+export async function songAdd(song) {
+  if (typeof song.id !== 'number' || isNaN(song.id)) {
     throw new Error(`invalid song id: ${inspect(song.id)}`);
   }
   if (typeof song.path !== 'string' || !song.path) {
@@ -74,7 +74,7 @@ async function songAdd(song) {
   return db.song.updateAsync({id: song.id}, song, {upsert: true});
 }
 
-async function songTouch(id, version) {
+export async function songTouch(id, version) {
   return db.song.updateAsync(
     {id},
     {
@@ -83,19 +83,18 @@ async function songTouch(id, version) {
   );
 }
 
-async function songClear(version) {
+export async function songClear(version) {
   return db.song.removeAsync({
     version: {$lt: version},
   });
 }
 
-async function versionGet() {
+export async function versionGet() {
   const versions = await db.info.findAsync({type: 'music'});
-  if (versions.length === 0) versions[0] = {version: 2}; // #26
-  return versions[0].version;
+  return versions[0]?.version ?? 2; // #26
 }
 
-async function versionInc(cb) {
+export async function versionInc() {
   const result = await db.info.updateAsync(
     {type: 'music'},
     {
@@ -113,7 +112,7 @@ async function versionInc(cb) {
   }
 }
 
-async function dbIdGet() {
+export async function dbIdGet() {
   const ids = await db.info.findAsync(
     {type: 'music'},
     {
@@ -121,10 +120,10 @@ async function dbIdGet() {
       _id: 0,
     },
   );
-  return ids && ids[0] && ids[0].dbId;
+  return ids[0]?.dbId;
 }
 
-async function dbIdSet(dbId) {
+export async function dbIdSet(dbId) {
   if (typeof dbId !== 'string' || !dbId) {
     throw new Error(`invalid db id: ${inspect(dbId)}`);
   }
@@ -144,7 +143,7 @@ function cacheName(name, metas) {
   return path.join(config.db.path, `cache-${name}-${md5sum.digest('hex')}`);
 }
 
-function cacheRead(name, metas, to, handler) {
+export function cacheRead(name, metas, to, handler) {
   name = cacheName(name, metas);
   const rs = createReadStream(name);
 
@@ -152,7 +151,7 @@ function cacheRead(name, metas, to, handler) {
   safePipe(rs, to, handler);
 }
 
-function cacheWrite(name, metas, buffer, handler) {
+export function cacheWrite(name, metas, buffer, handler) {
   name = cacheName(name, metas);
   const ws = createWriteStream(name);
 
@@ -162,11 +161,11 @@ function cacheWrite(name, metas, buffer, handler) {
   ws.end();
 }
 
-async function cacheExist(name, metas) {
+export async function cacheExist(name, metas) {
   return fs.stat(cacheName(name, metas));
 }
 
-async function cacheClear() {
+export async function cacheClear() {
   try {
     const files = await fs.readdir(config.db.path);
     return Promise.all(
@@ -180,7 +179,7 @@ async function cacheClear() {
   }
 }
 
-module.exports = {
+export default {
   init,
   close,
   song: {

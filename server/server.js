@@ -4,41 +4,42 @@
  *  canary server
  */
 
-const {version: VERSION} = require('./package.json');
+import {readFileSync} from 'node:fs';
+const {version: VERSION} = JSON.parse(readFileSync('./package.json'));
 
-const config = require('./config');
+import config from './config.js';
 const {argv} = config;
 (function() {
   if (argv.version) version();
   if (!argv.c || argv.help) usage();
 })();
 
-const zlib = require('zlib');
+import * as zlib from 'node:zlib';
 
-const express = require('express');
+import {default as express} from 'express';
 const app = express();
-const {
+import {
   logger,
   dropPrivilege,
-} = require('@hodgepodge-node/server');
+} from '@hodgepodge-node/server';
 
-const db = require('./lib/db');
-const api = require('./lib/api');
-const mp3 = require('./lib/mp3');
-const mdns = require('./lib/mdns');
+import db from './lib/db';
+import api from './lib/api';
+import mp3 from './lib/mp3';
+import mdns from './lib/mdns';
 let service;
 
 let log;
 
 async function exit() {
-  if (mp3) mp3.close();
+  mp3?.close();
   if (service) {
     log.info('stopping service advertisement');
     const _service = service;
     service = null;
     await _service.stop();
   }
-  if (db) db.close();
+  db?.close();
   process.exit(0);
 }
 
@@ -69,9 +70,9 @@ function publishService(services, i = 0) {
   const s = services[i];
   log.info(`running ${s}`);
   service = mdns[s](config.server.name, config.server.port, (err) => {
-    if (service && i < services.length - 1) { // something went wrong
+    if (i < services?.length - 1) { // something went wrong
       service = null;
-      if (!err || !err.signal) {
+      if (!err?.signal) {
         log.warning(`seems not to have '${s}'`);
         if (i + 1 === services.length - 1) log.warning(`fall back to '${services[i + 1]}'`);
         publishService(services, i + 1);
@@ -126,7 +127,7 @@ function usage() {
       log.error(err);
       exit();
     });
-  process.on('SIGUSR2', mp3.scan.bind(mp3, true));
+  process.on('SIGUSR2', () => mp3.scan(true));
 
   dropPrivilege(config.server.runAs, log, exit);
 
@@ -168,10 +169,12 @@ function usage() {
   });
   installRoute();
   // handles errors
-  app.use((err, req, res, _next) => {
+  app.use((err, req, res) => {
     log.warning(`error occurred while handling ${req.method} ${req.url}`);
     log.error(err);
-    res.status(isFinite(err.statusCode) ? err.statusCode : 500).send(err.message);
+    res
+      .status(isFinite(err.statusCode) ? err.statusCode : 500)
+      .send(err.message);
   });
 
   try {

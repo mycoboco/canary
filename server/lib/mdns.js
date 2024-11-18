@@ -2,16 +2,16 @@
  *  service advertisement via mDNS
  */
 
-const {execFile} = require('child_process');
+import {execFile} from 'node:child_process';
 
-const which = require('which');
-const mdns = require('mdns-js');
+import which from 'which';
+import mdns from 'mdns-js';
 
-const db = require('./db');
+import db from './db.js';
 
 let id = 'beddab1edeadbea7';
 
-async function init() {
+export async function init() {
   let dbId = await db.dbId.get();
   if (dbId) return id = dbId;
 
@@ -33,7 +33,7 @@ function getTxts() {
   return ['txtvers=1', `Database ID=${id}`];
 }
 
-function avahi(name, port, handler) {
+export function avahi(name, port, handler) {
   const service = execFile(
     which.sync('avahi-publish-service', {nothrow: true}) || 'avahi-publish-service',
     [
@@ -48,7 +48,7 @@ function avahi(name, port, handler) {
   return {stop: async () => service.kill()};
 }
 
-function dnssd(name, port, handler) {
+export function dnssd(name, port, handler) {
   const service = execFile(
     which.sync('dns-sd', {nothrow: true}) || 'dns-sd',
     [
@@ -65,7 +65,7 @@ function dnssd(name, port, handler) {
   return {stop: async () => service.kill()};
 }
 
-function mdnsjs(name, port, handler) {
+export function mdnsjs(name, port, handler) {
   const service = mdns.createAdvertisement(
     '_daap._tcp',
     port,
@@ -89,7 +89,7 @@ function mdnsjs(name, port, handler) {
   };
 }
 
-module.exports = {
+export default {
   init,
   avahi,
   'dns-sd': dnssd,

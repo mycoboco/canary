@@ -2,20 +2,20 @@
  *  server APIs
  */
 
-const fs = require('fs').promises;
-const {createReadStream} = require('fs');
+import * as fs from 'node:fs/promises';
+import {createReadStream} from 'node:fs';
 
-const mime = require('mime');
-const {
+import mime from 'mime';
+import {
   logger,
   range,
   ServerError,
-} = require('@hodgepodge-node/server');
-const {safePipe} = require('@hodgepodge-node/util');
+} from '@hodgepodge-node/server';
+import {safePipe} from '@hodgepodge-node/util';
 
-const config = require('../config');
-const db = require('./db');
-const daap = require('./daap');
+import config from '../config';
+import db from './db';
+import daap from './daap';
 
 const log = logger.create({
   prefix: 'api',
@@ -32,7 +32,7 @@ const nextSession = (() => {
   };
 })();
 
-function auth(req, res, next) {
+export function auth(req, res, next) {
   if (!config.server.password) return next();
 
   if (!req.headers.authorization) {
@@ -52,7 +52,7 @@ function auth(req, res, next) {
   next();
 }
 
-async function login(_req, res, _next) {
+export async function login(_req, res) {
   res.ok(await daap.build({
     mlog: [
       {mstt: 200},
@@ -61,7 +61,7 @@ async function login(_req, res, _next) {
   }));
 }
 
-async function update(req, res, _next) {
+export async function update(req, res) {
   const run = async () => {
     let version;
 
@@ -84,11 +84,11 @@ async function update(req, res, _next) {
   else run();
 }
 
-function logout(_req, res, _next) {
+export function logout(_req, res) {
   res.ok(Buffer.alloc(0));
 }
 
-async function serverInfo(_req, res, _next) {
+export async function serverInfo(_req, res) {
   const auth = config.server.password ? 2 : 0; // 2: password only
 
   res.ok(await daap.build({
@@ -114,7 +114,7 @@ async function serverInfo(_req, res, _next) {
   }));
 }
 
-async function databaseInfo(req, res, next) {
+export async function databaseInfo(req, res, next) {
   let update;
   try {
     const version = await db.version.get();
@@ -172,7 +172,7 @@ async function sendList(name, metas, res, next) {
   cacheUpdate(name, metas, res, next);
 }
 
-async function databaseItem(req, res, next) {
+export async function databaseItem(req, res, next) {
   const metas = defaultMetas('song', req.query.meta);
 
   try {
@@ -192,7 +192,7 @@ async function databaseItem(req, res, next) {
 }
 
 // TODO: support smart playlists
-async function containerInfo(req, res, _next) {
+export async function containerInfo(req, res) {
   let update;
   try {
     const version = await db.version.get();
@@ -221,7 +221,7 @@ async function containerInfo(req, res, _next) {
   }));
 }
 
-async function containerItem(req, res, next) {
+export async function containerItem(req, res, next) {
   const metas = defaultMetas('container', req.query.meta);
 
   try {
@@ -240,7 +240,7 @@ async function containerItem(req, res, next) {
   await sendList('container', metas, res, next);
 }
 
-async function song(req, res, next) {
+export async function song(req, res, next) {
   try {
     const id = /([0-9]+)\.(mp3|ogg)/i.exec(req.params.file);
     if (!isFinite(+id[1])) throw new ServerError(400, `invaild song id: ${id[1]}`);
@@ -280,7 +280,7 @@ async function song(req, res, next) {
   }
 }
 
-async function cacheUpdate(name, metas = defaultMetas(name), res, next) {
+export async function cacheUpdate(name, metas = defaultMetas(name), res, next) {
   try {
     const songs = await db.song.list();
     const buf = await daap.build(
@@ -293,13 +293,13 @@ async function cacheUpdate(name, metas = defaultMetas(name), res, next) {
   }
 }
 
-function cacheDisable(err) {
+export function cacheDisable(err) {
   cache = false;
   log.error(err);
   log.warning('cache disabled');
 }
 
-async function cover(req, res, next) {
+export async function cover(req, res, next) {
   try {
     const {id} = req.params;
     const cover = await db.cover.get(+id);
@@ -311,7 +311,7 @@ async function cover(req, res, next) {
   }
 }
 
-module.exports = {
+export default {
   auth,
   login,
   update,

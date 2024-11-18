@@ -5,11 +5,11 @@
  *  DAAP response
  */
 
-const {inspect} = require('util');
+import {inspect} from 'node:util';
 
-const {logger} = require('@hodgepodge-node/server');
+import {logger} from '@hodgepodge-node/server';
 
-const config = require('../config');
+import config from '../config.js';
 
 const tag2info = {
   miid: {desc: 'dmap.itemid',                          type: 5, field: 'id'},
@@ -129,7 +129,7 @@ const tag2info = {
   aeSP: {desc: 'com.apple.itunes.smart-playlist',      type: 1},
 };
 const desc2tag = {};
-Object.keys(tag2info).forEach((key) => desc2tag[tag2info[key].desc] = key);
+Object.entries(tag2info).forEach(([key, info]) => desc2tag[info.desc] = key);
 
 const max = {
   byte1: Math.pow(2, 8) - 1,
@@ -197,7 +197,7 @@ function version(v) {
 
   buf.writeUInt16BE(version[1], 0);
   buf.writeUInt8(version[2], 2);
-  buf.writeUInt8(+version[3] || 0, 3);
+  buf.writeUInt8(+version[3] ?? 0, 3);
 
   return buf;
 }
@@ -224,9 +224,8 @@ function chktype(key, val, type) {
 }
 
 async function buffer(obj) {
-  const [key] = Object.keys(obj);
+  let [key, val] = Object.entries(obj);
   const buf = Buffer.from(key, 'utf-8');
-  let val = obj[key];
 
   if (!tag2info[key]) throw new Error(`unknown key: ${key}`);
 
@@ -268,6 +267,7 @@ async function buffer(obj) {
       }
       top = Buffer.alloc(0);
       for (const v of val) {
+        // eslint-disable-next-line no-await-in-loop
         const nested = await buffer(v);
         top = Buffer.concat([top, nested], top.length + nested.length);
       }
@@ -278,7 +278,7 @@ async function buffer(obj) {
   }
 }
 
-async function build(obj) {
+export async function build(obj) {
   log.info(`building DAAP response from: ${inspect(obj)}`);
 
   try {
@@ -288,7 +288,7 @@ async function build(obj) {
   }
 }
 
-async function item(container, songs, metas) {
+export async function item(container, songs, metas) {
   const obj = {};
   const top = container ? 'apso' : 'adbs';
 
@@ -301,11 +301,12 @@ async function item(container, songs, metas) {
 
   const mlcl = [];
   for (const song of songs) {
+    // eslint-disable-next-line no-await-in-loop
     await Promise.resolve();
     const mlit = {};
     metas.forEach((meta) => {
       const key = desc2tag[meta];
-      if (tag2info[key] && tag2info[key].field) mlit[key] = song[tag2info[key].field];
+      if (tag2info[key]?.field) mlit[key] = song[tag2info[key].field];
     });
     mlcl.push({mlit});
   }
@@ -313,13 +314,13 @@ async function item(container, songs, metas) {
   return obj;
 }
 
-module.exports = {
+export default {
   build,
   song: {
-    item: item.bind(null, false),
+    item: () => item(false),
   },
   container: {
-    item: item.bind(null, true),
+    item: () => item(true),
   },
 };
 

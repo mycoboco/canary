@@ -2,16 +2,16 @@
  *  DB wrapper for MongoDB
  */
 
-const crypto = require('crypto');
-const {inspect} = require('util');
+import * as crypto from 'node:crypto';
+import {inspect} from 'node:util';
 
-const _mongoose = require('mongoose');
-const {Schema} = _mongoose;
-const {logger} = require('@hodgepodge-node/server');
-const mongoose = require('@hodgepodge-node/db/mongoose')(_mongoose);
-const {safePipe} = require('@hodgepodge-node/util');
+import _m, {Schema} from 'mongoose';
+import {logger} from '@hodgepodge-node/server';
+import _mongoose from '@hodgepodge-node/db/mongoose';
+const mongoose = _mongoose(_m);
+import {safePipe} from '@hodgepodge-node/util';
 
-const config = require('../config');
+import config from '../config.js';
 
 const infoSchema = new Schema({
   type: {
@@ -65,7 +65,7 @@ let bucket;
 let log;
 let db;
 
-async function init() {
+export async function init() {
   log = logger.create({
     prefix: 'db',
     level: config.debug ? 'info' : 'error',
@@ -80,32 +80,32 @@ async function init() {
   bucket = new _mongoose.mongo.GridFSBucket(db.db);
 }
 
-function close() {
+export function close() {
   mongoose.close();
 }
 
-async function songCount() {
+export async function songCount() {
   return Song.count();
 }
 
-async function songList() {
+export async function songList() {
   return Song.find();
 }
 
-async function songPath(id) {
+export async function songPath(id) {
   return Song.findOne({id}).select('-_id path');
 }
 
-async function songGet(id) {
+export async function songGet(id) {
   return Song.findOne({id}).select('-_id');
 }
 
-async function coverGet(id) {
+export async function coverGet(id) {
   return Cover.findOne({id}).select('-_id');
 }
 
-async function songAdd(song) {
-  if (typeof song.id !== 'number' || song.id !== song.id) {
+export async function songAdd(song) {
+  if (typeof song.id !== 'number' || isNaN(song.id)) {
     throw new Error(`invalid song id: ${inspect(song.id)}`);
   }
   if (typeof song.path !== 'string' || !song.path) {
@@ -129,7 +129,7 @@ async function songAdd(song) {
   return Song.updateOne({id: song.id}, song, {upsert: true});
 }
 
-async function songTouch(id, version) {
+export async function songTouch(id, version) {
   return Promise.all([
     Cover.updateOne(
       {id},
@@ -146,7 +146,7 @@ async function songTouch(id, version) {
   ]);
 }
 
-async function songClear(version) {
+export async function songClear(version) {
   return Promise.allSettled([
     Cover.deleteMany({
       version: {$lt: version},
@@ -157,13 +157,12 @@ async function songClear(version) {
   ]);
 }
 
-async function versionGet() {
+export async function versionGet() {
   const versions = await Info.find({type: 'music'});
-  if (versions.length === 0) versions[0] = {version: 2}; // #26
-  return versions[0].version;
+  return versions[0]?.version ?? 2; // #26
 }
 
-async function versionInc() {
+export async function versionInc() {
   const result = await Info.updateOne(
     {type: 'music'},
     {
@@ -182,14 +181,14 @@ async function versionInc() {
   }
 }
 
-async function dbIdGet() {
+export async function dbIdGet() {
   const ids = await Info
     .find({type: 'music'})
     .select('dbId -_id');
-  return ids && ids[0] && ids[0].dbId;
+  return ids[0]?.dbId;
 }
 
-async function dbIdSet(dbId) {
+export async function dbIdSet(dbId) {
   if (typeof dbId !== 'string' || !dbId) {
     throw new Error(`invalid db id: ${inspect(dbId)}`);
   }
@@ -209,7 +208,7 @@ function hashQuery(metas) {
   return md5sum.digest('hex');
 }
 
-function cacheRead(name, metas, to, handler) {
+export function cacheRead(name, metas, to, handler) {
   name = `${name}-${hashQuery(metas)}`;
   const rs = bucket.openDownloadStreamByName(name);
 
@@ -217,7 +216,7 @@ function cacheRead(name, metas, to, handler) {
   safePipe(rs, to, handler);
 }
 
-function cacheWrite(name, metas, buffer, handler) {
+export function cacheWrite(name, metas, buffer, handler) {
   name = `${name}-${hashQuery(metas)}`;
   const ws = bucket.openUploadStream(name);
 
@@ -227,11 +226,13 @@ function cacheWrite(name, metas, buffer, handler) {
   ws.end();
 }
 
-async function cacheExist(name, metas) {
-  return bucket.find({filename: `${name}-${hashQuery(metas)}`}).count({limit: 1});
+export async function cacheExist(name, metas) {
+  // cannot use Bucket.findOne() because of no support for Promise
+  // use underlying driver instead
+  return db.db.collection('fs.files').findOne({filename: `${name}-${hashQuery(metas)}`});
 }
 
-async function cacheClear() {
+export async function cacheClear() {
   return Promise.all(
     // uses underlying driver
     ['fs.files', 'fs.chunks'].map((name) => db.db.collection(name).drop()),
@@ -239,7 +240,7 @@ async function cacheClear() {
     .catch((err) => log.warning(err)); // errors igrnored
 }
 
-module.exports = {
+export default {
   init,
   close,
   song: {

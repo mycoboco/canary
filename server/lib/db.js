@@ -2,8 +2,10 @@
  *  DB selector
  */
 
-const config = require('../config');
+import config from '../config.js';
+import mongo from './db.mongo.js';
+import ne from './db.ne.js';
 
-module.exports = /mongo/i.test(config.server.db) ? require('./db.mongo') : require('./db.ne');
+export default /mongo/i.test(config.server.db) ? mongo : ne;
 
 // end of db.js

@@ -2,20 +2,20 @@
  *  mp3 scanner
  */
 
-const fs = require('fs').promises;
-const {realpathSync} = require('fs');
-const path = require('path');
-const {inspect} = require('util');
+import * as fs from 'node:fs/promises';
+import {realpathSync} from 'node:fs';
+import * as path from 'node:path';
+import {inspect} from 'node:util';
 
-const mm = require('music-metadata');
-const {FNV} = require('fnv');
-const ontime = require('ontime');
-const {logger} = require('@hodgepodge-node/server');
-const {recursiveWatch: rwatch} = require('@hodgepodge-node/util');
+import mm from 'music-metadata';
+import {FNV} from 'fnv';
+import ontime from 'ontime';
+import {logger} from '@hodgepodge-node/server';
+import {recursiveWatch as rwatch} from '@hodgepodge-node/util';
 
-const config = require('../config');
-const db = require('./db');
-const api = require('./api');
+import config from '../config';
+import db from './db';
+import api from './api';
 
 let log;
 
@@ -27,7 +27,7 @@ let needRescan;
 let inProgress;
 let version;
 
-function init() {
+export function init() {
   log = logger.create({
     prefix: 'mp3',
     level: config.debug ? 'info' : 'error',
@@ -109,13 +109,12 @@ async function meta(song) {
       id: id(song),
       kind: 2,
       title: title || song,
-      artist: albumartist || artist || (artists && artists.filter((a) => a).join(', ')) ||
-        '(Unknown Artist)',
+      artist: albumartist || artist || artists?.filter((a) => a).join(', ') || '(Unknown Artist)',
       album: album || '(Unknown Album)',
-      time: Math.floor((format && format.duration * 1000) || 0),
-      year: year || 0,
-      track: (track && track.no) || 0,
-      genre: (genre && genre.filter((g) => g).join(', ')) || '(Unknown Genre)',
+      time: Math.floor(format?.duration * 1000 ?? 0),
+      year: year ?? 0,
+      track: (track?.no) ?? 0,
+      genre: genre?.filter((g) => g).join(', ') || '(Unknown Genre)',
       format: path.extname(song).substring(1, song.length - 1),
       path: song,
       cover: picture && {
@@ -199,7 +198,7 @@ async function next(update) {
 
     try {
       const song = await db.song.get(id(file));
-      changed = update || !song || song.mtime.valueOf() !== stats.mtime.valueOf();
+      changed = update || song?.mtime.valueOf() !== stats.mtime.valueOf();
     } catch (err) {
       log.error(err);
       changed = true;
@@ -256,7 +255,7 @@ async function next(update) {
   await next(update);
 }
 
-async function scan(force, update) {
+export async function scan(force, update) {
   if (!force && !needRescan) {
     log.info('rescan is not necessary');
     return;
@@ -281,11 +280,11 @@ async function scan(force, update) {
   await next(update);
 }
 
-function close() {
+export function close() {
   // nothing to do
 }
 
-module.exports = {
+export default {
   init,
   scan,
   close,
