@@ -27,7 +27,7 @@
     "start": "node server.js -c config"
   },
   "dependencies": {
-    "@hodgepodge-node/db": "^0.5.1",
+    "@hodgepodge-node/db": "^0.5.2",
     "@hodgepodge-node/server": "^0.6.1",
     "@hodgepodge-node/util": "^0.6.2",
     "@seald-io/nedb": "^4.0.4",
@@ -44,6 +44,16 @@
   },
   "devDependencies": {
     "eslint": "^8.57.0"
+  },
+  "overrides": {
+    "mongoose-gridfs": {
+      "@lykmapipo/mongoose-common": {
+        "@lykmapipo/common": {
+          "mime": "^2.6.0",
+          "flat": "^5.0.2"
+        }
+      }
+    }
   },
   "engines": {
     "node": ">=20.0.0"
