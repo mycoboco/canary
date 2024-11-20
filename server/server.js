@@ -4,6 +4,7 @@
  *  canary server
  */
 
+import {createServer} from 'node:http';
 import {readFileSync} from 'node:fs';
 const {version: VERSION} = JSON.parse(readFileSync('./package.json'));
 
@@ -199,7 +200,7 @@ function usage() {
     mp3.init();
     if (argv.rescan) mp3.scan(true, argv.rebuild);
 
-    const server = require('http').createServer({requireHostHeader: false}, app);
+    const server = createServer({requireHostHeader: false}, app);
     server.listen(config.server.port, () => {
       log.info(`listening on port ${config.server.port}`);
     });
