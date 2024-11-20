@@ -77,7 +77,7 @@ export async function init() {
   Info = db.model('Info', infoSchema);
   Song = db.model('Song', songSchema);
   Cover = db.model('Cover', coverSchema);
-  bucket = new _mongoose.mongo.GridFSBucket(db.db);
+  bucket = new _m.mongo.GridFSBucket(db.db);
 }
 
 export function close() {
