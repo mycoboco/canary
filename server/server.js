@@ -23,10 +23,10 @@ import {
   dropPrivilege,
 } from '@hodgepodge-node/server';
 
-import db from './lib/db';
-import api from './lib/api';
-import mp3 from './lib/mp3';
-import mdns from './lib/mdns';
+import db from './lib/db.js';
+import api from './lib/api.js';
+import mp3 from './lib/mp3.js';
+import mdns from './lib/mdns.js';
 let service;
 
 let log;

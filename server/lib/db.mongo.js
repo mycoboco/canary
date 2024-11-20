@@ -7,7 +7,7 @@ import {inspect} from 'node:util';
 
 import _m, {Schema} from 'mongoose';
 import {logger} from '@hodgepodge-node/server';
-import _mongoose from '@hodgepodge-node/db/mongoose';
+import {mongoose as _mongoose} from '@hodgepodge-node/db';
 const mongoose = _mongoose(_m);
 import {safePipe} from '@hodgepodge-node/util';
 

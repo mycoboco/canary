@@ -7,15 +7,15 @@ import {realpathSync} from 'node:fs';
 import * as path from 'node:path';
 import {inspect} from 'node:util';
 
-import mm from 'music-metadata';
+import {parseFile} from 'music-metadata';
 import {FNV} from 'fnv';
 import ontime from 'ontime';
 import {logger} from '@hodgepodge-node/server';
 import {recursiveWatch as rwatch} from '@hodgepodge-node/util';
 
-import config from '../config';
-import db from './db';
-import api from './api';
+import config from '../config.js';
+import db from './db.js';
+import api from './api.js';
 
 let log;
 
@@ -127,7 +127,7 @@ async function meta(song) {
   };
 
   try {
-    const metadata = await mm.parseFile(song, {
+    const metadata = await parseFile(song, {
       duration: true,
       skipCovers: !config.server.useMongo, // cover only supported with MongoDB
     });
