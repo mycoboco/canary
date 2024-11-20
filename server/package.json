@@ -45,16 +45,6 @@
   "devDependencies": {
     "eslint": "^8.57.0"
   },
-  "overrides": {
-    "mongoose-gridfs": {
-      "@lykmapipo/mongoose-common": {
-        "@lykmapipo/common": {
-          "mime": "^2.6.0",
-          "flat": "^5.0.2"
-        }
-      }
-    }
-  },
   "engines": {
     "node": ">=20.0.0"
   },
