@@ -45,6 +45,11 @@
   "devDependencies": {
     "eslint": "^8.57.0"
   },
+  "overrides": {
+    "mdns-js": {
+      "semver": "^5.7.2"
+    }
+  },
   "engines": {
     "node": ">=20.0.0"
   },
