@@ -224,8 +224,9 @@ function chktype(key, val, type) {
 }
 
 async function buffer(obj) {
-  let [key, val] = Object.entries(obj);
+  const [key] = Object.keys(obj);
   const buf = Buffer.from(key, 'utf-8');
+  let val = obj[key];
 
   if (!tag2info[key]) throw new Error(`unknown key: ${key}`);
 
@@ -317,10 +318,10 @@ export async function item(container, songs, metas) {
 export default {
   build,
   song: {
-    item: () => item(false),
+    item: (...args) => item(false, ...args),
   },
   container: {
-    item: () => item(true),
+    item: (...args) => item(true, ...args),
   },
 };
 

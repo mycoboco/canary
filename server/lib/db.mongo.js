@@ -85,7 +85,7 @@ export function close() {
 }
 
 export async function songCount() {
-  return Song.count();
+  return Song.countDocuments();
 }
 
 export async function songList() {
