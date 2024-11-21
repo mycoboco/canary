@@ -108,7 +108,7 @@ async function meta(song) {
     const meta = {
       id: id(song),
       kind: 2,
-      title: title || song,
+      title: title || path.basename(song),
       artist: albumartist || artist || artists?.filter((a) => a).join(', ') || '(Unknown Artist)',
       album: album || '(Unknown Album)',
       time: Math.floor(format?.duration * 1000 ?? 0),
@@ -133,8 +133,8 @@ async function meta(song) {
     });
     return setMeta(song, metadata);
   } catch (err) {
-    log.error('failed to retrieve meta data from %s', song, err);
-    setMeta(song, {common: {}});
+    log.error(`failed to retrieve meta data from ${song}`, err);
+    return setMeta(song, {common: {}});
   }
 }
 
