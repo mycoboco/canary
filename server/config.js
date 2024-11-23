@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 import yargs from 'yargs';
 import {hideBin} from 'yargs/helpers';
-import {default as konphyg} from 'konphyg';
+import konphyg from 'konphyg';
 
 const argv = yargs(hideBin(process.argv))
   .version(false)
@@ -29,9 +29,9 @@ let ex = {argv};
 
 if (argv.rebuild) argv.rescan = true;
 
-if (argv.c) {
+if (argv.c) { // --config
   const config = konphyg(
-    path.isAbsolute(argv.config) ? argv.c : path.join(__dirname, argv.c),
+    path.isAbsolute(argv.c) ? argv.c : path.join(__dirname, argv.c),
   );
 
   const server = config('server');

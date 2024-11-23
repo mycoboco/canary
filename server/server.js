@@ -17,7 +17,7 @@ const {argv} = config;
 
 import * as zlib from 'node:zlib';
 
-import {default as express} from 'express';
+import express from 'express';
 const app = express();
 import {
   logger,
