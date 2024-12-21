@@ -3,9 +3,8 @@
  */
 
 import * as path from 'node:path';
-import {fileURLToPath} from 'url';
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+import {__dirname} from '@hodgepodge-node/util';
 import yargs from 'yargs';
 import {hideBin} from 'yargs/helpers';
 import konphyg from 'konphyg';
@@ -31,7 +30,7 @@ if (argv.rebuild) argv.rescan = true;
 
 if (argv.c) { // --config
   const config = konphyg(
-    path.isAbsolute(argv.c) ? argv.c : path.join(__dirname, argv.c),
+    path.isAbsolute(argv.c) ? argv.c : path.join(__dirname(import.meta.url), argv.c),
   );
 
   const server = config('server');
