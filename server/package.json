@@ -5,10 +5,10 @@
   "author": {
     "name": "Woong Jun",
     "email": "woong.jun@gmail.com",
-    "url": "http://code.woong.org/"
+    "url": "https://code.woong.org/"
   },
   "contributors": [],
-  "homepage": "http://code.woong.org/canary",
+  "homepage": "https://code.woong.org/canary",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mycoboco/canary.git"

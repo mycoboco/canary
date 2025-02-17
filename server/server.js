@@ -106,7 +106,7 @@ function usage() {
     '      --help            display this help and exit\n' +
     '      --version         display version information and exit\n',
   );
-  console.log('For bug reporting instructions, please see: <http://code.woong.org/>.');
+  console.log('For bug reporting instructions, please see: <https://code.woong.org/>.');
   process.exit(); // cannot use exit()
 }
 

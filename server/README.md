@@ -3,13 +3,13 @@ canary: a music streaming server/client
 
 `canary` is a package of a music streaming server and its companion iOS client
 that run upon
-[DAAP](http://en.wikipedia.org/wiki/Digital_Audio_Access_Protocol). Employing
+[DAAP](https://en.wikipedia.org/wiki/Digital_Audio_Access_Protocol). Employing
 DAAP for streaming and
-[mDNS](http://www.multicastdns.org)/[DNS-SD](http://www.dns-sd.org) for service
-advertisement let `canary` work perfectly with
+[mDNS](https://www.multicastdns.org)/[DNS-SD](https://www.dns-sd.org) for
+service advertisement let `canary` work perfectly with
 [iTunes](https://www.apple.com/itunes/).
 
-![running canary and iTunes](http://code.woong.org/common/files/canary-run.png)
+![running canary and iTunes](https://code.woong.org/common/files/canary-run.png)
 
 This document explains the server. See the files in the `client` directory for
 the client.
@@ -32,7 +32,7 @@ but does not support yet:
 The initial scan of songs is fairly fast thanks to high performance of the
 [`music-metadata`](https://www.npmjs.com/package/music-metadata) module; about 7 mins
 with 5,000+ songs on my [Gentoo](https://www.gentoo.org/) machine with
-[Intel Atom D525](http://ark.intel.com/products/49490/Intel-Atom-Processor-D525-1M-Cache-1_80-GHz),
+[Intel Atom D525](https://ark.intel.com/products/49490/Intel-Atom-Processor-D525-1M-Cache-1_80-GHz),
 4GB RAM and a 5400-rpm HDD. Once the database has been built, rescanning is
 even faster; about 1 min on the same condition. The server remembers the mtime,
 modification time of files and reads only added or modified files.
@@ -48,7 +48,7 @@ started to support a stand-alone DB,
 depend on MongoDB, however, if a huge number of songs need to be
 served, because NeDB stores all its indexed data on memory.
 
-`canary` can run with [`avahi`](http://www.avahi.org/) or
+`canary` can run with [`avahi`](https://www.avahi.org/) or
 [`dns-sd`](https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man1/dns-sd.1.html),
 or launch its own instance of mDNS/DNS-SD service implemented in pure
 JavaScript ([`node-mdns-js`](https://www.npmjs.com/package/mdns-js)) when you
@@ -213,4 +213,4 @@ needs many improvements that include, but not limited to:
 issues, see the accompanying `LICENSE.md` file.
 
 If you have a question or suggestion, do not hesitate to contact me via email
-(woong.jun at gmail.com) or web (http://code.woong.org/).
+(woong.jun at gmail.com) or web (https://code.woong.org/).

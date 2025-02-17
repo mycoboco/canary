@@ -4,7 +4,7 @@ canary: a music streaming server/client
 Copyright (C) 2015-2024 by Woong Jun.
 
 This package is a music streaming server and its companion iOS client that run
-upon [DAAP](http://en.wikipedia.org/wiki/Digital_Audio_Access_Protocol).
+upon [DAAP](https://en.wikipedia.org/wiki/Digital_Audio_Access_Protocol).
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in

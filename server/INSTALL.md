@@ -2,8 +2,8 @@ How to build and install canary
 ===============================
 
 This package does not provide an automated way to build or install the server
-except using [`npm`](http://npmjs.org/package/ontime.js) because
-`canary-server` is intended to runs on top of [`node.js`](http://nodejs.org).
+except using [`npm`](https://npmjs.org/package/ontime.js) because
+`canary-server` is intended to runs on top of [`node.js`](https://nodejs.org).
 If you have `node.js` in your system,
 
     npm install canary
