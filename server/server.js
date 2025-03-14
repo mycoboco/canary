@@ -170,7 +170,7 @@ function usage() {
   });
   installRoute();
   // handles errors
-  app.use((err, req, res) => {
+  app.use((err, req, res, _next) => {
     log.warning(`error occurred while handling ${req.method} ${req.url}`);
     log.error(err);
     res
