@@ -67,11 +67,19 @@ function id(s) {
 
 async function meta(song) {
   const chkmeta = (meta) => {
-    if (!isFinite(+meta.year)) {
-      meta.year = /^\s*([0-9]{2,4})/.exec(meta.year);
-      if (meta.year) [, meta.year] = meta.year;
+    let {year} = meta;
+    if (!isFinite(+year)) { // 2025-03-15
+      year = /^\s*([0-9]{2,4})/.exec(year);
+      if (year) [, year] = year;
+    } else if (/^\s*([0-9]{6,8})\s*$/.test(`${year}`)) {
+      // 20250314, 202503 or 250314
+      year = `${year}`.substring(0, 4);
+      if (year > new Date().getFullYear()) year = `${year}`.substring(0, 2);
     }
-    meta.year = Math.max(0, +meta.year);
+    if (+year > 0 && +year < 100) { // 25
+      year = +year + 2000; // assume 2025
+    }
+    meta.year = Math.max(0, +year);
 
     if (!isFinite(+meta.track) || +meta.track < 0) meta.track = 0;
     else meta.track = +meta.track;
