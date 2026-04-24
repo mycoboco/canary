@@ -60,6 +60,21 @@ const coverSchema = new Schema({
 });
 let Cover;
 
+const smartplsSchema = new Schema({
+  id: {
+    index: true,
+    type: Number,
+  },
+  name: String,
+  match: String,
+  rules: [{
+    field: String,
+    op: String,
+    value: Schema.Types.Mixed,
+  }],
+});
+let SmartPls;
+
 let bucket;
 
 let log;
@@ -77,6 +92,7 @@ export async function init() {
   Info = db.model('Info', infoSchema);
   Song = db.model('Song', songSchema);
   Cover = db.model('Cover', coverSchema);
+  SmartPls = db.model('SmartPls', smartplsSchema);
   bucket = new _m.mongo.GridFSBucket(db.db);
 }
 
@@ -201,6 +217,50 @@ export async function dbIdSet(dbId) {
   );
 }
 
+export async function smartplsNextId() {
+  const info = await Info.find({type: 'playlist'});
+  return info[0]?.nextId ?? 1;
+}
+
+export async function smartplsIncId() {
+  const result = await Info.updateOne(
+    {type: 'playlist'},
+    {$inc: {nextId: 1}},
+  );
+  if (result.modifiedCount === 0) {
+    return Info.updateOne(
+      {type: 'playlist'},
+      {$set: {nextId: 2}},
+      {upsert: true},
+    );
+  }
+}
+
+export async function smartplsList() {
+  return SmartPls.find();
+}
+
+export async function smartplsGet(id) {
+  return SmartPls.findOne({id});
+}
+
+export async function smartplsAdd(playlist) {
+  return SmartPls.create(playlist);
+}
+
+export async function smartplsUpdate(id, playlist) {
+  return SmartPls.findOneAndUpdate({id}, {$set: playlist}, {new: true});
+}
+
+export async function smartplsRemove(id) {
+  const result = await SmartPls.deleteOne({id});
+  return result.deletedCount;
+}
+
+export async function smartplsQuery(query) {
+  return Song.find(query);
+}
+
 function hashQuery(metas) {
   const md5sum = crypto.createHash('md5');
 
@@ -268,6 +328,16 @@ export default {
     write: cacheWrite,
     exist: cacheExist,
     clear: cacheClear,
+  },
+  smartpls: {
+    list: smartplsList,
+    get: smartplsGet,
+    add: smartplsAdd,
+    update: smartplsUpdate,
+    remove: smartplsRemove,
+    nextId: smartplsNextId,
+    incId: smartplsIncId,
+    query: smartplsQuery,
   },
 };
 
