@@ -33,10 +33,15 @@ export async function init() {
       filename: path.join(config.db.path, 'info.db'),
       autoload: true,
     }),
+    smartpls: new Datastore({
+      filename: path.join(config.db.path, 'smartpls.db'),
+      autoload: true,
+    }),
   };
   db.info.ensureIndex({fieldName: 'type'});
   db.song.ensureIndex({fieldName: 'id'});
   db.song.ensureIndex({fieldName: 'version'});
+  db.smartpls.ensureIndex({fieldName: 'id'});
 
   await mkdirp(config.db.path);
 }
@@ -179,6 +184,51 @@ export async function cacheClear() {
   }
 }
 
+export async function smartplsNextId() {
+  const info = await db.info.findAsync({type: 'playlist'});
+  return info[0]?.nextId ?? 1;
+}
+
+export async function smartplsIncId() {
+  const result = await db.info.updateAsync(
+    {type: 'playlist'},
+    {$inc: {nextId: 1}},
+  );
+  if (result.numAffected === 0) {
+    return db.info.updateAsync(
+      {type: 'playlist'},
+      {$set: {nextId: 2}},
+      {upsert: true},
+    );
+  }
+}
+
+export async function smartplsList() {
+  return db.smartpls.findAsync({});
+}
+
+export async function smartplsGet(id) {
+  return db.smartpls.findOneAsync({id});
+}
+
+export async function smartplsAdd(playlist) {
+  return db.smartpls.insertAsync(playlist);
+}
+
+export async function smartplsUpdate(id, playlist) {
+  const result = await db.smartpls.updateAsync({id}, {$set: playlist});
+  if (result.numAffected === 0) return null;
+  return db.smartpls.findOneAsync({id});
+}
+
+export async function smartplsRemove(id) {
+  return db.smartpls.removeAsync({id});
+}
+
+export async function smartplsQuery(query) {
+  return db.song.findAsync(query);
+}
+
 export default {
   init,
   close,
@@ -207,6 +257,16 @@ export default {
     write: cacheWrite,
     exist: cacheExist,
     clear: cacheClear,
+  },
+  smartpls: {
+    list: smartplsList,
+    get: smartplsGet,
+    add: smartplsAdd,
+    update: smartplsUpdate,
+    remove: smartplsRemove,
+    nextId: smartplsNextId,
+    incId: smartplsIncId,
+    query: smartplsQuery,
   },
 };
 
