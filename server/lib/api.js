@@ -16,6 +16,7 @@ import {safePipe} from '@hodgepodge-node/util';
 import config from '../config.js';
 import db from './db.js';
 import daap from './daap.js';
+import playlist from './playlist.js';
 
 const log = logger.create({
   prefix: 'api',
@@ -191,7 +192,6 @@ export async function databaseItem(req, res, next) {
   await sendList('song', metas, res, next);
 }
 
-// TODO: support smart playlists
 export async function containerInfo(req, res) {
   let update;
   try {
@@ -201,27 +201,72 @@ export async function containerInfo(req, res) {
     update = true;
   }
 
-  const mlcl = !update ? [] : {
-    mlit: [
-      {miid: 1},
-      {mper: 1},
-      {minm: config.server.name},
-      {mimc: 1},
-    ],
-  };
+  const mlcl = [];
+  if (update) {
+    // base library container
+    const songCount = await db.song.count();
+    mlcl.push({
+      mlit: [
+        {miid: 1},
+        {mper: 1},
+        {minm: config.server.name},
+        {mimc: songCount},
+      ],
+    });
 
+    // smart playlists
+    try {
+      const playlists = await db.smartpls.list();
+      for (const pls of playlists) {
+        const songs = await playlist.evaluate(pls);
+        mlcl.push({
+          mlit: [
+            {miid: pls.id + 1},
+            {mper: pls.id + 1},
+            {minm: pls.name},
+            {mimc: songs.length},
+            {aeSP: true},
+          ],
+        });
+      }
+    } catch (err) {
+      log.error(err);
+    }
+  }
+
+  const total = mlcl.length;
   res.ok(await daap.build({
     aply: [
       {mstt: 200},
       {muty: 0},
-      {mtco: update ? 1 : 0},
-      {mrco: update ? 1 : 0},
+      {mtco: total},
+      {mrco: total},
       {mlcl},
     ],
   }));
 }
 
 export async function containerItem(req, res, next) {
+  const pl = +req.params.pl;
+
+  if (pl !== 1) {
+    // smart playlist
+    try {
+      const pls = await db.smartpls.get(pl - 1);
+      if (!pls) return res.sendStatus(404);
+
+      const songs = await playlist.evaluate(pls);
+      const metas = defaultMetas('container', req.query.meta);
+      res.ok(await daap.build(
+        await daap.container.item(songs, metas),
+      ));
+    } catch (err) {
+      next(err);
+    }
+    return;
+  }
+
+  // base library (existing logic)
   const metas = defaultMetas('container', req.query.meta);
 
   try {

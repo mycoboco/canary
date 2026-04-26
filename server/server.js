@@ -26,6 +26,7 @@ import {
 
 import db from './lib/db.js';
 import api from './lib/api.js';
+import web from './lib/api.web.js';
 import mp3 from './lib/mp3.js';
 import mdns from './lib/mdns.js';
 let service;
@@ -57,6 +58,21 @@ function installRoute() {
       '/databases/1/containers/:pl/items': [api.auth, api.container.item],
       '/databases/1/items/:file': [api.song], // iTunes sends no password
       '/databases/1/items/:id/extra_data/artwork': [api.cover],
+      '/api/server': [api.auth, web.serverInfo],
+      '/api/songs': [api.auth, web.songs],
+      '/api/songs/:id/stream': [web.songStream],
+      '/api/songs/:id/cover': [web.songCover],
+      '/api/playlists': [api.auth, web.playlistList],
+      '/api/playlists/:id/songs': [api.auth, web.playlistSongs],
+    },
+    'post': {
+      '/api/playlists': [api.auth, express.json(), web.playlistCreate],
+    },
+    'put': {
+      '/api/playlists/:id': [api.auth, express.json(), web.playlistUpdate],
+    },
+    'delete': {
+      '/api/playlists/:id': [api.auth, web.playlistDelete],
     },
   };
 
@@ -169,6 +185,14 @@ function usage() {
     next();
   });
   installRoute();
+  // handles /api errors as JSON
+  app.use('/api', (err, req, res, _next) => {
+    log.warning(`error occurred while handling ${req.method} ${req.url}`);
+    log.error(err);
+    res
+      .status(isFinite(err.statusCode) ? err.statusCode : 500)
+      .json({error: err.message});
+  });
   // handles errors
   app.use((err, req, res, _next) => {
     log.warning(`error occurred while handling ${req.method} ${req.url}`);
