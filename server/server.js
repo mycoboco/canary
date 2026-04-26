@@ -185,7 +185,9 @@ function usage() {
     next();
   });
   installRoute();
+
   // handles /api errors as JSON
+  // eslint-disable-next-line no-unused-vars
   app.use('/api', (err, req, res, _next) => {
     log.warning(`error occurred while handling ${req.method} ${req.url}`);
     log.error(err);
@@ -193,7 +195,9 @@ function usage() {
       .status(isFinite(err.statusCode) ? err.statusCode : 500)
       .json({error: err.message});
   });
+
   // handles errors
+  // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, _next) => {
     log.warning(`error occurred while handling ${req.method} ${req.url}`);
     log.error(err);
