@@ -218,6 +218,7 @@ export async function containerInfo(req, res) {
     try {
       const playlists = await db.smartpls.list();
       for (const pls of playlists) {
+        // eslint-disable-next-line no-await-in-loop
         const songs = await playlist.evaluate(pls);
         mlcl.push({
           mlit: [
