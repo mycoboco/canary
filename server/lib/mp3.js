@@ -127,7 +127,7 @@ async function meta(song) {
       path: song,
       cover: picture && {
         format: picture[0].format,
-        image: picture[0].data,
+        image: Buffer.from(picture[0].data),
       },
     };
 
