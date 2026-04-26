@@ -186,7 +186,7 @@ export async function cacheClear() {
 
 export async function smartplsNextId() {
   const info = await db.info.findAsync({type: 'playlist'});
-  return info[0]?.nextId ?? 2;
+  return info[0]?.nextId ?? 10;
 }
 
 export async function smartplsIncId() {
@@ -197,7 +197,7 @@ export async function smartplsIncId() {
   if (result.numAffected === 0) {
     return db.info.updateAsync(
       {type: 'playlist'},
-      {$set: {nextId: 3}},
+      {$set: {nextId: 11}},
       {upsert: true},
     );
   }
