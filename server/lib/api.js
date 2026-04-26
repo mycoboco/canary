@@ -214,6 +214,19 @@ export async function containerInfo(req, res) {
       ],
     });
 
+    // recently added (built-in playlist)
+    if (songCount > 0) {
+      const recent = await db.song.recent(50);
+      mlcl.push({
+        mlit: [
+          {miid: 2},
+          {mper: 2},
+          {minm: 'Recently Added'},
+          {mimc: recent.length},
+        ],
+      });
+    }
+
     // smart playlists
     try {
       const playlists = await db.smartpls.list();
@@ -250,7 +263,21 @@ export async function containerInfo(req, res) {
 export async function containerItem(req, res, next) {
   const pl = +req.params.pl;
 
-  if (pl !== 1) {
+  if (pl === 2) {
+    // recently added
+    try {
+      const songs = await db.song.recent(50);
+      const metas = defaultMetas('container', req.query.meta);
+      res.ok(await daap.build(
+        await daap.container.item(songs, metas),
+      ));
+    } catch (err) {
+      next(err);
+    }
+    return;
+  }
+
+  if (pl > 2) {
     // smart playlist
     try {
       const pls = await db.smartpls.get(pl - 1);

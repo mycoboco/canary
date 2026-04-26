@@ -25,8 +25,29 @@ const log = logger.create({
 });
 
 function sanitizeSong(song) {
-  const {id, title, artist, album, genre, year, track, time, format} = song;
-  return {id, title, artist, album, genre, year, track, time, format};
+  const {
+    id,
+    title,
+    artist,
+    album,
+    genre,
+    year,
+    track,
+    time,
+    format,
+  } = song;
+
+  return {
+    id,
+    title,
+    artist,
+    album,
+    genre,
+    year,
+    track,
+    time,
+    format,
+  };
 }
 
 // GET /api/server
@@ -107,8 +128,26 @@ export async function songCover(req, res, next) {
 // GET /api/playlists
 export async function playlistList(_req, res, next) {
   try {
+    const result = [];
+    const songCount = await db.song.count();
+    if (songCount > 0) {
+      result.push({id: 1, name: 'Recently Added'});
+    }
     const list = await db.smartpls.list();
-    res.json(list.map(({id, name, match, rules}) => ({id, name, match, rules})));
+    result.push(...list.map(({
+      id,
+      name,
+      match,
+      rules,
+    }) => {
+      return {
+        id,
+        name,
+        match,
+        rules,
+      };
+    }));
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -123,8 +162,17 @@ export async function playlistCreate(req, res, next) {
     const id = await db.smartpls.nextId();
     await db.smartpls.incId();
 
-    const {name, match, rules} = req.body;
-    const pls = {id, name: name.trim(), match, rules};
+    const {
+      name,
+      match,
+      rules,
+    } = req.body;
+    const pls = {
+      id,
+      name: name.trim(),
+      match,
+      rules,
+    };
     await db.smartpls.add(pls);
     res.status(201).json(pls);
   } catch (err) {
@@ -140,13 +188,29 @@ export async function playlistUpdate(req, res, next) {
 
     const error = playlist.validate(req.body);
     if (error) return res.status(400).json({error});
+    if (id === 1) return res.status(400).json({error: 'cannot modify built-in playlist'});
 
     const existing = await db.smartpls.get(id);
     if (!existing) return res.status(404).json({error: 'playlist not found'});
 
-    const {name, match, rules} = req.body;
-    const updated = await db.smartpls.update(id, {name: name.trim(), match, rules});
-    res.json({id, name: updated.name, match: updated.match, rules: updated.rules});
+    const {
+      name,
+      match,
+      rules,
+    } = req.body;
+    const updated = await db.smartpls.update(
+      id,
+      {
+        name: name.trim(),
+        match,
+        rules,
+      });
+    res.json({
+      id,
+      name: updated.name,
+      match: updated.match,
+      rules: updated.rules,
+    });
   } catch (err) {
     next(err);
   }
@@ -157,6 +221,7 @@ export async function playlistDelete(req, res, next) {
   try {
     const id = +req.params.id;
     if (!isFinite(id)) return res.status(400).json({error: 'invalid playlist id'});
+    if (id === 1) return res.status(400).json({error: 'cannot delete built-in playlist'});
 
     const existing = await db.smartpls.get(id);
     if (!existing) return res.status(404).json({error: 'playlist not found'});
@@ -173,6 +238,11 @@ export async function playlistSongs(req, res, next) {
   try {
     const id = +req.params.id;
     if (!isFinite(id)) return res.status(400).json({error: 'invalid playlist id'});
+
+    if (id === 1) {
+      const songs = await db.song.recent(50);
+      return res.json(songs.map(sanitizeSong));
+    }
 
     const pls = await db.smartpls.get(id);
     if (!pls) return res.status(404).json({error: 'playlist not found'});

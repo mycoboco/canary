@@ -186,7 +186,7 @@ export async function cacheClear() {
 
 export async function smartplsNextId() {
   const info = await db.info.findAsync({type: 'playlist'});
-  return info[0]?.nextId ?? 1;
+  return info[0]?.nextId ?? 2;
 }
 
 export async function smartplsIncId() {
@@ -197,7 +197,7 @@ export async function smartplsIncId() {
   if (result.numAffected === 0) {
     return db.info.updateAsync(
       {type: 'playlist'},
-      {$set: {nextId: 2}},
+      {$set: {nextId: 3}},
       {upsert: true},
     );
   }
@@ -229,6 +229,12 @@ export async function smartplsQuery(query) {
   return db.song.findAsync(query);
 }
 
+export async function songRecent(limit) {
+  return db.song.findAsync({})
+    .sort({mtime: -1})
+    .limit(limit);
+}
+
 export default {
   init,
   close,
@@ -240,6 +246,7 @@ export default {
     add: songAdd,
     touch: songTouch,
     clear: songClear,
+    recent: songRecent,
   },
   cover: {
     get: async () => null,

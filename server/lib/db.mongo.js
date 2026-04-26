@@ -219,7 +219,7 @@ export async function dbIdSet(dbId) {
 
 export async function smartplsNextId() {
   const info = await Info.find({type: 'playlist'});
-  return info[0]?.nextId ?? 1;
+  return info[0]?.nextId ?? 2;
 }
 
 export async function smartplsIncId() {
@@ -230,7 +230,7 @@ export async function smartplsIncId() {
   if (result.modifiedCount === 0) {
     return Info.updateOne(
       {type: 'playlist'},
-      {$set: {nextId: 2}},
+      {$set: {nextId: 3}},
       {upsert: true},
     );
   }
@@ -259,6 +259,12 @@ export async function smartplsRemove(id) {
 
 export async function smartplsQuery(query) {
   return Song.find(query);
+}
+
+export async function songRecent(limit) {
+  return Song.find()
+    .sort({mtime: -1})
+    .limit(limit);
 }
 
 function hashQuery(metas) {
@@ -311,6 +317,7 @@ export default {
     add: songAdd,
     touch: songTouch,
     clear: songClear,
+    recent: songRecent,
   },
   cover: {
     get: coverGet,
