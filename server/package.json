@@ -1,6 +1,6 @@
 {
   "name": "canary",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "a music streaming server with DAAP support",
   "author": {
     "name": "Woong Jun",
@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@hodgepodge-node/db": "^0.5.2",
-    "@hodgepodge-node/server": "^0.6.1",
+    "@hodgepodge-node/server": "^0.6.2",
     "@hodgepodge-node/util": "^0.6.3",
     "@seald-io/nedb": "^4.0.4",
     "express": "^4.21.0",
