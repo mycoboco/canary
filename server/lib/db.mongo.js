@@ -20,6 +20,7 @@ const infoSchema = new Schema({
   },
   version: Number,
   dbId: String,
+  nextId: Number,
 });
 let Info;
 
@@ -228,11 +229,7 @@ export async function smartplsIncId() {
     {$inc: {nextId: 1}},
   );
   if (result.modifiedCount === 0) {
-    return Info.updateOne(
-      {type: 'playlist'},
-      {$set: {nextId: 11}},
-      {upsert: true},
-    );
+    return Info.create({type: 'playlist', nextId: 11});
   }
 }
 

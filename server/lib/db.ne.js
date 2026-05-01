@@ -195,11 +195,7 @@ export async function smartplsIncId() {
     {$inc: {nextId: 1}},
   );
   if (result.numAffected === 0) {
-    return db.info.updateAsync(
-      {type: 'playlist'},
-      {$set: {nextId: 11}},
-      {upsert: true},
-    );
+    return db.info.insertAsync({type: 'playlist', nextId: 11});
   }
 }
 
