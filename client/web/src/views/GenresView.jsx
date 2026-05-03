@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import SongTable from '../components/SongTable.jsx';
 
-export default function GenresView({genres, onPlay, currentSongId}) {
+export default function GenresView({genres, onPlay, currentSongId, onAddToPlaylist}) {
   const [selected, setSelected] = useState(null);
 
   if (selected) {
@@ -13,7 +13,12 @@ export default function GenresView({genres, onPlay, currentSongId}) {
           className="text-sm text-blue-600 hover:underline mb-2"
         >← Genres</button>
         <h2 className="text-xl font-bold mb-4">{selected}</h2>
-        <SongTable songs={genre?.songs || []} onPlay={onPlay} currentSongId={currentSongId} />
+        <SongTable
+          songs={genre?.songs || []}
+          onPlay={onPlay}
+          currentSongId={currentSongId}
+          onAddToPlaylist={onAddToPlaylist}
+        />
       </div>
     );
   }

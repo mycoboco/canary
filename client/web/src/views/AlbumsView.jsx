@@ -7,7 +7,9 @@ function AlbumCover({coverId, className}) {
 
   if (failed) {
     return (
-      <div className={`${className} flex items-center justify-center text-4xl text-gray-300 bg-gray-100`}>💿</div>
+      <div className={`${className} flex items-center justify-center text-4xl text-gray-300 bg-gray-100`}>
+        💿
+      </div>
     );
   }
 
@@ -21,7 +23,7 @@ function AlbumCover({coverId, className}) {
   );
 }
 
-export default function AlbumsView({albums, onPlay, currentSongId}) {
+export default function AlbumsView({albums, onPlay, currentSongId, onAddToPlaylist}) {
   const [selected, setSelected] = useState(null);
 
   const album = selected ? albums.find((a) => `${a.name}::${a.artist}` === selected) : null;
@@ -44,7 +46,12 @@ export default function AlbumsView({albums, onPlay, currentSongId}) {
             <p className="text-gray-500">{album.artist}</p>
           </div>
         </div>
-        <SongTable songs={album.songs} onPlay={onPlay} currentSongId={currentSongId} />
+        <SongTable
+          songs={album.songs}
+          onPlay={onPlay}
+          currentSongId={currentSongId}
+          onAddToPlaylist={onAddToPlaylist}
+        />
       </div>
     );
   }

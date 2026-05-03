@@ -8,6 +8,7 @@ import Player from './components/Player.jsx';
 import MobileTabBar from './components/MobileTabBar.jsx';
 import MiniPlayer from './components/MiniPlayer.jsx';
 import FullScreenPlayer from './components/FullScreenPlayer.jsx';
+import AddToPlaylistMenu from './components/AddToPlaylistMenu.jsx';
 import SongsView from './views/SongsView.jsx';
 import GenresView from './views/GenresView.jsx';
 import ArtistsView from './views/ArtistsView.jsx';
@@ -21,6 +22,7 @@ export default function App() {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
   const [search, setSearch] = useState('');
   const [showFullPlayer, setShowFullPlayer] = useState(false);
+  const [addingSong, setAddingSong] = useState(null);
 
   function handleNavigate(v) {
     if (v === 'playlist') {
@@ -95,6 +97,7 @@ export default function App() {
               songs={filteredSongs}
               onPlay={player.playSong}
               currentSongId={player.currentSong?.id}
+              onAddToPlaylist={setAddingSong}
             />
           )}
           {view === 'genres' && (
@@ -102,6 +105,7 @@ export default function App() {
               genres={library.genres}
               onPlay={player.playSong}
               currentSongId={player.currentSong?.id}
+              onAddToPlaylist={setAddingSong}
             />
           )}
           {view === 'artists' && (
@@ -110,6 +114,7 @@ export default function App() {
               albums={library.albums}
               onPlay={player.playSong}
               currentSongId={player.currentSong?.id}
+              onAddToPlaylist={setAddingSong}
             />
           )}
           {view === 'albums' && (
@@ -117,6 +122,7 @@ export default function App() {
               albums={library.albums}
               onPlay={player.playSong}
               currentSongId={player.currentSong?.id}
+              onAddToPlaylist={setAddingSong}
             />
           )}
           {view === 'playlist' && (
@@ -127,6 +133,7 @@ export default function App() {
               currentSongId={player.currentSong?.id}
               onReload={library.reloadPlaylists}
               onSelectPlaylist={handleSelectPlaylist}
+              onAddToPlaylist={setAddingSong}
             />
           )}
         </main>
@@ -136,6 +143,14 @@ export default function App() {
       <MobileTabBar view={view} onNavigate={handleNavigate} />
       {showFullPlayer && (
         <FullScreenPlayer player={player} onClose={() => setShowFullPlayer(false)} />
+      )}
+      {addingSong && (
+        <AddToPlaylistMenu
+          song={addingSong}
+          playlists={library.playlists}
+          onClose={() => setAddingSong(null)}
+          onChange={library.reloadPlaylists}
+        />
       )}
     </div>
   );

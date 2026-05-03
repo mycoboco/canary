@@ -5,6 +5,7 @@ import {
   createPlaylist,
   updatePlaylist,
   deletePlaylist,
+  removeSongFromPlaylist,
 } from '../api.js';
 
 const stringOps = [
@@ -112,7 +113,7 @@ function RuleEditor({rules, onChange}) {
   );
 }
 
-function PlaylistEditor({playlist, onSave, onCancel}) {
+function SmartPlaylistEditor({playlist, onSave, onCancel}) {
   const isNew = !playlist;
   const [name, setName] = useState(playlist?.name || '');
   const [match, setMatch] = useState(playlist?.match || 'all');
@@ -123,12 +124,14 @@ function PlaylistEditor({playlist, onSave, onCancel}) {
     try {
       setError(null);
       const cleanRules = rules.map(({field, op, value}) => ({field, op, value}));
-      const data = {name, match, rules: cleanRules};
-      if (isNew) {
-        await createPlaylist(data);
-      } else {
-        await updatePlaylist(playlist.id, data);
-      }
+      const data = {
+        name,
+        type: 'smart',
+        match,
+        rules: cleanRules
+      };
+      if (isNew) await createPlaylist(data);
+      else await updatePlaylist(playlist.id, data);
       onSave();
     } catch (err) {
       setError(err.message);
@@ -176,18 +179,83 @@ function PlaylistEditor({playlist, onSave, onCancel}) {
   );
 }
 
-export default function PlaylistView({playlistId, playlists, onPlay, currentSongId, onReload, onSelectPlaylist}) {
+function ManualPlaylistEditor({playlist, onSave, onCancel}) {
+  const isNew = !playlist;
+  const [name, setName] = useState(playlist?.name || '');
+  const [error, setError] = useState(null);
+
+  async function handleSave() {
+    try {
+      setError(null);
+      if (isNew) {
+        await createPlaylist({name, type: 'manual', songIds: []});
+      } else {
+        await updatePlaylist(playlist.id, {
+          name,
+          type: 'manual',
+          songIds: playlist.songIds ?? [],
+        });
+      }
+      onSave();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  return (
+    <div className="border rounded-lg p-4 bg-gray-50 space-y-4">
+      <div>
+        <label className="block text-sm font-medium mb-1">Name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          autoFocus
+          className="border rounded px-3 py-1.5 text-sm w-full max-w-xs"
+        />
+      </div>
+      {isNew && (
+        <p className="text-xs text-gray-500">
+          Add songs from the Songs, Albums, Artists, or Genres views using the + button on each row.
+        </p>
+      )}
+      {error && <div className="text-red-500 text-sm">{error}</div>}
+      <div className="flex gap-2">
+        <button
+          onClick={handleSave}
+          disabled={!name.trim()}
+          className="px-4 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+        >{isNew ? 'Create' : 'Save'}</button>
+        <button
+          onClick={onCancel}
+          className="px-4 py-1.5 border rounded text-sm hover:bg-gray-100"
+        >Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+export default function PlaylistView({
+  playlistId,
+  playlists,
+  onPlay,
+  currentSongId,
+  onReload,
+  onSelectPlaylist,
+  onAddToPlaylist,
+}) {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(null);
 
   const playlist = playlists.find((p) => p.id === playlistId);
   const isBuiltIn = playlistId < 10;
+  const isManual = playlist?.type === 'manual';
 
   useEffect(() => {
     setEditing(false);
-    setCreating(false);
+    setCreating(null);
     if (!playlistId) return;
     setLoading(true);
     fetchPlaylistSongs(playlistId)
@@ -209,7 +277,7 @@ export default function PlaylistView({playlistId, playlists, onPlay, currentSong
 
   async function handleSaved() {
     setEditing(false);
-    setCreating(false);
+    setCreating(null);
     await onReload();
     if (playlistId) {
       const s = await fetchPlaylistSongs(playlistId);
@@ -217,20 +285,40 @@ export default function PlaylistView({playlistId, playlists, onPlay, currentSong
     }
   }
 
-  if (creating) {
+  async function handleRemoveSong(songId) {
+    try {
+      await removeSongFromPlaylist(playlistId, songId);
+      const s = await fetchPlaylistSongs(playlistId);
+      setSongs(s);
+      await onReload();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  if (creating === 'smart') {
     return (
       <div>
-        <h2 className="text-xl font-bold mb-4">New Playlist</h2>
-        <PlaylistEditor onSave={handleSaved} onCancel={() => setCreating(false)} />
+        <h2 className="text-xl font-bold mb-4">New Smart Playlist</h2>
+        <SmartPlaylistEditor onSave={handleSaved} onCancel={() => setCreating(null)} />
+      </div>
+    );
+  }
+  if (creating === 'manual') {
+    return (
+      <div>
+        <h2 className="text-xl font-bold mb-4">New Manual Playlist</h2>
+        <ManualPlaylistEditor onSave={handleSaved} onCancel={() => setCreating(null)} />
       </div>
     );
   }
 
   if (editing && playlist) {
+    const Editor = playlist.type === 'manual' ? ManualPlaylistEditor : SmartPlaylistEditor;
     return (
       <div>
         <h2 className="text-xl font-bold mb-4">Edit {playlist.name}</h2>
-        <PlaylistEditor playlist={playlist} onSave={handleSaved} onCancel={() => setEditing(false)} />
+        <Editor playlist={playlist} onSave={handleSaved} onCancel={() => setEditing(false)} />
       </div>
     );
   }
@@ -252,15 +340,22 @@ export default function PlaylistView({playlistId, playlists, onPlay, currentSong
           </button>
         ))}
         <button
-          onClick={() => setCreating(true)}
+          onClick={() => setCreating('smart')}
           className="px-3 py-1.5 rounded-full text-sm whitespace-nowrap bg-blue-50 text-blue-600 hover:bg-blue-100"
-        >+ New Playlist</button>
+        >+ New Smart</button>
+        <button
+          onClick={() => setCreating('manual')}
+          className="px-3 py-1.5 rounded-full text-sm whitespace-nowrap bg-blue-50 text-blue-600 hover:bg-blue-100"
+        >+ New Manual</button>
       </div>
 
       {playlist ? (
         <div>
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-xl font-bold">{playlist.name}</h2>
+            {playlist.type && (
+              <span className="text-xs uppercase tracking-wider text-gray-400">{playlist.type}</span>
+            )}
             {!isBuiltIn && (
               <>
                 <button
@@ -277,7 +372,18 @@ export default function PlaylistView({playlistId, playlists, onPlay, currentSong
           {loading ? (
             <div className="text-gray-400 text-sm">Loading...</div>
           ) : (
-            <SongTable songs={songs} onPlay={onPlay} currentSongId={currentSongId} />
+            <SongTable
+              songs={songs}
+              onPlay={onPlay}
+              currentSongId={currentSongId}
+              onAddToPlaylist={onAddToPlaylist}
+              onRemove={isManual ? handleRemoveSong : undefined}
+            />
+          )}
+          {isManual && songs.length === 0 && !loading && (
+            <div className="text-gray-400 text-sm mt-4">
+              No songs yet. Add some from the Songs, Albums, Artists, or Genres views.
+            </div>
           )}
         </div>
       ) : (

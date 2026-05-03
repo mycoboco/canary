@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import SongTable from '../components/SongTable.jsx';
 
-export default function ArtistsView({artists, albums, onPlay, currentSongId}) {
+export default function ArtistsView({artists, albums, onPlay, currentSongId, onAddToPlaylist}) {
   const [selected, setSelected] = useState(null);
 
   if (selected) {
@@ -17,11 +17,21 @@ export default function ArtistsView({artists, albums, onPlay, currentSongId}) {
         {artistAlbums.map((album) => (
           <div key={album.name} className="mb-6">
             <h3 className="text-sm font-semibold text-gray-500 mb-2">{album.name}</h3>
-            <SongTable songs={album.songs} onPlay={onPlay} currentSongId={currentSongId} />
+            <SongTable
+              songs={album.songs}
+              onPlay={onPlay}
+              currentSongId={currentSongId}
+              onAddToPlaylist={onAddToPlaylist}
+            />
           </div>
         ))}
         {artistAlbums.length === 0 && artist && (
-          <SongTable songs={artist.songs} onPlay={onPlay} currentSongId={currentSongId} />
+          <SongTable
+            songs={artist.songs}
+            onPlay={onPlay}
+            currentSongId={currentSongId}
+            onAddToPlaylist={onAddToPlaylist}
+          />
         )}
       </div>
     );
