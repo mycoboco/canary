@@ -106,6 +106,7 @@ Two configuration files are required:
     },
     "db":    "neDB",
     "mdns":  "auto",
+    "web":   "../client/web/dist",
     "debug": false
 }
 ```
@@ -128,6 +129,10 @@ Notes:
     `true`.
 - `db`: `neDB` or `mongoDB`
 - `mdns`: service discovery method
+- `web`: path to the built web client (relative to `server.js` or absolute).
+  Defaults to `../client/web/dist`. Set to `false` to disable web UI serving
+  entirely. If the directory does not exist, the server logs a warning and
+  skips serving (DAAP and `/api` endpoints remain unaffected).
 - `debug`: enables verbose logging
 
 --------------------------------------------------------------------------------
@@ -174,6 +179,16 @@ Since version 0.2.2, `canary` can extract cover images. If upgrading from an
 older version, rebuild the database:
 
     node server.js -c config/ --rebuild
+
+To serve the web client from the same port, build it first:
+
+    cd ../client/web
+    npm install
+    npm run build
+
+The server then serves the built artifacts at `/` (configurable via the `web`
+field in `server.json`). Without a build, the web UI is silently disabled while
+DAAP and `/api` endpoints continue to work.
 
 --------------------------------------------------------------------------------
 
