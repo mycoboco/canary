@@ -125,28 +125,54 @@ export async function songCover(req, res, next) {
   }
 }
 
+function sanitizePlaylist(pls) {
+  const {
+    id, name, type,
+  } = pls;
+  if (type === 'manual') {
+    return {
+      id,
+      name,
+      type,
+      songIds:
+      pls.songIds ?? [],
+    };
+  }
+  return {
+    id,
+    name,
+    type,
+    match: pls.match,
+    rules: pls.rules,
+  };
+}
+
+function buildPlaylistDoc({
+  name, type, match, rules, songIds,
+}) {
+  const base = {name: name.trim(), type};
+  if (type === 'manual') return {...base, songIds: [...new Set(songIds)]};
+  return {
+    ...base,
+    match,
+    rules,
+  };
+}
+
 // GET /api/playlists
 export async function playlistList(_req, res, next) {
   try {
     const result = [];
     const songCount = await db.song.count();
     if (songCount > 0) {
-      result.push({id: 1, name: 'Recently Added'});
+      result.push({
+        id: 1,
+        name: 'Recently Added',
+        type: 'builtin',
+      });
     }
     const list = await db.playlist.list();
-    result.push(...list.map(({
-      id,
-      name,
-      match,
-      rules,
-    }) => {
-      return {
-        id,
-        name,
-        match,
-        rules,
-      };
-    }));
+    result.push(...list.map(sanitizePlaylist));
     res.json(result);
   } catch (err) {
     next(err);
@@ -162,19 +188,9 @@ export async function playlistCreate(req, res, next) {
     const id = await db.playlist.nextId();
     await db.playlist.incId();
 
-    const {
-      name,
-      match,
-      rules,
-    } = req.body;
-    const pls = {
-      id,
-      name: name.trim(),
-      match,
-      rules,
-    };
+    const pls = {id, ...buildPlaylistDoc(req.body)};
     await db.playlist.add(pls);
-    res.status(201).json(pls);
+    res.status(201).json(sanitizePlaylist(pls));
   } catch (err) {
     next(err);
   }
@@ -192,25 +208,12 @@ export async function playlistUpdate(req, res, next) {
 
     const existing = await db.playlist.get(id);
     if (!existing) return res.status(404).json({error: 'playlist not found'});
+    if (existing.type !== req.body.type) {
+      return res.status(400).json({error: 'cannot change playlist type'});
+    }
 
-    const {
-      name,
-      match,
-      rules,
-    } = req.body;
-    const updated = await db.playlist.update(
-      id,
-      {
-        name: name.trim(),
-        match,
-        rules,
-      });
-    res.json({
-      id,
-      name: updated.name,
-      match: updated.match,
-      rules: updated.rules,
-    });
+    const updated = await db.playlist.update(id, buildPlaylistDoc(req.body));
+    res.json(sanitizePlaylist(updated));
   } catch (err) {
     next(err);
   }
@@ -254,6 +257,41 @@ export async function playlistSongs(req, res, next) {
   }
 }
 
+// POST /api/playlists/:id/songs
+export async function playlistAddSong(req, res, next) {
+  try {
+    const id = +req.params.id;
+    if (!isFinite(id)) return res.status(400).json({error: 'invalid playlist id'});
+    const songId = +req.body?.songId;
+    if (!Number.isInteger(songId)) return res.status(400).json({error: 'invalid songId'});
+
+    const song = await db.song.get(songId);
+    if (!song) return res.status(404).json({error: 'song not found'});
+
+    const updated = await db.playlist.addSong(id, songId);
+    if (!updated) return res.status(404).json({error: 'manual playlist not found'});
+    res.json(sanitizePlaylist(updated));
+  } catch (err) {
+    next(err);
+  }
+}
+
+// DELETE /api/playlists/:id/songs/:songId
+export async function playlistRemoveSong(req, res, next) {
+  try {
+    const id = +req.params.id;
+    const songId = +req.params.songId;
+    if (!isFinite(id)) return res.status(400).json({error: 'invalid playlist id'});
+    if (!Number.isInteger(songId)) return res.status(400).json({error: 'invalid songId'});
+
+    const updated = await db.playlist.removeSong(id, songId);
+    if (!updated) return res.status(404).json({error: 'manual playlist not found'});
+    res.json(sanitizePlaylist(updated));
+  } catch (err) {
+    next(err);
+  }
+}
+
 export default {
   serverInfo,
   songs,
@@ -264,4 +302,6 @@ export default {
   playlistUpdate,
   playlistDelete,
   playlistSongs,
+  playlistAddSong,
+  playlistRemoveSong,
 };

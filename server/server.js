@@ -68,12 +68,14 @@ function installRoute() {
     },
     'post': {
       '/api/playlists': [api.auth, express.json(), web.playlistCreate],
+      '/api/playlists/:id/songs': [api.auth, express.json(), web.playlistAddSong],
     },
     'put': {
       '/api/playlists/:id': [api.auth, express.json(), web.playlistUpdate],
     },
     'delete': {
       '/api/playlists/:id': [api.auth, web.playlistDelete],
+      '/api/playlists/:id/songs/:songId': [api.auth, web.playlistRemoveSong],
     },
   };
 

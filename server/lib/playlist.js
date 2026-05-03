@@ -1,5 +1,5 @@
 /*
- *  smart playlist logic
+ *  playlist logic (smart and manual)
  */
 
 import {logger} from '@hodgepodge-node/server';
@@ -21,25 +21,14 @@ function escapeRegex(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function validate(body) {
-  if (!body || typeof body !== 'object') return 'invalid request body';
-
-  const {
-    name,
-    match,
-    rules,
-  } = body;
-
-  if (typeof name !== 'string' || !name.trim()) return 'name is required';
+function validateSmart({match, rules}) {
   if (match !== 'all' && match !== 'any') return 'match must be "all" or "any"';
   if (!Array.isArray(rules) || rules.length === 0) return 'rules must be a non-empty array';
 
   for (const rule of rules) {
     if (!rule || typeof rule !== 'object') return 'each rule must be an object';
     const {
-      field,
-      op,
-      value,
+      field, op, value,
     } = rule;
 
     if (stringFields.has(field)) {
@@ -58,12 +47,29 @@ export function validate(body) {
   return null;
 }
 
+function validateManual({songIds}) {
+  if (!Array.isArray(songIds)) return 'songIds must be an array';
+  for (const id of songIds) {
+    if (!Number.isInteger(id)) return 'songIds must contain integers only';
+  }
+  if (new Set(songIds).size !== songIds.length) return 'songIds must not contain duplicates';
+  return null;
+}
+
+export function validate(body) {
+  if (!body || typeof body !== 'object') return 'invalid request body';
+
+  const {name, type} = body;
+  if (typeof name !== 'string' || !name.trim()) return 'name is required';
+  if (type !== 'smart' && type !== 'manual') return 'type must be "smart" or "manual"';
+
+  return type === 'smart' ? validateSmart(body) : validateManual(body);
+}
+
 export function buildQuery(playlist) {
   const conditions = playlist.rules.map((rule) => {
     const {
-      field,
-      op,
-      value,
+      field, op, value,
     } = rule;
     const cond = {};
 
@@ -92,9 +98,20 @@ export function buildQuery(playlist) {
   return {[op]: conditions};
 }
 
+async function evaluateManual(playlist) {
+  const songs = await Promise.all(playlist.songIds.map((id) => db.song.get(id)));
+  return songs.filter(Boolean);
+}
+
 export async function evaluate(playlist) {
+  if (playlist.type === 'manual') {
+    log.info(
+      `evaluating manual playlist "${playlist.name}" with ${playlist.songIds?.length ?? 0} songs`,
+    );
+    return evaluateManual(playlist);
+  }
   const query = buildQuery(playlist);
-  log.info(`evaluating playlist "${playlist.name}" with query: ${JSON.stringify(query)}`);
+  log.info(`evaluating smart playlist "${playlist.name}" with query: ${JSON.stringify(query)}`);
   return db.playlist.query(query);
 }
 

@@ -227,21 +227,20 @@ export async function containerInfo(req, res) {
       });
     }
 
-    // smart playlists
+    // user playlists (smart and manual)
     try {
       const playlists = await db.playlist.list();
       for (const pls of playlists) {
         // eslint-disable-next-line no-await-in-loop
         const songs = await playlist.evaluate(pls);
-        mlcl.push({
-          mlit: [
-            {miid: pls.id + 1},
-            {mper: pls.id + 1},
-            {minm: pls.name},
-            {mimc: songs.length},
-            {aeSP: true},
-          ],
-        });
+        const mlit = [
+          {miid: pls.id + 1},
+          {mper: pls.id + 1},
+          {minm: pls.name},
+          {mimc: songs.length},
+        ];
+        if (pls.type === 'smart') mlit.push({aeSP: true});
+        mlcl.push({mlit});
       }
     } catch (err) {
       log.error(err);

@@ -67,12 +67,25 @@ const playlistSchema = new Schema({
     type: Number,
   },
   name: String,
+  type: {
+    type: String,
+    enum: ['smart', 'manual'],
+    required: true,
+  },
   match: String,
   rules: [{
     field: String,
     op: String,
     value: Schema.Types.Mixed,
   }],
+  songIds: {
+    type: [Number],
+    default: undefined,
+    validate: {
+      validator: (arr) => !arr || new Set(arr).size === arr.length,
+      message: 'songIds must not contain duplicates',
+    },
+  },
 });
 let Playlist;
 
@@ -254,6 +267,22 @@ export async function playlistRemove(id) {
   return result.deletedCount;
 }
 
+export async function playlistAddSong(id, songId) {
+  return Playlist.findOneAndUpdate(
+    {id, type: 'manual'},
+    {$addToSet: {songIds: songId}},
+    {new: true},
+  );
+}
+
+export async function playlistRemoveSong(id, songId) {
+  return Playlist.findOneAndUpdate(
+    {id, type: 'manual'},
+    {$pull: {songIds: songId}},
+    {new: true},
+  );
+}
+
 export async function playlistQuery(query) {
   return Song.find(query);
 }
@@ -339,6 +368,8 @@ export default {
     add: playlistAdd,
     update: playlistUpdate,
     remove: playlistRemove,
+    addSong: playlistAddSong,
+    removeSong: playlistRemoveSong,
     nextId: playlistNextId,
     incId: playlistIncId,
     query: playlistQuery,

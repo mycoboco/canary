@@ -221,6 +221,20 @@ export async function playlistRemove(id) {
   return db.playlist.removeAsync({id});
 }
 
+export async function playlistAddSong(id, songId) {
+  const pls = await db.playlist.findOneAsync({id, type: 'manual'});
+  if (!pls) return null;
+  await db.playlist.updateAsync({id}, {$addToSet: {songIds: songId}});
+  return db.playlist.findOneAsync({id});
+}
+
+export async function playlistRemoveSong(id, songId) {
+  const pls = await db.playlist.findOneAsync({id, type: 'manual'});
+  if (!pls) return null;
+  await db.playlist.updateAsync({id}, {$pull: {songIds: songId}});
+  return db.playlist.findOneAsync({id});
+}
+
 export async function playlistQuery(query) {
   return db.song.findAsync(query);
 }
@@ -267,6 +281,8 @@ export default {
     add: playlistAdd,
     update: playlistUpdate,
     remove: playlistRemove,
+    addSong: playlistAddSong,
+    removeSong: playlistRemoveSong,
     nextId: playlistNextId,
     incId: playlistIncId,
     query: playlistQuery,
