@@ -6,6 +6,7 @@
 
 import {createServer} from 'node:http';
 import {readFileSync} from 'node:fs';
+import * as path from 'node:path';
 const {version: VERSION} = JSON.parse(readFileSync('./package.json'));
 
 import config from './config.js';
@@ -81,6 +82,17 @@ function installRoute() {
       app[method](path, ...handlers);
     });
   });
+}
+
+function installWeb() {
+  const cfg = config.server.web;
+  if (cfg === false || cfg === null) return;
+  const webRoot = path.resolve(
+    import.meta.dirname,
+    typeof cfg === 'string' && cfg ? cfg : '../client/web/dist',
+  );
+  log.info(`serving web client from ${webRoot}`);
+  app.use(express.static(webRoot));
 }
 
 function publishService(services, i = 0) {
@@ -185,6 +197,7 @@ function usage() {
     next();
   });
   installRoute();
+  installWeb();
 
   // handles /api errors as JSON
   // eslint-disable-next-line no-unused-vars
