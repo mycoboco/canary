@@ -1,3 +1,4 @@
 build
 node_modules
 db
+client/web/dist
