@@ -95,7 +95,7 @@ export function buildQuery(playlist) {
 export async function evaluate(playlist) {
   const query = buildQuery(playlist);
   log.info(`evaluating playlist "${playlist.name}" with query: ${JSON.stringify(query)}`);
-  return db.smartpls.query(query);
+  return db.playlist.query(query);
 }
 
 export default {
