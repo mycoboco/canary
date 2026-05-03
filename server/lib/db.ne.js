@@ -33,15 +33,15 @@ export async function init() {
       filename: path.join(config.db.path, 'info.db'),
       autoload: true,
     }),
-    smartpls: new Datastore({
-      filename: path.join(config.db.path, 'smartpls.db'),
+    playlist: new Datastore({
+      filename: path.join(config.db.path, 'playlists.db'),
       autoload: true,
     }),
   };
   db.info.ensureIndex({fieldName: 'type'});
   db.song.ensureIndex({fieldName: 'id'});
   db.song.ensureIndex({fieldName: 'version'});
-  db.smartpls.ensureIndex({fieldName: 'id'});
+  db.playlist.ensureIndex({fieldName: 'id'});
 
   await mkdirp(config.db.path);
 }
@@ -184,12 +184,12 @@ export async function cacheClear() {
   }
 }
 
-export async function smartplsNextId() {
+export async function playlistNextId() {
   const info = await db.info.findAsync({type: 'playlist'});
   return info[0]?.nextId ?? 10;
 }
 
-export async function smartplsIncId() {
+export async function playlistIncId() {
   const result = await db.info.updateAsync(
     {type: 'playlist'},
     {$inc: {nextId: 1}},
@@ -199,29 +199,29 @@ export async function smartplsIncId() {
   }
 }
 
-export async function smartplsList() {
-  return db.smartpls.findAsync({});
+export async function playlistList() {
+  return db.playlist.findAsync({});
 }
 
-export async function smartplsGet(id) {
-  return db.smartpls.findOneAsync({id});
+export async function playlistGet(id) {
+  return db.playlist.findOneAsync({id});
 }
 
-export async function smartplsAdd(playlist) {
-  return db.smartpls.insertAsync(playlist);
+export async function playlistAdd(playlist) {
+  return db.playlist.insertAsync(playlist);
 }
 
-export async function smartplsUpdate(id, playlist) {
-  const result = await db.smartpls.updateAsync({id}, {$set: playlist});
+export async function playlistUpdate(id, playlist) {
+  const result = await db.playlist.updateAsync({id}, {$set: playlist});
   if (result.numAffected === 0) return null;
-  return db.smartpls.findOneAsync({id});
+  return db.playlist.findOneAsync({id});
 }
 
-export async function smartplsRemove(id) {
-  return db.smartpls.removeAsync({id});
+export async function playlistRemove(id) {
+  return db.playlist.removeAsync({id});
 }
 
-export async function smartplsQuery(query) {
+export async function playlistQuery(query) {
   return db.song.findAsync(query);
 }
 
@@ -261,15 +261,15 @@ export default {
     exist: cacheExist,
     clear: cacheClear,
   },
-  smartpls: {
-    list: smartplsList,
-    get: smartplsGet,
-    add: smartplsAdd,
-    update: smartplsUpdate,
-    remove: smartplsRemove,
-    nextId: smartplsNextId,
-    incId: smartplsIncId,
-    query: smartplsQuery,
+  playlist: {
+    list: playlistList,
+    get: playlistGet,
+    add: playlistAdd,
+    update: playlistUpdate,
+    remove: playlistRemove,
+    nextId: playlistNextId,
+    incId: playlistIncId,
+    query: playlistQuery,
   },
 };
 

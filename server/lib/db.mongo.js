@@ -61,7 +61,7 @@ const coverSchema = new Schema({
 });
 let Cover;
 
-const smartplsSchema = new Schema({
+const playlistSchema = new Schema({
   id: {
     index: true,
     type: Number,
@@ -74,7 +74,7 @@ const smartplsSchema = new Schema({
     value: Schema.Types.Mixed,
   }],
 });
-let SmartPls;
+let Playlist;
 
 let bucket;
 
@@ -93,7 +93,7 @@ export async function init() {
   Info = db.model('Info', infoSchema);
   Song = db.model('Song', songSchema);
   Cover = db.model('Cover', coverSchema);
-  SmartPls = db.model('SmartPls', smartplsSchema);
+  Playlist = db.model('Playlist', playlistSchema);
   bucket = new _m.mongo.GridFSBucket(db.db);
 }
 
@@ -218,12 +218,12 @@ export async function dbIdSet(dbId) {
   );
 }
 
-export async function smartplsNextId() {
+export async function playlistNextId() {
   const info = await Info.find({type: 'playlist'});
   return info[0]?.nextId ?? 10;
 }
 
-export async function smartplsIncId() {
+export async function playlistIncId() {
   const result = await Info.updateOne(
     {type: 'playlist'},
     {$inc: {nextId: 1}},
@@ -233,28 +233,28 @@ export async function smartplsIncId() {
   }
 }
 
-export async function smartplsList() {
-  return SmartPls.find();
+export async function playlistList() {
+  return Playlist.find();
 }
 
-export async function smartplsGet(id) {
-  return SmartPls.findOne({id});
+export async function playlistGet(id) {
+  return Playlist.findOne({id});
 }
 
-export async function smartplsAdd(playlist) {
-  return SmartPls.create(playlist);
+export async function playlistAdd(playlist) {
+  return Playlist.create(playlist);
 }
 
-export async function smartplsUpdate(id, playlist) {
-  return SmartPls.findOneAndUpdate({id}, {$set: playlist}, {new: true});
+export async function playlistUpdate(id, playlist) {
+  return Playlist.findOneAndUpdate({id}, {$set: playlist}, {new: true});
 }
 
-export async function smartplsRemove(id) {
-  const result = await SmartPls.deleteOne({id});
+export async function playlistRemove(id) {
+  const result = await Playlist.deleteOne({id});
   return result.deletedCount;
 }
 
-export async function smartplsQuery(query) {
+export async function playlistQuery(query) {
   return Song.find(query);
 }
 
@@ -333,15 +333,15 @@ export default {
     exist: cacheExist,
     clear: cacheClear,
   },
-  smartpls: {
-    list: smartplsList,
-    get: smartplsGet,
-    add: smartplsAdd,
-    update: smartplsUpdate,
-    remove: smartplsRemove,
-    nextId: smartplsNextId,
-    incId: smartplsIncId,
-    query: smartplsQuery,
+  playlist: {
+    list: playlistList,
+    get: playlistGet,
+    add: playlistAdd,
+    update: playlistUpdate,
+    remove: playlistRemove,
+    nextId: playlistNextId,
+    incId: playlistIncId,
+    query: playlistQuery,
   },
 };
 

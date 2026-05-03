@@ -133,7 +133,7 @@ export async function playlistList(_req, res, next) {
     if (songCount > 0) {
       result.push({id: 1, name: 'Recently Added'});
     }
-    const list = await db.smartpls.list();
+    const list = await db.playlist.list();
     result.push(...list.map(({
       id,
       name,
@@ -159,8 +159,8 @@ export async function playlistCreate(req, res, next) {
     const error = playlist.validate(req.body);
     if (error) return res.status(400).json({error});
 
-    const id = await db.smartpls.nextId();
-    await db.smartpls.incId();
+    const id = await db.playlist.nextId();
+    await db.playlist.incId();
 
     const {
       name,
@@ -173,7 +173,7 @@ export async function playlistCreate(req, res, next) {
       match,
       rules,
     };
-    await db.smartpls.add(pls);
+    await db.playlist.add(pls);
     res.status(201).json(pls);
   } catch (err) {
     next(err);
@@ -190,7 +190,7 @@ export async function playlistUpdate(req, res, next) {
     if (error) return res.status(400).json({error});
     if (id === 1) return res.status(400).json({error: 'cannot modify built-in playlist'});
 
-    const existing = await db.smartpls.get(id);
+    const existing = await db.playlist.get(id);
     if (!existing) return res.status(404).json({error: 'playlist not found'});
 
     const {
@@ -198,7 +198,7 @@ export async function playlistUpdate(req, res, next) {
       match,
       rules,
     } = req.body;
-    const updated = await db.smartpls.update(
+    const updated = await db.playlist.update(
       id,
       {
         name: name.trim(),
@@ -223,10 +223,10 @@ export async function playlistDelete(req, res, next) {
     if (!isFinite(id)) return res.status(400).json({error: 'invalid playlist id'});
     if (id === 1) return res.status(400).json({error: 'cannot delete built-in playlist'});
 
-    const existing = await db.smartpls.get(id);
+    const existing = await db.playlist.get(id);
     if (!existing) return res.status(404).json({error: 'playlist not found'});
 
-    await db.smartpls.remove(id);
+    await db.playlist.remove(id);
     res.sendStatus(204);
   } catch (err) {
     next(err);
@@ -244,7 +244,7 @@ export async function playlistSongs(req, res, next) {
       return res.json(songs.map(sanitizeSong));
     }
 
-    const pls = await db.smartpls.get(id);
+    const pls = await db.playlist.get(id);
     if (!pls) return res.status(404).json({error: 'playlist not found'});
 
     const songs = await playlist.evaluate(pls);

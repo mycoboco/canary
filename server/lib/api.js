@@ -229,7 +229,7 @@ export async function containerInfo(req, res) {
 
     // smart playlists
     try {
-      const playlists = await db.smartpls.list();
+      const playlists = await db.playlist.list();
       for (const pls of playlists) {
         // eslint-disable-next-line no-await-in-loop
         const songs = await playlist.evaluate(pls);
@@ -280,7 +280,7 @@ export async function containerItem(req, res, next) {
   if (pl > 2) {
     // smart playlist
     try {
-      const pls = await db.smartpls.get(pl - 1);
+      const pls = await db.playlist.get(pl - 1);
       if (!pls) return res.sendStatus(404);
 
       const songs = await playlist.evaluate(pls);
