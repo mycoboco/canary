@@ -5,7 +5,7 @@
  */
 
 import {createServer} from 'node:http';
-import {readFileSync} from 'node:fs';
+import {readFileSync, existsSync} from 'node:fs';
 import * as path from 'node:path';
 const {version: VERSION} = JSON.parse(readFileSync('./package.json'));
 
@@ -91,6 +91,10 @@ function installWeb() {
     import.meta.dirname,
     typeof cfg === 'string' && cfg ? cfg : '../client/web/dist',
   );
+  if (!existsSync(webRoot)) {
+    log.warning(`web client not found at ${webRoot}; skipping`);
+    return;
+  }
   log.info(`serving web client from ${webRoot}`);
   app.use(express.static(webRoot));
 }
