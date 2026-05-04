@@ -13,5 +13,6 @@
   },
   "db": "nedb",
   "mdns": "auto",
+  "web": true,
   "debug": false
 }
