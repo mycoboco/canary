@@ -17,6 +17,8 @@ function AlbumCover({coverId, className}) {
     <img
       src={coverUrl(coverId)}
       alt=""
+      loading="lazy"
+      decoding="async"
       className={`${className} object-cover bg-gray-100`}
       onError={() => setFailed(true)}
     />
