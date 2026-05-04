@@ -22,13 +22,10 @@ The server supports:
 - Scheduled rescanning of music files
   - Efficient change detection (only rescans modified or newly added files)
 - Password-based authentication
+- Smart and manual playlists
+  - Playlists can be easily managed through the web UI
 - Streaming of MP3 and OGG files (if supported by the client)
 - Multiple directories for storing music
-
-Currently, the server does __not__ support:
-
-- Creating or editing smart playlists
-- Other features you may discover - please report them!
 
 #### Performance
 
