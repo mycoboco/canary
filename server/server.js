@@ -87,12 +87,8 @@ function installRoute() {
 }
 
 function installWeb() {
-  const cfg = config.server.web;
-  if (cfg === false || cfg === null) return;
-  const webRoot = path.resolve(
-    import.meta.dirname,
-    typeof cfg === 'string' && cfg ? cfg : '../client/web/dist',
-  );
+  if (!config.server.web) return;
+  const webRoot = path.resolve(import.meta.dirname, './web');
   if (!existsSync(webRoot)) {
     log.warning(`web client not found at ${webRoot}; skipping`);
     return;

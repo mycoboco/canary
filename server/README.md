@@ -106,7 +106,7 @@ Two configuration files are required:
     },
     "db":    "neDB",
     "mdns":  "auto",
-    "web":   "../client/web/dist",
+    "web":   true,
     "debug": false
 }
 ```
@@ -129,10 +129,10 @@ Notes:
     `true`.
 - `db`: `neDB` or `mongoDB`
 - `mdns`: service discovery method
-- `web`: path to the built web client (relative to `server.js` or absolute).
-  Defaults to `../client/web/dist`. Set to `false` to disable web UI serving
-  entirely. If the directory does not exist, the server logs a warning and
-  skips serving (DAAP and `/api` endpoints remain unaffected).
+- `web`: whether to serve the built web client from `server/web/`. Set to
+  `false` to disable web UI serving entirely. If the directory does not exist,
+  the server logs a warning and skips serving (DAAP and `/api` endpoints remain
+  unaffected).
 - `debug`: enables verbose logging
 
 --------------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 build
 node_modules
 db
-client/web/dist
+server/web/*
+!server/web/.keep
