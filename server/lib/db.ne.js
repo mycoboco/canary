@@ -42,6 +42,11 @@ export async function init() {
   db.song.ensureIndex({fieldName: 'id'});
   db.song.ensureIndex({fieldName: 'version'});
   db.playlist.ensureIndex({fieldName: 'id'});
+  db.playlist.ensureIndex({
+    fieldName: 'name',
+    unique: true,
+    sparse: true,
+  });
 
   await mkdirp(config.db.path);
 }
@@ -207,14 +212,34 @@ export async function playlistGet(id) {
   return db.playlist.findOneAsync({id});
 }
 
+function dupNameError() {
+  const err = new Error('playlist name already exists');
+  err.code = 'DUP_NAME';
+  return err;
+}
+
+function isDupNameViolation(err) {
+  return err?.errorType === 'uniqueViolated' && err?.key === 'name';
+}
+
 export async function playlistAdd(playlist) {
-  return db.playlist.insertAsync(playlist);
+  try {
+    return await db.playlist.insertAsync(playlist);
+  } catch (err) {
+    if (isDupNameViolation(err)) throw dupNameError();
+    throw err;
+  }
 }
 
 export async function playlistUpdate(id, playlist) {
-  const result = await db.playlist.updateAsync({id}, {$set: playlist});
-  if (result.numAffected === 0) return null;
-  return db.playlist.findOneAsync({id});
+  try {
+    const result = await db.playlist.updateAsync({id}, {$set: playlist});
+    if (result.numAffected === 0) return null;
+    return db.playlist.findOneAsync({id});
+  } catch (err) {
+    if (isDupNameViolation(err)) throw dupNameError();
+    throw err;
+  }
 }
 
 export async function playlistRemove(id) {

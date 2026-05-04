@@ -192,6 +192,9 @@ export async function playlistCreate(req, res, next) {
     await db.playlist.add(pls);
     res.status(201).json(sanitizePlaylist(pls));
   } catch (err) {
+    if (err?.code === 'DUP_NAME') {
+      return res.status(409).json({error: 'playlist name already exists'});
+    }
     next(err);
   }
 }
@@ -215,6 +218,9 @@ export async function playlistUpdate(req, res, next) {
     const updated = await db.playlist.update(id, buildPlaylistDoc(req.body));
     res.json(sanitizePlaylist(updated));
   } catch (err) {
+    if (err?.code === 'DUP_NAME') {
+      return res.status(409).json({error: 'playlist name already exists'});
+    }
     next(err);
   }
 }

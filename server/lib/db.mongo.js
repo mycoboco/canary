@@ -66,7 +66,11 @@ const playlistSchema = new Schema({
     index: true,
     type: Number,
   },
-  name: String,
+  name: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
   type: {
     type: String,
     enum: ['smart', 'manual'],
@@ -254,12 +258,28 @@ export async function playlistGet(id) {
   return Playlist.findOne({id});
 }
 
+function dupNameError() {
+  const err = new Error('playlist name already exists');
+  err.code = 'DUP_NAME';
+  return err;
+}
+
 export async function playlistAdd(playlist) {
-  return Playlist.create(playlist);
+  try {
+    return await Playlist.create(playlist);
+  } catch (err) {
+    if (err?.code === 11000 && err?.keyPattern?.name) throw dupNameError();
+    throw err;
+  }
 }
 
 export async function playlistUpdate(id, playlist) {
-  return Playlist.findOneAndUpdate({id}, {$set: playlist}, {new: true});
+  try {
+    return await Playlist.findOneAndUpdate({id}, {$set: playlist}, {new: true});
+  } catch (err) {
+    if (err?.code === 11000 && err?.keyPattern?.name) throw dupNameError();
+    throw err;
+  }
 }
 
 export async function playlistRemove(id) {
