@@ -118,7 +118,20 @@ export async function songCover(req, res, next) {
 
     const cover = await db.cover.get(id);
     if (!cover) return res.sendStatus(404);
-    res.writeHead(200, {'Content-Type': cover.format});
+
+    const etag = `"cover-${id}-${cover.version ?? 0}"`;
+    if (req.headers['if-none-match'] === etag) {
+      res.writeHead(304, {
+        'ETag': etag,
+        'Cache-Control': 'public, max-age=3600',
+      });
+      return res.end();
+    }
+    res.writeHead(200, {
+      'Content-Type': cover.format,
+      'Cache-Control': 'public, max-age=3600',
+      'ETag': etag,
+    });
     res.end(Buffer.from(cover.image));
   } catch (err) {
     next(err);
