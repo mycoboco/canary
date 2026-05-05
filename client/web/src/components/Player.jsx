@@ -27,7 +27,7 @@ export default function Player({player, onAddToPlaylist}) {
   return (
     <div className="hidden md:flex items-center h-20 bg-white border-t border-gray-200 px-6 gap-4">
       {/* left: song info */}
-      <div className="flex items-center gap-3 w-60 min-w-0">
+      <div className="flex items-center gap-3 w-72 min-w-0">
         <img
           key={currentSong.id}
           src={coverUrl(currentSong.id)}
