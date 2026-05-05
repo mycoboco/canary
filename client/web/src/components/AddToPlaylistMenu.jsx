@@ -52,7 +52,7 @@ export default function AddToPlaylistMenu({song, playlists, onClose, onChange}) 
           <div className="text-xs text-gray-500 truncate">{song.title}</div>
         </div>
 
-        <ul className="max-h-72 overflow-y-auto">
+        <ul className="max-h-72 overflow-y-auto px-2 py-1">
           {manualLists.length === 0 && !creating && (
             <li className="px-4 py-3 text-sm text-gray-400">No manual playlists yet.</li>
           )}
@@ -61,7 +61,7 @@ export default function AddToPlaylistMenu({song, playlists, onClose, onChange}) 
               <button
                 onClick={() => addExisting(p.id)}
                 disabled={busy}
-                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50 truncate"
+                className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 disabled:opacity-50 truncate"
               >{p.name}</button>
             </li>
           ))}
@@ -92,10 +92,12 @@ export default function AddToPlaylistMenu({song, playlists, onClose, onChange}) 
               </div>
             </div>
           ) : (
-            <button
-              onClick={() => setCreating(true)}
-              className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-gray-50"
-            >+ New manual playlist</button>
+            <div className="p-2">
+              <button
+                onClick={() => setCreating(true)}
+                className="w-full text-left px-3 py-2 text-sm text-blue-600 rounded-lg hover:bg-gray-100"
+              >+ New manual playlist</button>
+            </div>
           )}
         </div>
 
