@@ -1,4 +1,4 @@
-import {useState, useEffect, useMemo} from 'react';
+import {useState, useEffect, useMemo, useCallback} from 'react';
 import {fetchServer, fetchSongs, fetchPlaylists, AuthError} from '../api.js';
 
 export default function useLibrary() {
@@ -9,7 +9,7 @@ export default function useLibrary() {
   const [error, setError] = useState(null);
   const [authError, setAuthError] = useState(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const [sv, s, p] = await Promise.all([fetchServer(), fetchSongs(), fetchPlaylists()]);
@@ -28,9 +28,19 @@ export default function useLibrary() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  const reloadPlaylists = useCallback(async () => {
+    try {
+      const p = await fetchPlaylists();
+      setPlaylists(p);
+    } catch (err) {
+      if (err instanceof AuthError) setAuthError(err);
+      else setError(err.message);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
 
   const genres = useMemo(() => {
     const map = {};
@@ -77,14 +87,6 @@ export default function useLibrary() {
     error,
     authError,
     reload: load,
-    reloadPlaylists: async () => {
-      try {
-        const p = await fetchPlaylists();
-        setPlaylists(p);
-      } catch (err) {
-        if (err instanceof AuthError) setAuthError(err);
-        else setError(err.message);
-      }
-    },
+    reloadPlaylists,
   };
 }
