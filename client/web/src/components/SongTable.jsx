@@ -43,13 +43,25 @@ export default function SongTable({
           <tr
             key={song.id}
             onClick={() => onPlay(songs, i)}
-            className={`group cursor-pointer hover:bg-gray-50 ${
-              currentSongId === song.id ? 'text-blue-600 font-medium' : ''
+            className={`group cursor-pointer ${
+              currentSongId === song.id
+                ? 'text-blue-600 font-medium bg-blue-50 hover:bg-blue-100'
+                : 'hover:bg-gray-50'
             }`}
           >
             <td className="py-2 px-3">
-              <div>{song.title}</div>
-              <div className="text-gray-400 text-xs sm:hidden">{song.artist}</div>
+              <div className="flex items-start gap-2">
+                <span
+                  className={`shrink-0 text-xs leading-5 ${
+                    currentSongId === song.id ? 'text-blue-600' : 'invisible'
+                  }`}
+                  aria-hidden="true"
+                >▶</span>
+                <div className="min-w-0">
+                  <div>{song.title}</div>
+                  <div className="text-gray-400 text-xs sm:hidden">{song.artist}</div>
+                </div>
+              </div>
             </td>
             <td className="py-2 px-3 hidden sm:table-cell text-gray-600">{song.artist}</td>
             <td className="py-2 px-3 hidden md:table-cell text-gray-600">{song.album}</td>
