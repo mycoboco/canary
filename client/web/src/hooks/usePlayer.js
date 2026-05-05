@@ -38,12 +38,21 @@ export default function usePlayer() {
     audio.preload = 'auto';
     audioRef.current = audio;
 
-    audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime));
-    audio.addEventListener('durationchange', () => setDuration(audio.duration || 0));
-    audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('error', handleError);
+    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const onDurationChange = () => setDuration(audio.duration || 0);
+    const onEnded = () => handleEnded();
+    const onError = () => handleError();
+
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('durationchange', onDurationChange);
+    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('error', onError);
 
     return () => {
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('durationchange', onDurationChange);
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
       audio.pause();
       audio.src = '';
     };
