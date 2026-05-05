@@ -108,11 +108,11 @@ export default function usePlayer() {
 
   const currentSong = queue[currentIndex] || null;
 
-  function playSong(songs, index) {
+  const playSong = useCallback((songs, index) => {
     setQueue([...songs]);
     setCurrentIndex(index);
     loadAndPlay(songs[index]);
-  }
+  }, []);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
