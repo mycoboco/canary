@@ -54,39 +54,45 @@ export default function Player({player, onAddToPlaylist}) {
         <div className="flex items-center gap-5">
           <button
             onClick={toggleShuffle}
+            aria-label={shuffle ? 'Shuffle on' : 'Shuffle off'}
+            aria-pressed={shuffle}
+            title="Shuffle"
             className={`p-1.5 rounded-full transition-colors ${
               shuffle ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
             }`}
-            title="Shuffle"
           >
             <Icon d={icons.shuffle} size={18} />
           </button>
           <button
             onClick={prev}
-            className="p-1.5 rounded-full text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+            aria-label="Previous"
             title="Previous"
+            className="p-1.5 rounded-full text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
           >
             <Icon d={icons.prev} size={22} />
           </button>
           <button
             onClick={togglePlay}
+            aria-label={playing ? 'Pause' : 'Play'}
             className="w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-700 hover:scale-105 transition-all"
           >
             <Icon d={playing ? icons.pause : icons.play} size={22} />
           </button>
           <button
             onClick={next}
-            className="p-1.5 rounded-full text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+            aria-label="Next"
             title="Next"
+            className="p-1.5 rounded-full text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
           >
             <Icon d={icons.next} size={22} />
           </button>
           <button
             onClick={toggleRepeat}
+            aria-label={repeat === 'one' ? 'Repeat one' : repeat === 'all' ? 'Repeat all' : 'No repeat'}
+            title={repeat === 'one' ? 'Repeat one' : repeat === 'all' ? 'Repeat all' : 'No repeat'}
             className={`p-1.5 rounded-full transition-colors ${
               repeat !== 'none' ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
             }`}
-            title={repeat === 'one' ? 'Repeat one' : repeat === 'all' ? 'Repeat all' : 'No repeat'}
           >
             <Icon d={repeat === 'one' ? icons.repeatOne : icons.repeat} size={18} />
           </button>
@@ -98,6 +104,7 @@ export default function Player({player, onAddToPlaylist}) {
             min={0}
             max={duration || 0}
             {...seekInputProps}
+            aria-label="Seek"
             className="flex-1 h-1 accent-gray-800 cursor-pointer"
           />
           <span className="w-8">{formatSec(duration)}</span>
@@ -106,9 +113,9 @@ export default function Player({player, onAddToPlaylist}) {
 
       {/* right: volume */}
       <div className="flex items-center gap-2 w-36 shrink-0 mr-2">
-        <button className="text-gray-400 p-1">
+        <span className="text-gray-400 p-1" aria-hidden="true">
           <Icon d={icons.volume} size={18} />
-        </button>
+        </span>
         <input
           type="range"
           min={0}
@@ -116,6 +123,7 @@ export default function Player({player, onAddToPlaylist}) {
           step={0.01}
           value={volume}
           onChange={(e) => setVolume(+e.target.value)}
+          aria-label="Volume"
           className="flex-1 h-1 accent-gray-800 cursor-pointer"
         />
       </div>

@@ -1,5 +1,6 @@
-import {useState} from 'react';
+import {useState, useRef} from 'react';
 import {addSongToPlaylist, createPlaylist} from '../api.js';
+import useModalAccess from '../hooks/useModalAccess.js';
 
 export default function AddToPlaylistMenu({song, playlists, onClose, onChange}) {
   const manualLists = playlists.filter((p) => p.type === 'manual');
@@ -7,6 +8,8 @@ export default function AddToPlaylistMenu({song, playlists, onClose, onChange}) 
   const [name, setName] = useState('');
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const rootRef = useRef(null);
+  useModalAccess(rootRef, onClose);
 
   async function addExisting(playlistId) {
     if (busy) return;
@@ -44,11 +47,15 @@ export default function AddToPlaylistMenu({song, playlists, onClose, onChange}) 
       onClick={onClose}
     >
       <div
+        ref={rootRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-to-playlist-title"
         className="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-4 py-3 border-b">
-          <div className="text-sm font-semibold truncate">Add to playlist</div>
+          <div id="add-to-playlist-title" className="text-sm font-semibold truncate">Add to playlist</div>
           <div className="text-xs text-gray-500 truncate">{song.title}</div>
         </div>
 

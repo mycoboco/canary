@@ -1,8 +1,7 @@
-import {useState, useMemo} from 'react';
+import {useState} from 'react';
 import useLibrary from './hooks/useLibrary.js';
 import usePlayer from './hooks/usePlayer.js';
 import Sidebar from './components/Sidebar.jsx';
-import SearchBar from './components/SearchBar.jsx';
 import Login from './components/Login.jsx';
 import Player from './components/Player.jsx';
 import MobileTabBar from './components/MobileTabBar.jsx';
@@ -20,7 +19,6 @@ export default function App() {
   const player = usePlayer();
   const [view, setView] = useState('songs');
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
-  const [search, setSearch] = useState('');
   const [showFullPlayer, setShowFullPlayer] = useState(false);
   const [addingSong, setAddingSong] = useState(null);
 
@@ -32,22 +30,12 @@ export default function App() {
       setView(v);
       setSelectedPlaylistId(null);
     }
-    setSearch('');
   }
 
   function handleSelectPlaylist(id) {
     setSelectedPlaylistId(id);
     setView('playlist');
   }
-
-  const filteredSongs = useMemo(() => {
-    if (!search) return library.songs;
-    const q = search.toLowerCase();
-    return library.songs.filter((s) =>
-      s.title.toLowerCase().includes(q) ||
-      s.artist.toLowerCase().includes(q) ||
-      s.album.toLowerCase().includes(q));
-  }, [search, library.songs]);
 
   if (library.loading) {
     return <div className="h-screen flex items-center justify-center text-gray-500">Loading...</div>;
@@ -91,10 +79,9 @@ export default function App() {
           selectedPlaylistId={selectedPlaylistId}
         />
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 min-w-0">
-          {view === 'songs' && <SearchBar value={search} onChange={setSearch} />}
           {view === 'songs' && (
             <SongsView
-              songs={filteredSongs}
+              songs={library.songs}
               onPlay={player.playSong}
               currentSongId={player.currentSong?.id}
               onAddToPlaylist={setAddingSong}

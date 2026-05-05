@@ -1,17 +1,28 @@
 import {useState, useMemo} from 'react';
+import SearchBar from '../components/SearchBar.jsx';
 import SongTable from '../components/SongTable.jsx';
 
 export default function SongsView({songs, onPlay, currentSongId, onAddToPlaylist}) {
+  const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
 
+  const filtered = useMemo(() => {
+    if (!search) return songs;
+    const q = search.toLowerCase();
+    return songs.filter((s) =>
+      s.title.toLowerCase().includes(q) ||
+      s.artist.toLowerCase().includes(q) ||
+      s.album.toLowerCase().includes(q));
+  }, [search, songs]);
+
   const sorted = useMemo(() => {
-    if (!sortKey) return songs;
+    if (!sortKey) return filtered;
     const sign = sortDir === 'desc' ? -1 : 1;
-    return [...songs].sort((a, b) =>
+    return [...filtered].sort((a, b) =>
       sign * (a[sortKey] || '').localeCompare(b[sortKey] || '', undefined, {sensitivity: 'base'}),
     );
-  }, [songs, sortKey, sortDir]);
+  }, [filtered, sortKey, sortDir]);
 
   const onSort = (key) => {
     if (key === sortKey) {
@@ -23,18 +34,21 @@ export default function SongsView({songs, onPlay, currentSongId, onAddToPlaylist
   };
 
   return (
-    <div>
+    <div className="h-full flex flex-col">
+      <SearchBar value={search} onChange={setSearch} />
       <h2 className="text-xl font-bold mb-4">Songs</h2>
-      <SongTable
-        songs={sorted}
-        onPlay={onPlay}
-        currentSongId={currentSongId}
-        onAddToPlaylist={onAddToPlaylist}
-        sortKey={sortKey}
-        sortDir={sortDir}
-        onSort={onSort}
-        stickyHeader
-      />
+      <div className="flex-1 min-h-0">
+        <SongTable
+          virtualized
+          songs={sorted}
+          onPlay={onPlay}
+          currentSongId={currentSongId}
+          onAddToPlaylist={onAddToPlaylist}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          onSort={onSort}
+        />
+      </div>
     </div>
   );
 }

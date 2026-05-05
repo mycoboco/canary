@@ -24,6 +24,7 @@ export default function MiniPlayer({player, onExpand}) {
       </div>
       <button
         onClick={(e) => { e.stopPropagation(); togglePlay(); }}
+        aria-label={playing ? 'Pause' : 'Play'}
         className="w-8 h-8 flex items-center justify-center text-gray-600"
       >
         <Icon d={playing ? icons.pause : icons.play} size={20} />
