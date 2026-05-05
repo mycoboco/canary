@@ -1,6 +1,7 @@
 import {coverUrl} from '../api.js';
 import {formatSec} from '../utils.js';
 import {Icon, icons} from './Icons.jsx';
+import useSeekBar from '../hooks/useSeekBar.js';
 
 export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
   const {
@@ -17,6 +18,7 @@ export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
     toggleShuffle,
     toggleRepeat,
   } = player;
+  const {displayTime, inputProps: seekInputProps} = useSeekBar({currentTime, onSeek: seek});
 
   if (!currentSong) return null;
 
@@ -56,12 +58,11 @@ export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
           type="range"
           min={0}
           max={duration || 0}
-          value={currentTime}
-          onChange={(e) => seek(+e.target.value)}
+          {...seekInputProps}
           className="w-full h-1 accent-gray-800 cursor-pointer"
         />
         <div className="flex justify-between text-xs text-gray-400 mt-1">
-          <span>{formatSec(currentTime)}</span>
+          <span>{formatSec(displayTime)}</span>
           <span>{formatSec(duration)}</span>
         </div>
       </div>

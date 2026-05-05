@@ -1,6 +1,7 @@
 import {coverUrl} from '../api.js';
 import {formatSec} from '../utils.js';
 import {Icon, icons} from './Icons.jsx';
+import useSeekBar from '../hooks/useSeekBar.js';
 
 export default function Player({player, onAddToPlaylist}) {
   const {
@@ -19,6 +20,7 @@ export default function Player({player, onAddToPlaylist}) {
     toggleShuffle,
     toggleRepeat,
   } = player;
+  const {displayTime, inputProps: seekInputProps} = useSeekBar({currentTime, onSeek: seek});
 
   if (!currentSong) return null;
 
@@ -90,13 +92,12 @@ export default function Player({player, onAddToPlaylist}) {
           </button>
         </div>
         <div className="w-full max-w-md flex items-center gap-2 text-xs text-gray-400">
-          <span className="w-8 text-right">{formatSec(currentTime)}</span>
+          <span className="w-8 text-right">{formatSec(displayTime)}</span>
           <input
             type="range"
             min={0}
             max={duration || 0}
-            value={currentTime}
-            onChange={(e) => seek(+e.target.value)}
+            {...seekInputProps}
             className="flex-1 h-1 accent-gray-800 cursor-pointer"
           />
           <span className="w-8">{formatSec(duration)}</span>
