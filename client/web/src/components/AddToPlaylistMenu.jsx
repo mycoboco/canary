@@ -31,9 +31,9 @@ export default function AddToPlaylistMenu({song, playlists, onClose, onChange}) 
     try {
       setBusy(true);
       setError(null);
-      const pls = await createPlaylist({name, type: 'manual', songIds: [song.id]});
+      await createPlaylist({name, type: 'manual', songIds: [song.id]});
       await onChange?.();
-      onClose(pls);
+      onClose();
     } catch (err) {
       setError(err.message);
     } finally {
