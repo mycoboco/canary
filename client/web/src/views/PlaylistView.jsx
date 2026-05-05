@@ -250,7 +250,7 @@ export default function PlaylistView({
   const [creating, setCreating] = useState(null);
 
   const playlist = playlists.find((p) => p.id === playlistId);
-  const isBuiltIn = playlistId < 10;
+  const isBuiltIn = playlist?.type === 'builtin';
   const isManual = playlist?.type === 'manual';
 
   useEffect(() => {
