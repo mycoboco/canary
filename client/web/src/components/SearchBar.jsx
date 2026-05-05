@@ -1,6 +1,6 @@
 export default function SearchBar({value, onChange}) {
   return (
-    <div className="mb-4">
+    <div className="sticky top-0 z-20 bg-white pb-4">
       <input
         type="text"
         value={value}

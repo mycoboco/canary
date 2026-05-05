@@ -1,20 +1,23 @@
 import {formatTime} from '../utils.js';
 
 export default function SongTable({
-  songs, onPlay, currentSongId, onAddToPlaylist, onRemove, sortKey, sortDir, onSort,
+  songs, onPlay, currentSongId, onAddToPlaylist, onRemove, sortKey, sortDir, onSort, stickyHeader,
 }) {
   const showActions = !!(onAddToPlaylist || onRemove);
+  const thBase = `py-2 px-3 border-b border-gray-100 ${
+    stickyHeader ? 'sticky top-[54px] bg-white z-10' : ''
+  }`;
 
   const sortableHeader = (key, label, extra) => {
     if (!onSort) {
-      return <th className={`py-2 px-3 font-medium ${extra}`}>{label}</th>;
+      return <th className={`${thBase} font-medium ${extra}`}>{label}</th>;
     }
     const active = sortKey === key;
     const arrow = active ? (sortDir === 'desc' ? ' ↓' : ' ↑') : '';
     return (
       <th
         onClick={() => onSort(key)}
-        className={`py-2 px-3 font-medium cursor-pointer select-none hover:text-gray-600 ${
+        className={`${thBase} font-medium cursor-pointer select-none hover:text-gray-600 ${
           active ? 'text-gray-700' : ''
         } ${extra}`}
       >
@@ -26,13 +29,13 @@ export default function SongTable({
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="text-left text-gray-400 border-b border-gray-100">
+        <tr className="text-left text-gray-400">
           {sortableHeader('title', 'Title', '')}
           {sortableHeader('artist', 'Artist', 'hidden sm:table-cell')}
           {sortableHeader('album', 'Album', 'hidden md:table-cell')}
           {sortableHeader('genre', 'Genre', 'hidden lg:table-cell')}
-          <th className="py-2 px-3 font-medium text-right">Time</th>
-          {showActions && <th className="py-2 px-3 w-px"></th>}
+          <th className={`${thBase} font-medium text-right`}>Time</th>
+          {showActions && <th className={`${thBase} w-px`}></th>}
         </tr>
       </thead>
       <tbody>

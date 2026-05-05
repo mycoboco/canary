@@ -33,6 +33,7 @@ export default function SongsView({songs, onPlay, currentSongId, onAddToPlaylist
         sortKey={sortKey}
         sortDir={sortDir}
         onSort={onSort}
+        stickyHeader
       />
     </div>
   );
