@@ -59,7 +59,6 @@ export default function usePlayer() {
   }, []);
 
   function pickNext(q, idx, rep, shuf) {
-    if (rep === 'one') return idx;
     if (shuf) {
       if (q.length <= 1) return rep === 'all' ? 0 : -1;
       const candidates = q.map((_, i) => i).filter((i) => i !== idx);
