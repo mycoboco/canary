@@ -140,7 +140,9 @@ export default function usePlayer() {
 
   const seek = useCallback((time) => {
     const audio = audioRef.current;
-    if (audio) audio.currentTime = time;
+    if (!audio) return;
+    audio.currentTime = time;
+    setCurrentTime(time);
   }, []);
 
   const setVolume = useCallback((v) => {
