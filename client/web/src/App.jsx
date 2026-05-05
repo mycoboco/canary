@@ -138,11 +138,15 @@ export default function App() {
           )}
         </main>
       </div>
-      <Player player={player} />
+      <Player player={player} onAddToPlaylist={setAddingSong} />
       <MiniPlayer player={player} onExpand={() => setShowFullPlayer(true)} />
       <MobileTabBar view={view} onNavigate={handleNavigate} />
       {showFullPlayer && (
-        <FullScreenPlayer player={player} onClose={() => setShowFullPlayer(false)} />
+        <FullScreenPlayer
+          player={player}
+          onClose={() => setShowFullPlayer(false)}
+          onAddToPlaylist={setAddingSong}
+        />
       )}
       {addingSong && (
         <AddToPlaylistMenu

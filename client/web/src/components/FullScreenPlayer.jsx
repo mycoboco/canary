@@ -2,7 +2,7 @@ import {coverUrl} from '../api.js';
 import {formatSec} from '../utils.js';
 import {Icon, icons} from './Icons.jsx';
 
-export default function FullScreenPlayer({player, onClose}) {
+export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
   const {
     currentSong,
     playing,
@@ -28,6 +28,15 @@ export default function FullScreenPlayer({player, onClose}) {
       >
         <Icon d={icons.chevronDown} size={28} />
       </button>
+
+      {onAddToPlaylist && (
+        <button
+          onClick={() => onAddToPlaylist(currentSong)}
+          className="absolute top-4 right-4 w-11 h-11 flex items-center justify-center rounded-full text-3xl leading-none text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+          title="Add to playlist"
+          aria-label="Add to playlist"
+        >+</button>
+      )}
 
       <img
         key={currentSong.id}

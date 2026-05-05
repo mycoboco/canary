@@ -2,7 +2,7 @@ import {coverUrl} from '../api.js';
 import {formatSec} from '../utils.js';
 import {Icon, icons} from './Icons.jsx';
 
-export default function Player({player}) {
+export default function Player({player, onAddToPlaylist}) {
   const {
     currentSong,
     playing,
@@ -33,10 +33,18 @@ export default function Player({player}) {
           className="w-12 h-12 rounded object-cover bg-gray-100"
           onError={(e) => { e.target.style.visibility = 'hidden'; }}
         />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="text-sm font-medium truncate">{currentSong.title}</div>
           <div className="text-xs text-gray-400 truncate">{currentSong.artist}</div>
         </div>
+        {onAddToPlaylist && (
+          <button
+            onClick={() => onAddToPlaylist(currentSong)}
+            className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-full text-base leading-none text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+            title="Add to playlist"
+            aria-label="Add to playlist"
+          >+</button>
+        )}
       </div>
 
       {/* center: controls + progress */}
