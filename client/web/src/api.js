@@ -56,17 +56,16 @@ function mutate(method, path, data) {
   return request(path, options);
 }
 
+const sendJson = (method, path, data) => mutate(method, path, data).then((r) => r.json());
+
 export const fetchServer = () => json('/server');
 export const fetchSongs = () => json('/songs');
 export const fetchPlaylists = () => json('/playlists');
 export const fetchPlaylistSongs = (id) => json(`/playlists/${id}/songs`);
-export const createPlaylist = (data) => mutate('POST', '/playlists', data).then((r) => r.json());
-export const updatePlaylist = (id, data) =>
-  mutate('PUT', `/playlists/${id}`, data).then((r) => r.json());
+export const createPlaylist = (data) => sendJson('POST', '/playlists', data);
+export const updatePlaylist = (id, data) => sendJson('PUT', `/playlists/${id}`, data);
 export const deletePlaylist = (id) => mutate('DELETE', `/playlists/${id}`);
-export const addSongToPlaylist = (id, songId) =>
-  mutate('POST', `/playlists/${id}/songs`, {songId}).then((r) => r.json());
-export const removeSongFromPlaylist = (id, songId) =>
-  mutate('DELETE', `/playlists/${id}/songs/${songId}`).then((r) => r.json());
+export const addSongToPlaylist = (id, songId) => sendJson('POST', `/playlists/${id}/songs`, {songId});
+export const removeSongFromPlaylist = (id, songId) => sendJson('DELETE', `/playlists/${id}/songs/${songId}`);
 export const streamUrl = (id) => `${BASE}/songs/${id}/stream`;
 export const coverUrl = (id) => `${BASE}/songs/${id}/cover`;
