@@ -1,7 +1,7 @@
-import {coverUrl} from '../api.js';
 import {formatSec} from '../utils.js';
 import {Icon, icons} from './Icons.jsx';
 import useSeekBar from '../hooks/useSeekBar.js';
+import AlbumCover from './AlbumCover.jsx';
 
 export default function Player({player, onAddToPlaylist}) {
   const {
@@ -28,12 +28,10 @@ export default function Player({player, onAddToPlaylist}) {
     <div className="hidden md:flex items-center h-20 bg-white border-t border-gray-200 px-6 gap-4">
       {/* left: song info */}
       <div className="flex items-center gap-3 w-72 min-w-0">
-        <img
+        <AlbumCover
           key={currentSong.id}
-          src={coverUrl(currentSong.id)}
-          alt=""
-          className="w-12 h-12 rounded object-cover bg-gray-100"
-          onError={(e) => { e.target.style.visibility = 'hidden'; }}
+          coverId={currentSong.id}
+          className="w-12 h-12 rounded shrink-0"
         />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium truncate">{currentSong.title}</div>

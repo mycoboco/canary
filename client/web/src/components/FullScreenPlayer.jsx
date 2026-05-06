@@ -1,9 +1,9 @@
 import {useRef} from 'react';
-import {coverUrl} from '../api.js';
 import {formatSec} from '../utils.js';
 import {Icon, icons} from './Icons.jsx';
 import useSeekBar from '../hooks/useSeekBar.js';
 import useModalAccess from '../hooks/useModalAccess.js';
+import AlbumCover from './AlbumCover.jsx';
 
 export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
   const rootRef = useRef(null);
@@ -52,12 +52,10 @@ export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
         >+</button>
       )}
 
-      <img
+      <AlbumCover
         key={currentSong.id}
-        src={coverUrl(currentSong.id)}
-        alt=""
-        className="w-64 h-64 rounded-xl object-cover bg-gray-100 shadow-lg mb-8"
-        onError={(e) => { e.target.style.visibility = 'hidden'; }}
+        coverId={currentSong.id}
+        className="w-64 h-64 rounded-xl shadow-lg mb-8"
       />
 
       <div className="text-center mb-6 w-full max-w-xs">

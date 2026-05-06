@@ -1,29 +1,6 @@
 import {useState} from 'react';
-import {coverUrl} from '../api.js';
+import AlbumCover from '../components/AlbumCover.jsx';
 import SongTable from '../components/SongTable.jsx';
-
-function AlbumCover({coverId, className}) {
-  const [failed, setFailed] = useState(false);
-
-  if (failed) {
-    return (
-      <div className={`${className} flex items-center justify-center text-4xl text-gray-300 bg-gray-100`}>
-        💿
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={coverUrl(coverId)}
-      alt=""
-      loading="lazy"
-      decoding="async"
-      className={`${className} object-cover bg-gray-100`}
-      onError={() => setFailed(true)}
-    />
-  );
-}
 
 export default function AlbumsView({albums, onPlay, currentSongId, onAddToPlaylist}) {
   const [selected, setSelected] = useState(null);

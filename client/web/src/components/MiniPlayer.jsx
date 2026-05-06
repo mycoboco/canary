@@ -1,5 +1,5 @@
-import {coverUrl} from '../api.js';
 import {Icon, icons} from './Icons.jsx';
+import AlbumCover from './AlbumCover.jsx';
 
 export default function MiniPlayer({player, onExpand}) {
   const {currentSong, playing, togglePlay} = player;
@@ -11,12 +11,10 @@ export default function MiniPlayer({player, onExpand}) {
       className="md:hidden flex items-center h-14 bg-white border-t border-gray-200 px-3 gap-3"
       onClick={onExpand}
     >
-      <img
+      <AlbumCover
         key={currentSong.id}
-        src={coverUrl(currentSong.id)}
-        alt=""
-        className="w-10 h-10 rounded object-cover bg-gray-100"
-        onError={(e) => { e.target.style.visibility = 'hidden'; }}
+        coverId={currentSong.id}
+        className="w-10 h-10 rounded shrink-0"
       />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate">{currentSong.title}</div>
