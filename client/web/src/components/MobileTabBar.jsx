@@ -1,10 +1,6 @@
-const tabs = [
-  {id: 'songs', label: 'Songs', icon: '♫'},
-  {id: 'genres', label: 'Genres', icon: '🎸'},
-  {id: 'artists', label: 'Artists', icon: '👤'},
-  {id: 'albums', label: 'Albums', icon: '💿'},
-  {id: 'playlist', label: 'Lists', icon: '☰'},
-];
+import {navItems} from '../navItems.js';
+
+const tabs = [...navItems, {id: 'playlist', label: 'Lists', icon: '☰'}];
 
 export default function MobileTabBar({view, onNavigate}) {
   return (

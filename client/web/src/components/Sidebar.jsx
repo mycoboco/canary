@@ -1,9 +1,4 @@
-const navItems = [
-  {id: 'songs', label: 'Songs', icon: '♫'},
-  {id: 'genres', label: 'Genres', icon: '🎸'},
-  {id: 'artists', label: 'Artists', icon: '👤'},
-  {id: 'albums', label: 'Albums', icon: '💿'},
-];
+import {navItems} from '../navItems.js';
 
 export default function Sidebar({serverName, view, onNavigate, playlists, onSelectPlaylist, selectedPlaylistId}) {
   return (
