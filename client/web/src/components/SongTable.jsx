@@ -123,15 +123,18 @@ export default function SongTable({
     }
   }, [songs.length, focusedIndex]);
 
-  function focusRowAt(idx, attempts = 0) {
+  function focusRowAt(idx) {
     requestAnimationFrame(() => {
       const root = containerRef.current ?? document;
       const row = root.querySelector(`tr[data-index="${idx}"]`);
       if (row) {
         row.focus();
-      } else if (attempts < 5) {
-        focusRowAt(idx, attempts + 1);
+        return;
       }
+      // virtuoso may need one more frame to render after scrollToIndex
+      requestAnimationFrame(() => {
+        (containerRef.current ?? document).querySelector(`tr[data-index="${idx}"]`)?.focus();
+      });
     });
   }
 
