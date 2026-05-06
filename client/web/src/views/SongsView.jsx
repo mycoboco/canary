@@ -1,12 +1,11 @@
-import {useState, useMemo} from 'react';
+import {useMemo} from 'react';
 import SearchBar from '../components/SearchBar.jsx';
 import SongTable from '../components/SongTable.jsx';
 
-export default function SongsView({songs, onPlay, currentSongId, onAddToPlaylist}) {
-  const [search, setSearch] = useState('');
-  const [sortKey, setSortKey] = useState(null);
-  const [sortDir, setSortDir] = useState('asc');
-
+export default function SongsView({
+  songs, onPlay, currentSongId, onAddToPlaylist,
+  search, onSearchChange, sortKey, sortDir, onSortChange
+}) {
   const filtered = useMemo(() => {
     if (!search) return songs;
     const q = search.toLowerCase();
@@ -26,16 +25,15 @@ export default function SongsView({songs, onPlay, currentSongId, onAddToPlaylist
 
   const onSort = (key) => {
     if (key === sortKey) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+      onSortChange(key, sortDir === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortKey(key);
-      setSortDir('asc');
+      onSortChange(key, 'asc');
     }
   };
 
   return (
     <div className="h-full flex flex-col">
-      <SearchBar value={search} onChange={setSearch} />
+      <SearchBar value={search} onChange={onSearchChange} />
       <h2 className="text-xl font-bold mb-4">Songs</h2>
       <div className="flex-1 min-h-0">
         <SongTable

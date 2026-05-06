@@ -22,6 +22,10 @@ export default function App() {
   const [showFullPlayer, setShowFullPlayer] = useState(false);
   const [addingSong, setAddingSong] = useState(null);
 
+  const [songsSearch, setSongsSearch] = useState('');
+  const [songsSortKey, setSongsSortKey] = useState(null);
+  const [songsSortDir, setSongsSortDir] = useState('asc');
+
   function handleNavigate(v) {
     if (v === 'playlist') {
       setView('playlist');
@@ -85,6 +89,14 @@ export default function App() {
               onPlay={player.playSong}
               currentSongId={player.currentSong?.id}
               onAddToPlaylist={setAddingSong}
+              search={songsSearch}
+              onSearchChange={setSongsSearch}
+              sortKey={songsSortKey}
+              sortDir={songsSortDir}
+              onSortChange={(key, dir) => {
+                setSongsSortKey(key);
+                setSongsSortDir(dir);
+              }}
             />
           )}
           {view === 'genres' && (
