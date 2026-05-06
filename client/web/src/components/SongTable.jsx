@@ -7,7 +7,7 @@ const tableComponents = {
     <table
       {...props}
       className="w-full text-sm"
-      style={{...props.style, tableLayout: 'fixed', borderCollapse: 'collapse'}}
+      style={{...props.style, width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse'}}
     />
   ),
   TableRow: ({context, ...props}) => {
@@ -223,7 +223,7 @@ export default function SongTable({
   }
 
   return (
-    <table ref={containerRef} className="w-full text-sm">
+    <table ref={containerRef} className="w-full text-sm" style={{tableLayout: 'fixed', borderCollapse: 'collapse'}}>
       <thead>{headerRow}</thead>
       <tbody>
         {songs.map((song, i) => {
