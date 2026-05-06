@@ -195,7 +195,7 @@ export default function SongTable({
       {sortableHeader('album', 'Album', 'hidden md:table-cell', '20%')}
       {sortableHeader('genre', 'Genre', 'hidden lg:table-cell', '15%')}
       <th className={`${thBase} font-medium text-right`} style={{width: 80}}>Time</th>
-      {showActions && <th className={thBase} style={{width: 60}}></th>}
+      {showActions && <th className={thBase} style={{width: 90}}></th>}
     </tr>
   );
 
