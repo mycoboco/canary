@@ -38,14 +38,14 @@ export default function App() {
   }
 
   if (library.loading) {
-    return <div className="h-screen flex items-center justify-center text-gray-500">Loading...</div>;
+    return <div className="h-dvh flex items-center justify-center text-gray-500">Loading...</div>;
   }
   if (library.authError) {
     return <Login invalid={library.authError.invalid} onLogin={library.reload} />;
   }
   if (library.error) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center gap-4">
+      <div className="h-dvh flex flex-col items-center justify-center gap-4">
         <div className="text-red-500">{library.error || 'Cannot connect to server'}</div>
         <button
           onClick={() => window.location.reload()}
@@ -57,7 +57,7 @@ export default function App() {
 
   if (library.songs.length === 0) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center gap-4 text-gray-500">
+      <div className="h-dvh flex flex-col items-center justify-center gap-4 text-gray-500">
         <div>No songs</div>
         <button
           onClick={() => window.location.reload()}
@@ -68,7 +68,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-white text-gray-800">
+    <div className="h-dvh flex flex-col bg-white text-gray-800">
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           serverName={library.serverName}

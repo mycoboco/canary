@@ -4,7 +4,10 @@ const tabs = [...navItems, {id: 'playlist', label: 'Lists', icon: '☰'}];
 
 export default function MobileTabBar({view, onNavigate}) {
   return (
-    <nav className="md:hidden flex border-t border-gray-200 bg-white">
+    <nav
+      className="md:hidden flex border-t border-gray-200 bg-white"
+      style={{paddingBottom: 'env(safe-area-inset-bottom)'}}
+    >
       {tabs.map((tab) => (
         <button
           key={tab.id}
