@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import {useState} from 'react';
 import {coverUrl} from '../api.js';
 import SongTable from '../components/SongTable.jsx';
 
@@ -29,10 +29,6 @@ export default function AlbumsView({albums, onPlay, currentSongId, onAddToPlayli
   const [selected, setSelected] = useState(null);
 
   const album = selected ? albums.find((a) => `${a.name}::${a.artist}` === selected) : null;
-
-  useEffect(() => {
-    if (selected && !album) setSelected(null);
-  }, [selected, album]);
 
   if (selected && album) {
     return (
