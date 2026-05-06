@@ -1,5 +1,6 @@
 import {useState, useEffect} from 'react';
 import SongTable from '../components/SongTable.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 import {
   fetchPlaylistSongs,
   createPlaylist,
@@ -248,6 +249,8 @@ export default function PlaylistView({
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [creating, setCreating] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [error, setError] = useState(null);
 
   const playlist = playlists.find((p) => p.id === playlistId);
   const isBuiltIn = playlist?.type === 'builtin';
@@ -265,13 +268,15 @@ export default function PlaylistView({
   }, [playlistId]);
 
   async function handleDelete() {
-    if (!confirm(`Delete playlist "${playlist?.name}"?`)) return;
     try {
+      setError(null);
       await deletePlaylist(playlistId);
       await onReload();
       onSelectPlaylist(null);
     } catch (err) {
-      alert(err.message);
+      setError(err.message);
+    } finally {
+      setConfirmDelete(false);
     }
   }
 
@@ -287,12 +292,13 @@ export default function PlaylistView({
 
   async function handleRemoveSong(songId) {
     try {
+      setError(null);
       await removeSongFromPlaylist(playlistId, songId);
       const s = await fetchPlaylistSongs(playlistId);
       setSongs(s);
       await onReload();
     } catch (err) {
-      alert(err.message);
+      setError(err.message);
     }
   }
 
@@ -363,7 +369,7 @@ export default function PlaylistView({
                   className="text-sm text-blue-600 hover:underline"
                 >Edit</button>
                 <button
-                  onClick={handleDelete}
+                  onClick={() => setConfirmDelete(true)}
                   className="text-sm text-red-500 hover:underline"
                 >Delete</button>
               </>
@@ -388,6 +394,15 @@ export default function PlaylistView({
         </div>
       ) : (
         <div className="text-gray-400 text-sm">Select a playlist</div>
+      )}
+      {error && <div className="text-red-500 text-sm mt-3">{error}</div>}
+      {confirmDelete && (
+        <ConfirmDialog
+          message={`Delete playlist "${playlist?.name}"?`}
+          confirmLabel="Delete"
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDelete(false)}
+        />
       )}
     </div>
   );
