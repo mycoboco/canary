@@ -1,4 +1,4 @@
-import {useState, useRef, useEffect, useCallback} from 'react';
+import {useState, useRef, useEffect, useLayoutEffect, useCallback} from 'react';
 import {streamUrl} from '../api.js';
 
 export default function usePlayer() {
@@ -19,11 +19,13 @@ export default function usePlayer() {
   const volumeRef = useRef(volume);
   const shuffleRef = useRef(shuffle);
 
-  queueRef.current = queue;
-  currentIndexRef.current = currentIndex;
-  repeatRef.current = repeat;
-  volumeRef.current = volume;
-  shuffleRef.current = shuffle;
+  useLayoutEffect(() => {
+    queueRef.current = queue;
+    currentIndexRef.current = currentIndex;
+    repeatRef.current = repeat;
+    volumeRef.current = volume;
+    shuffleRef.current = shuffle;
+  });
 
   function loadAndPlay(song) {
     const audio = audioRef.current;
