@@ -1,6 +1,14 @@
 import {useState, useEffect, useMemo, useCallback} from 'react';
 import {fetchServer, fetchSongs, fetchPlaylists, AuthError} from '../api.js';
 
+function groupByKey(songs, key) {
+  const map = {};
+  songs.forEach((s) => { (map[s[key]] ??= []).push(s); });
+  return Object.entries(map)
+    .map(([name, songs]) => ({name, count: songs.length, songs}))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export default function useLibrary() {
   const [serverName, setServerName] = useState('');
   const [songs, setSongs] = useState([]);
@@ -42,27 +50,8 @@ export default function useLibrary() {
 
   useEffect(() => { load(); }, [load]);
 
-  const genres = useMemo(() => {
-    const map = {};
-    songs.forEach((s) => {
-      if (!map[s.genre]) map[s.genre] = [];
-      map[s.genre].push(s);
-    });
-    return Object.entries(map)
-      .map(([name, songs]) => ({name, count: songs.length, songs}))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [songs]);
-
-  const artists = useMemo(() => {
-    const map = {};
-    songs.forEach((s) => {
-      if (!map[s.artist]) map[s.artist] = [];
-      map[s.artist].push(s);
-    });
-    return Object.entries(map)
-      .map(([name, songs]) => ({name, count: songs.length, songs}))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [songs]);
+  const genres = useMemo(() => groupByKey(songs, 'genre'), [songs]);
+  const artists = useMemo(() => groupByKey(songs, 'artist'), [songs]);
 
   const albums = useMemo(() => {
     const map = {};
