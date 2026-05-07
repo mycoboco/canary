@@ -53,7 +53,6 @@ export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
       )}
 
       <AlbumCover
-        key={currentSong.id}
         coverId={currentSong.id}
         className="w-64 h-64 rounded-xl shadow-lg mb-8"
       />

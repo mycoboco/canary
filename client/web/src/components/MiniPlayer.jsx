@@ -12,7 +12,6 @@ export default function MiniPlayer({player, onExpand}) {
       onClick={onExpand}
     >
       <AlbumCover
-        key={currentSong.id}
         coverId={currentSong.id}
         className="w-10 h-10 rounded shrink-0"
       />

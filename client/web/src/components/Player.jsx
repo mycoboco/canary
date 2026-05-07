@@ -29,7 +29,6 @@ export default function Player({player, onAddToPlaylist}) {
       {/* left: song info */}
       <div className="flex items-center gap-3 w-72 min-w-0">
         <AlbumCover
-          key={currentSong.id}
           coverId={currentSong.id}
           className="w-12 h-12 rounded shrink-0"
         />
