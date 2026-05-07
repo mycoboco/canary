@@ -30,7 +30,8 @@ export default function Player({player, onAddToPlaylist}) {
       <div className="flex items-center gap-3 w-72 min-w-0">
         <AlbumCover
           coverId={currentSong.id}
-          className="w-12 h-12 rounded shrink-0"
+          className="w-12 h-12"
+          imgClassName="rounded"
         />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium truncate">{currentSong.title}</div>

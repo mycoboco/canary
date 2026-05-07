@@ -13,7 +13,8 @@ export default function MiniPlayer({player, onExpand}) {
     >
       <AlbumCover
         coverId={currentSong.id}
-        className="w-10 h-10 rounded shrink-0"
+        className="w-10 h-10"
+        imgClassName="rounded"
       />
       <div className="flex-1 min-w-0">
         <div className="text-sm font-medium truncate">{currentSong.title}</div>
