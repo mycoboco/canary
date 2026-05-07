@@ -1,4 +1,4 @@
-import {useState, useEffect, useRef} from 'react';
+import {useState, useEffect, useRef, forwardRef} from 'react';
 import {TableVirtuoso} from 'react-virtuoso';
 import {formatTime} from '../utils.js';
 
@@ -7,9 +7,17 @@ const tableComponents = {
     <table
       {...props}
       className="w-full text-sm"
-      style={{...props.style, width: '100%', tableLayout: 'fixed', borderCollapse: 'collapse'}}
+      style={{...props.style, width: '100%', tableLayout: 'fixed'}}
     />
   ),
+  TableHead: forwardRef((props, ref) => (
+    <thead
+      {...props}
+      ref={ref}
+      className="bg-white"
+      style={{...props.style, top: 'var(--header-top, 0px)'}}
+    />
+  )),
   TableRow: ({context, ...props}) => {
     const idx = props['data-index'];
     const song = context?.songs?.[idx];
@@ -108,12 +116,13 @@ function SongCells({song, isCurrent, showActions, onAddToPlaylist, onRemove}) {
 }
 
 export default function SongTable({
-  songs, onPlay, currentSongId, onAddToPlaylist, onRemove, sortKey, sortDir, onSort, virtualized,
+  songs, onPlay, currentSongId, onAddToPlaylist, onRemove, sortKey, sortDir, onSort, virtualized, stickyOffset = 0,
 }) {
   const showActions = !!(onAddToPlaylist || onRemove);
   const thBase = 'py-2 px-3 border-b border-gray-100 bg-white';
   const isDesktop = useIsDesktop();
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const [scrollParent, setScrollParent] = useState(null);
   const virtuosoRef = useRef(null);
   const containerRef = useRef(null);
 
@@ -157,6 +166,12 @@ export default function SongTable({
       onPlay(songs, idx);
     }
   }
+
+  useEffect(() => {
+    if (virtualized && containerRef.current) {
+      setScrollParent(containerRef.current.closest('main'));
+    }
+  }, [virtualized]);
 
   function handleRangeChanged(range) {
     if (range.startIndex == null) return;
@@ -206,18 +221,20 @@ export default function SongTable({
 
   if (virtualized) {
     return (
-      <div ref={containerRef} className="h-full">
-        <TableVirtuoso
-          ref={virtuosoRef}
-          key={isDesktop ? 'd' : 'm'}
-          style={{height: '100%'}}
-          data={songs}
-          context={context}
-          components={tableComponents}
-          fixedHeaderContent={() => headerRow}
-          itemContent={renderItem}
-          rangeChanged={handleRangeChanged}
-        />
+      <div ref={containerRef} style={{'--header-top': `${stickyOffset}px`}}>
+        {scrollParent && (
+          <TableVirtuoso
+            ref={virtuosoRef}
+            key={isDesktop ? 'd' : 'm'}
+            customScrollParent={scrollParent}
+            data={songs}
+            context={context}
+            components={tableComponents}
+            fixedHeaderContent={() => headerRow}
+            itemContent={renderItem}
+            rangeChanged={handleRangeChanged}
+          />
+        )}
       </div>
     );
   }

@@ -1,4 +1,4 @@
-import {useMemo} from 'react';
+import {useMemo, useRef, useState, useEffect} from 'react';
 import SearchBar from '../components/SearchBar.jsx';
 import SongTable from '../components/SongTable.jsx';
 
@@ -6,6 +6,9 @@ export default function SongsView({
   songs, onPlay, currentSongId, onAddToPlaylist,
   search, onSearchChange, sortKey, sortDir, onSortChange
 }) {
+  const searchRef = useRef(null);
+  const [stickyOffset, setStickyOffset] = useState(0);
+
   const filtered = useMemo(() => {
     if (!search) return songs;
     const q = search.toLowerCase();
@@ -23,6 +26,10 @@ export default function SongsView({
     );
   }, [filtered, sortKey, sortDir]);
 
+  useEffect(() => {
+    if (searchRef.current) setStickyOffset(searchRef.current.offsetHeight);
+  }, []);
+
   const onSort = (key) => {
     if (key === sortKey) {
       onSortChange(key, sortDir === 'asc' ? 'desc' : 'asc');
@@ -32,21 +39,22 @@ export default function SongsView({
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <SearchBar value={search} onChange={onSearchChange} />
-      <h2 className="text-xl font-bold mb-4">Songs</h2>
-      <div className="flex-1 min-h-0">
-        <SongTable
-          virtualized
-          songs={sorted}
-          onPlay={onPlay}
-          currentSongId={currentSongId}
-          onAddToPlaylist={onAddToPlaylist}
-          sortKey={sortKey}
-          sortDir={sortDir}
-          onSort={onSort}
-        />
+    <div>
+      <div ref={searchRef} className="sticky top-0 z-10 bg-white">
+        <SearchBar value={search} onChange={onSearchChange} />
       </div>
+      <h2 className="text-xl font-bold mb-4">Songs</h2>
+      <SongTable
+        virtualized
+        stickyOffset={stickyOffset}
+        songs={sorted}
+        onPlay={onPlay}
+        currentSongId={currentSongId}
+        onAddToPlaylist={onAddToPlaylist}
+        sortKey={sortKey}
+        sortDir={sortDir}
+        onSort={onSort}
+      />
     </div>
   );
 }
