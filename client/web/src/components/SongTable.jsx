@@ -227,6 +227,7 @@ export default function SongTable({
             ref={virtuosoRef}
             key={isDesktop ? 'd' : 'm'}
             customScrollParent={scrollParent}
+            fixedItemHeight={isDesktop ? 40 : 52}
             data={songs}
             context={context}
             components={tableComponents}
