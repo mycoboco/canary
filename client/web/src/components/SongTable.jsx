@@ -82,9 +82,15 @@ function SongCells({song, isCurrent, showActions, onAddToPlaylist, onRemove}) {
           </div>
         </div>
       </td>
-      <td className={`py-2 px-3 hidden sm:table-cell text-gray-600 truncate ${cellBg}`}>{song.artist}</td>
-      <td className={`py-2 px-3 hidden md:table-cell text-gray-600 truncate ${cellBg}`}>{song.album}</td>
-      <td className={`py-2 px-3 hidden lg:table-cell text-gray-600 truncate ${cellBg}`}>{song.genre}</td>
+      <td className={`py-2 px-3 hidden sm:table-cell text-gray-600 truncate ${cellBg}`}>
+        {song.artist}
+      </td>
+      <td className={`py-2 px-3 hidden md:table-cell text-gray-600 truncate ${cellBg}`}>
+        {song.album}
+      </td>
+      <td className={`py-2 px-3 hidden lg:table-cell text-gray-600 truncate ${cellBg}`}>
+        {song.genre}
+      </td>
       <td className={`py-2 px-3 text-right text-gray-400 ${
         !showActions ? 'rounded-r-lg' : ''
       } ${cellBg}`}>{formatTime(song.time)}</td>
@@ -116,7 +122,16 @@ function SongCells({song, isCurrent, showActions, onAddToPlaylist, onRemove}) {
 }
 
 export default function SongTable({
-  songs, onPlay, currentSongId, onAddToPlaylist, onRemove, sortKey, sortDir, onSort, virtualized, stickyOffset = 0,
+  songs,
+  onPlay,
+  currentSongId,
+  onAddToPlaylist,
+  onRemove,
+  sortKey,
+  sortDir,
+  onSort,
+  virtualized,
+  stickyOffset = 0,
 }) {
   const showActions = !!(onAddToPlaylist || onRemove);
   const thBase = 'py-2 px-3 border-b border-gray-100 bg-white';
@@ -241,7 +256,11 @@ export default function SongTable({
   }
 
   return (
-    <table ref={containerRef} className="w-full text-sm" style={{tableLayout: 'fixed', borderCollapse: 'collapse'}}>
+    <table
+      ref={containerRef}
+      className="w-full text-sm"
+      style={{tableLayout: 'fixed', borderCollapse: 'collapse'}}
+    >
       <thead>{headerRow}</thead>
       <tbody>
         {songs.map((song, i) => {

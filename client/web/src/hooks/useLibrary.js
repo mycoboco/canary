@@ -61,7 +61,11 @@ export default function useLibrary() {
       map[key].songs.push(s);
     });
     return Object.values(map)
-      .map((a) => ({...a, coverId: a.songs[0]?.id, songs: a.songs.sort((x, y) => x.track - y.track)}))
+      .map((a) => ({
+        ...a,
+        coverId: a.songs[0]?.id,
+        songs: a.songs.sort((x, y) => x.track - y.track)
+      }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [songs]);
 

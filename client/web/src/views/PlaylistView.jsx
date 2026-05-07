@@ -109,7 +109,9 @@ function RuleEditor({rules, onChange}) {
           </div>
         );
       })}
-      <button onClick={addRule} className="text-sm text-blue-600 hover:underline">+ Add rule</button>
+      <button onClick={addRule} className="text-sm text-blue-600 hover:underline">
+        + Add rule
+      </button>
     </div>
   );
 }
@@ -360,7 +362,9 @@ export default function PlaylistView({
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-xl font-bold">{playlist.name}</h2>
             {playlist.type && (
-              <span className="text-xs uppercase tracking-wider text-gray-400">{playlist.type}</span>
+              <span className="text-xs uppercase tracking-wider text-gray-400">
+                {playlist.type}
+              </span>
             )}
             {!isBuiltIn && (
               <>

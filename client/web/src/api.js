@@ -65,7 +65,9 @@ export const fetchPlaylistSongs = (id) => json(`/playlists/${id}/songs`);
 export const createPlaylist = (data) => sendJson('POST', '/playlists', data);
 export const updatePlaylist = (id, data) => sendJson('PUT', `/playlists/${id}`, data);
 export const deletePlaylist = (id) => mutate('DELETE', `/playlists/${id}`);
-export const addSongToPlaylist = (id, songId) => sendJson('POST', `/playlists/${id}/songs`, {songId});
-export const removeSongFromPlaylist = (id, songId) => sendJson('DELETE', `/playlists/${id}/songs/${songId}`);
+export const addSongToPlaylist = (id, songId) =>
+  sendJson('POST', `/playlists/${id}/songs`, {songId});
+export const removeSongFromPlaylist = (id, songId) =>
+  sendJson('DELETE', `/playlists/${id}/songs/${songId}`);
 export const streamUrl = (id) => `${BASE}/songs/${id}/stream`;
 export const coverUrl = (id) => `${BASE}/songs/${id}/cover`;

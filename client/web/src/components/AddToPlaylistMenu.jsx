@@ -55,7 +55,9 @@ export default function AddToPlaylistMenu({song, playlists, onClose, onChange}) 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-4 py-3 border-b">
-          <div id="add-to-playlist-title" className="text-sm font-semibold truncate">Add to playlist</div>
+          <div id="add-to-playlist-title" className="text-sm font-semibold truncate">
+            Add to playlist
+          </div>
           <div className="text-xs text-gray-500 truncate">{song.title}</div>
         </div>
 

@@ -3,7 +3,12 @@ import {navItems} from '../navItems.js';
 export default function Sidebar({serverName, view, onNavigate, playlists, onSelectPlaylist, selectedPlaylistId}) {
   return (
     <aside className="hidden md:flex flex-col w-56 bg-gray-50 border-r border-gray-200 h-full">
-      <div className="p-4 font-bold text-lg text-gray-800 truncate" title={serverName}>{serverName || 'canary'}</div>
+      <div
+        className="p-4 font-bold text-lg text-gray-800 truncate"
+        title={serverName}
+      >
+        {serverName || 'canary'}
+      </div>
       <nav className="flex-1 overflow-y-auto">
         <ul className="px-2">
           {navItems.map((item) => (
@@ -23,7 +28,9 @@ export default function Sidebar({serverName, view, onNavigate, playlists, onSele
           ))}
         </ul>
         <div className="mt-4 px-4">
-          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Playlists</div>
+          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+            Playlists
+          </div>
         </div>
         <ul className="px-2">
           {playlists.map((p) => (
