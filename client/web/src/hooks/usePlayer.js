@@ -1,6 +1,15 @@
 import {useState, useRef, useEffect, useLayoutEffect, useCallback} from 'react';
 import {streamUrl} from '../api.js';
 
+function shuffleArray(arr) {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 export default function usePlayer() {
   const audioRef = useRef(null);
   const [queue, setQueue] = useState([]);
@@ -11,25 +20,25 @@ export default function usePlayer() {
   const [volume, setVolumeState] = useState(1);
   const [shuffle, setShuffle] = useState(false);
   const [repeat, setRepeat] = useState('none'); // 'none', 'all', 'one'
+  const originalQueueRef = useRef([]);
 
   // refs to avoid stale closures in audio event handlers
   const queueRef = useRef(queue);
   const currentIndexRef = useRef(currentIndex);
   const repeatRef = useRef(repeat);
   const volumeRef = useRef(volume);
-  const shuffleRef = useRef(shuffle);
 
   useLayoutEffect(() => {
     queueRef.current = queue;
     currentIndexRef.current = currentIndex;
     repeatRef.current = repeat;
     volumeRef.current = volume;
-    shuffleRef.current = shuffle;
   });
 
   function loadAndPlay(song) {
     const audio = audioRef.current;
     if (!audio || !song) return;
+    audio.pause();
     audio.src = streamUrl(song.id);
     audio.volume = volumeRef.current;
     audio.play().then(() => setPlaying(true)).catch(() => {});
@@ -60,12 +69,7 @@ export default function usePlayer() {
     };
   }, []);
 
-  function pickNext(q, idx, rep, shuf) {
-    if (shuf) {
-      if (q.length <= 1) return rep === 'all' ? 0 : -1;
-      const candidates = q.map((_, i) => i).filter((i) => i !== idx);
-      return candidates[Math.floor(Math.random() * candidates.length)];
-    }
+  function pickNext(q, idx, rep) {
     if (idx < q.length - 1) return idx + 1;
     if (rep === 'all') return 0;
     return -1;
@@ -74,6 +78,8 @@ export default function usePlayer() {
   const errorCountRef = useRef(0);
 
   function handleError() {
+    const audio = audioRef.current;
+    if (audio?.error?.code === MediaError.MEDIA_ERR_ABORTED) return;
     errorCountRef.current++;
     if (errorCountRef.current > 3) {
       setPlaying(false);
@@ -88,7 +94,6 @@ export default function usePlayer() {
     const q = queueRef.current;
     const idx = currentIndexRef.current;
     const rep = repeatRef.current;
-    const shuf = shuffleRef.current;
 
     if (rep === 'one') {
       const audio = audioRef.current;
@@ -98,7 +103,7 @@ export default function usePlayer() {
       }
       return;
     }
-    const next = pickNext(q, idx, rep, shuf);
+    const next = pickNext(q, idx, rep);
     if (next >= 0) {
       setCurrentIndex(next);
       loadAndPlay(q[next]);
@@ -110,10 +115,20 @@ export default function usePlayer() {
   const currentSong = queue[currentIndex] || null;
 
   const playSong = useCallback((songs, index) => {
-    setQueue([...songs]);
-    setCurrentIndex(index);
-    loadAndPlay(songs[index]);
-  }, []);
+    originalQueueRef.current = [...songs];
+    if (shuffle) {
+      const selected = songs[index];
+      const rest = songs.filter((_, i) => i !== index);
+      const shuffled = [selected, ...shuffleArray(rest)];
+      setQueue(shuffled);
+      setCurrentIndex(0);
+      loadAndPlay(selected);
+    } else {
+      setQueue([...songs]);
+      setCurrentIndex(index);
+      loadAndPlay(songs[index]);
+    }
+  }, [shuffle]);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
@@ -140,8 +155,7 @@ export default function usePlayer() {
     const q = queueRef.current;
     const idx = currentIndexRef.current;
     const rep = repeatRef.current;
-    const shuf = shuffleRef.current;
-    const i = pickNext(q, idx, rep, shuf);
+    const i = pickNext(q, idx, rep);
     if (i >= 0) {
       setCurrentIndex(i);
       loadAndPlay(q[i]);
@@ -161,7 +175,25 @@ export default function usePlayer() {
     if (audio) audio.volume = v;
   }, []);
 
-  const toggleShuffle = useCallback(() => setShuffle((s) => !s), []);
+  const toggleShuffle = useCallback(() => {
+    const q = queueRef.current;
+    const idx = currentIndexRef.current;
+    const current = q[idx];
+
+    if (!shuffle) {
+      originalQueueRef.current = [...q];
+      const rest = q.filter((_, i) => i !== idx);
+      const shuffled = [current, ...shuffleArray(rest)];
+      setQueue(shuffled);
+      setCurrentIndex(0);
+    } else {
+      const orig = originalQueueRef.current;
+      const origIdx = current ? orig.findIndex((s) => s.id === current.id) : 0;
+      setQueue([...orig]);
+      setCurrentIndex(origIdx >= 0 ? origIdx : 0);
+    }
+    setShuffle((s) => !s);
+  }, [shuffle]);
 
   const toggleRepeat = useCallback(() => {
     setRepeat((r) => {
