@@ -1,4 +1,4 @@
-export function formatTime(ms) {
+export function formatMs(ms) {
   const s = Math.floor(ms / 1000);
   const min = Math.floor(s / 60);
   const sec = s % 60;

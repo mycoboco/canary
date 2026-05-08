@@ -265,7 +265,7 @@ export default function PlaylistView({
     setLoading(true);
     fetchPlaylistSongs(playlistId)
       .then(setSongs)
-      .catch(() => setSongs([]))
+      .catch((err) => { setSongs([]); setError(err.message); })
       .finally(() => setLoading(false));
   }, [playlistId]);
 

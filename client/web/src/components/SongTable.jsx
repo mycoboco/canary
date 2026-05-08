@@ -1,6 +1,6 @@
 import {useState, useEffect, useRef, forwardRef} from 'react';
 import {TableVirtuoso} from 'react-virtuoso';
-import {formatTime} from '../utils.js';
+import {formatMs} from '../utils.js';
 
 const tableComponents = {
   Table: (props) => (
@@ -93,7 +93,7 @@ function SongCells({song, isCurrent, showActions, onAddToPlaylist, onRemove}) {
       </td>
       <td className={`py-2 px-3 text-right text-gray-400 ${
         !showActions ? 'rounded-r-lg' : ''
-      } ${cellBg}`}>{formatTime(song.time)}</td>
+      } ${cellBg}`}>{formatMs(song.time)}</td>
       {showActions && (
         <td
           className={`py-1 px-2 text-right whitespace-nowrap rounded-r-lg ${cellBg}`}
