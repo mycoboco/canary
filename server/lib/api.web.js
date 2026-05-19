@@ -53,10 +53,12 @@ function sanitizeSong(song) {
 // GET /api/server
 export async function serverInfo(_req, res) {
   const songCount = await db.song.count();
+  const dbVersion = await db.version.get();
   res.json({
     name: config.server.name,
     version: VERSION,
     songCount,
+    dbVersion,
   });
 }
 
