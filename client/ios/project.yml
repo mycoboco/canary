@@ -1,0 +1,49 @@
+name: Canary
+options:
+  bundleIdPrefix: org.woong.canary
+  deploymentTarget:
+    iOS: "18.0"
+  xcodeVersion: "16.0"
+  groupSortPosition: top
+
+packages:
+  CachingPlayerItem:
+    url: https://github.com/sukov/CachingPlayerItem
+    from: "2.2.0"
+
+targets:
+  Canary:
+    type: application
+    platform: iOS
+    sources:
+      - Canary
+    settings:
+      base:
+        INFOPLIST_FILE: Canary/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: org.woong.canary
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: "6.0"
+        DEVELOPMENT_TEAM: ""
+    dependencies:
+      - package: CachingPlayerItem
+    info:
+      path: Canary/Info.plist
+      properties:
+        UIBackgroundModes:
+          - audio
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        CFBundleDisplayName: Canary
+        UILaunchScreen: {}
+
+  CanaryTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - CanaryTests
+    dependencies:
+      - target: Canary
+    settings:
+      base:
+        SWIFT_VERSION: "6.0"
