@@ -44,8 +44,12 @@ struct MainTabView: View {
                 tab { PlaylistsView() }
                     .tabItem { Label("Playlists", systemImage: "music.note.list") }
             }
-            .fullScreenCover(isPresented: $showFullPlayer) {
+            .sheet(isPresented: $showFullPlayer) {
                 FullPlayerView()
+                    .presentationDetents([.large])
+                    .presentationCornerRadius(0)
+                    .presentationDragIndicator(.hidden)
+                    .presentationBackground(.ultraThinMaterial)
             }
         }
     }
