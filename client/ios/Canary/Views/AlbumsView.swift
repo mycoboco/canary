@@ -21,9 +21,12 @@ struct AlbumsView: View {
                             selectedAlbum = album
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
-                                AlbumCoverView(songId: album.coverId, size: 0)
-                                    .frame(maxWidth: .infinity)
+                                Color.clear
                                     .aspectRatio(1, contentMode: .fit)
+                                    .frame(maxWidth: .infinity)
+                                    .overlay {
+                                        AlbumCoverView(songId: album.coverId, size: 0, clipCorners: false)
+                                    }
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                                 Text(album.name)
                                     .font(.caption)

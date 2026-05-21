@@ -7,6 +7,10 @@ struct FullPlayerView: View {
     @State private var addingSong: Song?
     @State private var scrubbing = false
     @State private var scrubTime: TimeInterval = 0
+    @GestureState private var dragOffset: CGFloat = 0
+
+    private let dismissDistance: CGFloat = 100
+    private let directionRatio: CGFloat = 1.5
 
     var body: some View {
         let currentTime = player.currentTime
@@ -127,6 +131,23 @@ struct FullPlayerView: View {
 
             Spacer()
         }
+        .offset(y: dragOffset)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: dragOffset)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 30)
+                .updating($dragOffset) { value, state, _ in
+                    if isVerticalSwipe(value) && value.translation.height > 0 {
+                        state = value.translation.height
+                    }
+                }
+                .onEnded { value in
+                    if value.translation.height > dismissDistance && isVerticalSwipe(value) {
+                        dismiss()
+                    }
+                }
+        )
+        .accessibilityAction(.escape) { dismiss() }
+        .presentationBackground(.ultraThinMaterial)
         .sheet(item: $addingSong) { song in
             AddToPlaylistSheet(song: song)
         }
@@ -136,4 +157,7 @@ struct FullPlayerView: View {
         }
     }
 
+    private func isVerticalSwipe(_ value: DragGesture.Value) -> Bool {
+        abs(value.translation.height) > abs(value.translation.width) * directionRatio
+    }
 }

@@ -3,6 +3,7 @@ import SwiftUI
 struct AlbumCoverView: View {
     let songId: Int?
     var size: CGFloat = 40
+    var clipCorners: Bool = true
 
     @Environment(APIClient.self) private var api
     @State private var image: UIImage?
@@ -19,7 +20,7 @@ struct AlbumCoverView: View {
             }
         }
         .frame(width: size > 0 ? size : nil, height: size > 0 ? size : nil)
-        .clipShape(RoundedRectangle(cornerRadius: size > 60 ? 12 : 6))
+        .clipShape(RoundedRectangle(cornerRadius: clipCorners ? (size > 60 ? 12 : 6) : 0))
         .task(id: songId) {
             await loadImage()
         }

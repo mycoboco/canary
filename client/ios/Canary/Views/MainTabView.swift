@@ -44,7 +44,7 @@ struct MainTabView: View {
                 tab { PlaylistsView() }
                     .tabItem { Label("Playlists", systemImage: "music.note.list") }
             }
-            .sheet(isPresented: $showFullPlayer) {
+            .fullScreenCover(isPresented: $showFullPlayer) {
                 FullPlayerView()
             }
         }
