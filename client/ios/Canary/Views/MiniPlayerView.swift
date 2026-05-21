@@ -33,8 +33,7 @@ struct MiniPlayerView: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .glassEffect(in: RoundedRectangle(cornerRadius: 12))
             .padding(.horizontal, 8)
             .padding(.bottom, 8)
             .contentShape(Rectangle())
