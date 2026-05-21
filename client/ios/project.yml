@@ -36,6 +36,10 @@ targets:
           NSAllowsLocalNetworking: true
         CFBundleDisplayName: Canary
         UILaunchScreen: {}
+        CFBundleURLTypes:
+          - CFBundleURLName: org.woong.canary
+            CFBundleURLSchemes:
+              - canary
 
   CanaryTests:
     type: bundle.unit-test
