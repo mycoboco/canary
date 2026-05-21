@@ -5,6 +5,7 @@ server/web/*
 !server/web/.keep
 
 # iOS
+**/project.pbxproj
 *.xcuserstate
 xcuserdata/
 *.xcscmblueprint
