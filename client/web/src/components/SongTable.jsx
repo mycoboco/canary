@@ -1,6 +1,6 @@
 import {useState, useEffect, useRef, forwardRef} from 'react';
 import {TableVirtuoso} from 'react-virtuoso';
-import {formatMs} from '../utils.js';
+import {formatMs, findScrollParent} from '../utils.js';
 
 const tableComponents = {
   Table: (props) => (
@@ -184,7 +184,8 @@ export default function SongTable({
 
   useEffect(() => {
     if (virtualized && containerRef.current) {
-      setScrollParent(containerRef.current.closest('main'));
+      const sp = findScrollParent(containerRef.current.parentElement);
+      if (sp) setScrollParent(sp);
     }
   }, [virtualized]);
 

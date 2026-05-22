@@ -1,6 +1,15 @@
 import {navItems} from '../navItems.js';
 
-export default function Sidebar({serverName, view, onNavigate, playlists, onSelectPlaylist, selectedPlaylistId}) {
+export default function Sidebar(
+  {
+    serverName,
+    view,
+    onNavigate,
+    playlists,
+    onSelectPlaylist,
+    selectedPlaylistId,
+  }
+) {
   return (
     <aside className="hidden md:flex flex-col w-56 bg-gray-50 border-r border-gray-200 h-full">
       <div
@@ -16,7 +25,7 @@ export default function Sidebar({serverName, view, onNavigate, playlists, onSele
               <button
                 onClick={() => onNavigate(item.id)}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${
-                  view === item.id && !selectedPlaylistId
+                  view === item.id
                     ? 'bg-blue-100 text-blue-700 font-medium'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
@@ -38,7 +47,7 @@ export default function Sidebar({serverName, view, onNavigate, playlists, onSele
               <button
                 onClick={() => onSelectPlaylist(p.id)}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm truncate ${
-                  selectedPlaylistId === p.id
+                  view === 'playlist' && selectedPlaylistId === p.id
                     ? 'bg-blue-100 text-blue-700 font-medium'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}

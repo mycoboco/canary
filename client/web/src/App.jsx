@@ -29,10 +29,11 @@ export default function App() {
   function handleNavigate(v) {
     if (v === 'playlist') {
       setView('playlist');
-      setSelectedPlaylistId(library.playlists[0]?.id || null);
+      if (!selectedPlaylistId) {
+        setSelectedPlaylistId(library.playlists[0]?.id || null);
+      }
     } else {
       setView(v);
-      setSelectedPlaylistId(null);
     }
   }
 
@@ -82,8 +83,10 @@ export default function App() {
           onSelectPlaylist={handleSelectPlaylist}
           selectedPlaylistId={selectedPlaylistId}
         />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 min-w-0">
-          {view === 'songs' && (
+        <main className="flex-1 overflow-hidden min-w-0 relative">
+          <div
+            className={`absolute inset-0 overflow-y-auto overflow-x-hidden p-4${view === 'songs' ? '' : ' invisible pointer-events-none'}`}
+          >
             <SongsView
               songs={library.songs}
               onPlay={player.playSong}
@@ -98,16 +101,20 @@ export default function App() {
                 setSongsSortDir(dir);
               }}
             />
-          )}
-          {view === 'genres' && (
+          </div>
+          <div
+            className={`absolute inset-0 overflow-y-auto overflow-x-hidden p-4${view === 'genres' ? '' : ' invisible pointer-events-none'}`}
+          >
             <GenresView
               genres={library.genres}
               onPlay={player.playSong}
               currentSongId={player.currentSong?.id}
               onAddToPlaylist={setAddingSong}
             />
-          )}
-          {view === 'artists' && (
+          </div>
+          <div
+            className={`absolute inset-0 overflow-y-auto overflow-x-hidden p-4${view === 'artists' ? '' : ' invisible pointer-events-none'}`}
+          >
             <ArtistsView
               artists={library.artists}
               albums={library.albums}
@@ -115,25 +122,29 @@ export default function App() {
               currentSongId={player.currentSong?.id}
               onAddToPlaylist={setAddingSong}
             />
-          )}
-          {view === 'albums' && (
+          </div>
+          <div
+            className={`absolute inset-0 overflow-y-auto overflow-x-hidden p-4${view === 'albums' ? '' : ' invisible pointer-events-none'}`}
+          >
             <AlbumsView
               albums={library.albums}
               onPlay={player.playSong}
               currentSongId={player.currentSong?.id}
               onAddToPlaylist={setAddingSong}
             />
-          )}
+          </div>
           {view === 'playlist' && (
-            <PlaylistView
-              playlistId={selectedPlaylistId}
-              playlists={library.playlists}
-              onPlay={player.playSong}
-              currentSongId={player.currentSong?.id}
-              onReload={library.reloadPlaylists}
-              onSelectPlaylist={handleSelectPlaylist}
-              onAddToPlaylist={setAddingSong}
-            />
+            <div className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4">
+              <PlaylistView
+                playlistId={selectedPlaylistId}
+                playlists={library.playlists}
+                onPlay={player.playSong}
+                currentSongId={player.currentSong?.id}
+                onReload={library.reloadPlaylists}
+                onSelectPlaylist={handleSelectPlaylist}
+                onAddToPlaylist={setAddingSong}
+              />
+            </div>
           )}
         </main>
       </div>

@@ -1,3 +1,12 @@
+export function findScrollParent(el) {
+  while (el) {
+    const s = getComputedStyle(el);
+    if (s.overflowY === 'auto' || s.overflowY === 'scroll') return el;
+    el = el.parentElement;
+  }
+  return null;
+}
+
 export function formatMs(ms) {
   const s = Math.floor(ms / 1000);
   const min = Math.floor(s / 60);

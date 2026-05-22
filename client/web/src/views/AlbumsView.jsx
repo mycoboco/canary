@@ -1,15 +1,38 @@
-import {useState} from 'react';
+import {useState, useRef, useLayoutEffect} from 'react';
 import AlbumCover from '../components/AlbumCover.jsx';
 import SongTable from '../components/SongTable.jsx';
+import {findScrollParent} from '../utils.js';
 
 export default function AlbumsView({albums, onPlay, currentSongId, onAddToPlaylist}) {
   const [selected, setSelected] = useState(null);
+  const rootRef = useRef(null);
+  const savedScroll = useRef(0);
+
+  function getScrollParent() {
+    return rootRef.current ? findScrollParent(rootRef.current) : null;
+  }
+
+  function handleSelect(key) {
+    const sp = getScrollParent();
+    if (sp) savedScroll.current = sp.scrollTop;
+    setSelected(key);
+  }
+
+  useLayoutEffect(() => {
+    const sp = getScrollParent();
+    if (!sp) return;
+    if (selected) {
+      sp.scrollTop = 0;
+    } else if (savedScroll.current > 0) {
+      sp.scrollTop = savedScroll.current;
+    }
+  }, [selected]);
 
   const album = selected ? albums.find((a) => `${a.name}::${a.artist}` === selected) : null;
 
   if (selected && album) {
     return (
-      <div>
+      <div ref={rootRef}>
         <button
           onClick={() => setSelected(null)}
           className="text-sm text-blue-600 hover:underline mb-2"
@@ -32,13 +55,13 @@ export default function AlbumsView({albums, onPlay, currentSongId, onAddToPlayli
   }
 
   return (
-    <div>
+    <div ref={rootRef}>
       <h2 className="text-xl font-bold mb-4">Albums</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {albums.map((album) => (
           <button
             key={`${album.name}::${album.artist}`}
-            onClick={() => setSelected(`${album.name}::${album.artist}`)}
+            onClick={() => handleSelect(`${album.name}::${album.artist}`)}
             className="text-left group"
           >
             <div className="aspect-square rounded-lg overflow-hidden mb-2">
