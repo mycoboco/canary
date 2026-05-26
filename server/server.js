@@ -156,6 +156,7 @@ function usage() {
     .on('SIGTERM', exit)
     .on('uncaughtException', (err) => {
       log.error(err);
+      if (err instanceof RangeError || err instanceof TypeError) return;
       exit();
     });
   process.on('SIGUSR2', () => mp3.scan(true));
