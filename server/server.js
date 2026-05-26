@@ -156,6 +156,8 @@ function usage() {
     .on('SIGTERM', exit)
     .on('uncaughtException', (err) => {
       log.error(err);
+      // TODO: remove this after Borewit/music-metadata#2640 resolved
+      if (err instanceof RangeError || err instanceof TypeError) return;
       exit();
     });
   process.on('SIGUSR2', () => mp3.scan(true));

@@ -1,14 +1,37 @@
-import {useState} from 'react';
+import {useState, useRef, useLayoutEffect} from 'react';
 import SongTable from '../components/SongTable.jsx';
+import {findScrollParent} from '../utils.js';
 
 export default function ArtistsView({artists, albums, onPlay, currentSongId, onAddToPlaylist}) {
   const [selected, setSelected] = useState(null);
+  const rootRef = useRef(null);
+  const savedScroll = useRef(0);
+
+  function getScrollParent() {
+    return rootRef.current ? findScrollParent(rootRef.current) : null;
+  }
+
+  function handleSelect(name) {
+    const sp = getScrollParent();
+    if (sp) savedScroll.current = sp.scrollTop;
+    setSelected(name);
+  }
+
+  useLayoutEffect(() => {
+    const sp = getScrollParent();
+    if (!sp) return;
+    if (selected) {
+      sp.scrollTop = 0;
+    } else if (savedScroll.current > 0) {
+      sp.scrollTop = savedScroll.current;
+    }
+  }, [selected]);
 
   if (selected) {
     const artistAlbums = albums.filter((a) => a.artist === selected);
     const artist = artists.find((a) => a.name === selected);
     return (
-      <div>
+      <div ref={rootRef}>
         <button
           onClick={() => setSelected(null)}
           className="text-sm text-blue-600 hover:underline mb-2"
@@ -38,13 +61,13 @@ export default function ArtistsView({artists, albums, onPlay, currentSongId, onA
   }
 
   return (
-    <div>
+    <div ref={rootRef}>
       <h2 className="text-xl font-bold mb-4">Artists</h2>
       <ul className="space-y-1">
         {artists.map((a) => (
           <li key={a.name}>
             <button
-              onClick={() => setSelected(a.name)}
+              onClick={() => handleSelect(a.name)}
               className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 flex justify-between"
             >
               <span>{a.name}</span>
