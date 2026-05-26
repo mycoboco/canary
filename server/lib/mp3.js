@@ -238,7 +238,11 @@ async function next(update) {
               if (isSong(f)) return addSong(f, stats);
             })(f)),
         ))
-        .then(resolve);
+        .then(resolve)
+        .catch((err) => {
+          log.error(err);
+          resolve();
+        });
     }),
     new Promise((resolve) => {
       const p = qf.pop();
@@ -252,10 +256,18 @@ async function next(update) {
             return song;
           })
           .then(db.song.add)
-          .then(resolve);
+          .then(resolve)
+          .catch((err) => {
+            log.error(err);
+            resolve();
+          });
       } else {
         db.song.touch(id(p.path), version + 1)
-          .then(resolve);
+          .then(resolve)
+          .catch((err) => {
+            log.error(err);
+            resolve();
+          });
       }
     }),
   ])
