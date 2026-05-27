@@ -25,6 +25,7 @@ export default function App() {
   const [songsSearch, setSongsSearch] = useState('');
   const [songsSortKey, setSongsSortKey] = useState(null);
   const [songsSortDir, setSongsSortDir] = useState('asc');
+  const [resetKeys, setResetKeys] = useState({genres: 0, artists: 0, albums: 0});
 
   function handleNavigate(v) {
     if (v === 'playlist') {
@@ -33,6 +34,9 @@ export default function App() {
         setSelectedPlaylistId(library.playlists[0]?.id || null);
       }
     } else {
+      if (v === view && resetKeys[v] !== undefined) {
+        setResetKeys((prev) => ({...prev, [v]: prev[v] + 1}));
+      }
       setView(v);
     }
   }
@@ -110,6 +114,7 @@ export default function App() {
               onPlay={player.playSong}
               currentSongId={player.currentSong?.id}
               onAddToPlaylist={setAddingSong}
+              resetKey={resetKeys.genres}
             />
           </div>
           <div
@@ -121,6 +126,7 @@ export default function App() {
               onPlay={player.playSong}
               currentSongId={player.currentSong?.id}
               onAddToPlaylist={setAddingSong}
+              resetKey={resetKeys.artists}
             />
           </div>
           <div
@@ -131,6 +137,7 @@ export default function App() {
               onPlay={player.playSong}
               currentSongId={player.currentSong?.id}
               onAddToPlaylist={setAddingSong}
+              resetKey={resetKeys.albums}
             />
           </div>
           {view === 'playlist' && (
