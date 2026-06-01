@@ -75,7 +75,8 @@ struct CanaryApp: App {
                           let api = apiClient else { return }
                     songs = (try? await api.fetchPlaylistSongs(playlist.id)) ?? []
                 } else {
-                    songs = library.songs
+                    await player.startDefaultPlayback()
+                    return
                 }
                 guard !songs.isEmpty else { return }
                 player.playSong(songs: songs, index: 0)

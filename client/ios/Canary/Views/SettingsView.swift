@@ -9,10 +9,28 @@ struct SettingsView: View {
     @State private var currentCacheSize: Int64 = 0
     @State private var cacheFileCount: Int = 0
     @State private var confirmClear = false
+    @State private var defaultPlaylistId: Int?
 
     var body: some View {
         NavigationStack {
             Form {
+                Section("Widget") {
+                    Picker("Default Playlist", selection: $defaultPlaylistId) {
+                        Text("All Songs").tag(nil as Int?)
+                        ForEach(library.playlists) { playlist in
+                            Text(playlist.name).tag(Optional(playlist.id))
+                        }
+                    }
+                    .onChange(of: defaultPlaylistId) {
+                        let defaults = SharedConstants.sharedDefaults
+                        if let id = defaultPlaylistId {
+                            defaults?.set(id, forKey: SharedConstants.defaultPlaylistIdKey)
+                        } else {
+                            defaults?.removeObject(forKey: SharedConstants.defaultPlaylistIdKey)
+                        }
+                    }
+                }
+
                 Section("Cache") {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
@@ -74,6 +92,7 @@ struct SettingsView: View {
                 }
             }
             .onAppear {
+                defaultPlaylistId = SharedConstants.sharedDefaults?.object(forKey: SharedConstants.defaultPlaylistIdKey) as? Int
                 cacheSizeMB = Double(player.cache.maxSize) / 1024 / 1024
                 refreshCacheInfo()
             }

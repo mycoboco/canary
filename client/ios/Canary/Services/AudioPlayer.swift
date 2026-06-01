@@ -2,6 +2,7 @@ import AVFoundation
 @preconcurrency import MediaPlayer
 import Observation
 import CachingPlayerItem
+import WidgetKit
 
 @Observable
 @MainActor
@@ -37,6 +38,8 @@ final class AudioPlayer {
     let cache: AudioCache
     private var apiClient: APIClient?
 
+    nonisolated(unsafe) static var _widgetInstance: AudioPlayer?
+
     private var endObserver: NSObjectProtocol?
     private var errorObserver: NSObjectProtocol?
     private var interruptionObserver: NSObjectProtocol?
@@ -68,6 +71,8 @@ final class AudioPlayer {
 
     func configure(apiClient: APIClient) {
         self.apiClient = apiClient
+        AudioPlayer._widgetInstance = self
+        setupWidgetObservers()
     }
 
     func stop() {
@@ -81,6 +86,7 @@ final class AudioPlayer {
         cachedArtwork = nil
         apiClient = nil
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        updateSharedNowPlaying()
     }
 
     func isCached(_ song: Song) -> Bool {
@@ -332,6 +338,7 @@ final class AudioPlayer {
     private func updateNowPlaying() {
         guard let song = currentSong else {
             MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+            updateSharedNowPlaying()
             return
         }
         let safeDuration = duration.isFinite ? duration : 0
@@ -348,6 +355,7 @@ final class AudioPlayer {
             info[MPMediaItemPropertyArtwork] = cached.artwork
         }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+        updateSharedNowPlaying()
     }
 
     private func fetchNowPlayingArtwork(for song: Song) {
@@ -361,7 +369,64 @@ final class AudioPlayer {
                   self.currentSong?.id == songId else { return }
             let artwork = _makeNowPlayingArtwork(size: image.size, image: image)
             self.cachedArtwork = (songId: songId, artwork: artwork)
+            if let thumb = image.preparingThumbnail(of: CGSize(width: 200, height: 200)) {
+                SharedConstants.sharedDefaults?.set(thumb.jpegData(compressionQuality: 0.7), forKey: SharedConstants.coverDataKey)
+                WidgetCenter.shared.reloadAllTimelines()
+            }
             self.updateNowPlaying()
+        }
+    }
+
+    private var lastSharedSongId: Int?
+    private var lastSharedIsPlaying: Bool?
+
+    private func updateSharedNowPlaying() {
+        let songId = currentSong?.id
+        let playing = isPlaying
+        guard songId != lastSharedSongId || playing != lastSharedIsPlaying else { return }
+        lastSharedSongId = songId
+        lastSharedIsPlaying = playing
+
+        guard let defaults = SharedConstants.sharedDefaults else { return }
+        if let song = currentSong {
+            let shared = SharedNowPlaying(
+                songId: song.id, title: song.title, artist: song.artist,
+                album: song.album, isPlaying: isPlaying
+            )
+            defaults.set(try? JSONEncoder().encode(shared), forKey: SharedConstants.nowPlayingKey)
+        } else {
+            defaults.removeObject(forKey: SharedConstants.nowPlayingKey)
+            defaults.removeObject(forKey: SharedConstants.coverDataKey)
+        }
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    func startDefaultPlayback() async {
+        guard let api = apiClient else { return }
+        let playlistId = SharedConstants.sharedDefaults?.object(forKey: SharedConstants.defaultPlaylistIdKey) as? Int
+        do {
+            let songs: [Song]
+            if let playlistId {
+                songs = try await api.fetchPlaylistSongs(playlistId)
+            } else {
+                songs = try await api.fetchSongs()
+            }
+            guard !songs.isEmpty else { return }
+            playSong(songs: songs, index: 0)
+        } catch {}
+    }
+
+    private var widgetObserversRegistered = false
+
+    private func setupWidgetObservers() {
+        guard !widgetObserversRegistered else { return }
+        widgetObserversRegistered = true
+        let center = CFNotificationCenterGetDarwinNotifyCenter()
+        for command in WidgetCommand.allCases {
+            CFNotificationCenterAddObserver(
+                center, nil, _handleWidgetCommand,
+                command.rawValue as CFString, nil, .deliverImmediately
+            )
         }
     }
 
@@ -442,6 +507,26 @@ final class CachingDelegateProxy: NSObject, CachingPlayerItemDelegate, @unchecke
         lock.lock()
         entries.removeObject(forKey: playerItem)
         lock.unlock()
+    }
+}
+
+private func _handleWidgetCommand(
+    _ center: CFNotificationCenter?,
+    _ observer: UnsafeMutableRawPointer?,
+    _ name: CFNotificationName?,
+    _ object: UnsafeRawPointer?,
+    _ info: CFDictionary?
+) {
+    guard let name = name?.rawValue as String?,
+          let command = WidgetCommand(rawValue: name) else { return }
+    Task { @MainActor in
+        guard let player = AudioPlayer._widgetInstance else { return }
+        switch command {
+        case .togglePlay: player.togglePlay()
+        case .nextTrack: player.next()
+        case .prevTrack: player.prev()
+        case .startPlayback: await player.startDefaultPlayback()
+        }
     }
 }
 
