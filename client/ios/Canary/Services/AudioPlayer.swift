@@ -86,6 +86,7 @@ final class AudioPlayer {
         cachedArtwork = nil
         apiClient = nil
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        SharedConstants.sharedDefaults?.removeObject(forKey: SharedConstants.heartbeatKey)
         updateSharedNowPlaying()
     }
 
@@ -338,9 +339,11 @@ final class AudioPlayer {
     private func updateNowPlaying() {
         guard let song = currentSong else {
             MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+            SharedConstants.sharedDefaults?.removeObject(forKey: SharedConstants.heartbeatKey)
             updateSharedNowPlaying()
             return
         }
+        SharedConstants.sharedDefaults?.set(Date(), forKey: SharedConstants.heartbeatKey)
         let safeDuration = duration.isFinite ? duration : 0
         let safeCurrentTime = currentTime.isFinite ? currentTime : 0
         var info: [String: Any] = [
@@ -525,7 +528,6 @@ private func _handleWidgetCommand(
         case .togglePlay: player.togglePlay()
         case .nextTrack: player.next()
         case .prevTrack: player.prev()
-        case .startPlayback: await player.startDefaultPlayback()
         }
     }
 }

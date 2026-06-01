@@ -45,6 +45,10 @@ struct TogglePlayIntent: AppIntent {
     static let openAppWhenRun: Bool = false
 
     func perform() async throws -> some IntentResult {
+        if SharedConstants.clearStateIfAppDead() {
+            WidgetCenter.shared.reloadAllTimelines()
+            return .result()
+        }
         if let defaults = SharedConstants.sharedDefaults,
            let data = defaults.data(forKey: SharedConstants.nowPlayingKey),
            let np = try? JSONDecoder().decode(SharedNowPlaying.self, from: data) {
@@ -67,6 +71,10 @@ struct NextTrackIntent: AppIntent {
     static let openAppWhenRun: Bool = false
 
     func perform() async throws -> some IntentResult {
+        if SharedConstants.clearStateIfAppDead() {
+            WidgetCenter.shared.reloadAllTimelines()
+            return .result()
+        }
         WidgetCommand.nextTrack.post()
         return .result()
     }
@@ -77,20 +85,15 @@ struct PreviousTrackIntent: AppIntent {
     static let openAppWhenRun: Bool = false
 
     func perform() async throws -> some IntentResult {
+        if SharedConstants.clearStateIfAppDead() {
+            WidgetCenter.shared.reloadAllTimelines()
+            return .result()
+        }
         WidgetCommand.prevTrack.post()
         return .result()
     }
 }
 
-struct StartPlaybackIntent: AppIntent {
-    static let title: LocalizedStringResource = "Start Playback"
-    static let openAppWhenRun: Bool = false
-
-    func perform() async throws -> some IntentResult {
-        WidgetCommand.startPlayback.post()
-        return .result()
-    }
-}
 
 // MARK: - Views
 
@@ -110,9 +113,14 @@ struct PlayerWidgetView: View {
 
     private var smallView: some View {
         ZStack(alignment: .bottom) {
-            coverImage
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipShape(ContainerRelativeShape())
+            GeometryReader { geo in
+                let side = min(geo.size.width, geo.size.height)
+                coverImage
+                    .frame(width: side, height: side)
+                    .clipped()
+                    .frame(width: geo.size.width, height: geo.size.height)
+            }
+            .clipShape(ContainerRelativeShape())
 
             VStack(spacing: 6) {
                 if hasNowPlaying {
@@ -121,10 +129,9 @@ struct PlayerWidgetView: View {
                     }
                     .buttonStyle(.plain)
                 } else {
-                    Button(intent: StartPlaybackIntent()) {
+                    Link(destination: URL(string: "canary://play")!) {
                         playPauseCircle
                     }
-                    .buttonStyle(.plain)
                 }
 
                 Text(np?.title ?? "Canary")
@@ -158,10 +165,15 @@ struct PlayerWidgetView: View {
 
     private var mediumView: some View {
         HStack(spacing: 12) {
-            coverImage
-                .aspectRatio(1, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .padding(.vertical, 4)
+            GeometryReader { geo in
+                let size = geo.size.height
+                coverImage
+                    .frame(width: size, height: size)
+                    .clipped()
+            }
+            .aspectRatio(1, contentMode: .fit)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.vertical, 4)
 
             VStack(spacing: 0) {
                 Spacer()
@@ -198,7 +210,7 @@ struct PlayerWidgetView: View {
                                 .frame(maxWidth: .infinity)
                         }
                     } else {
-                        Button(intent: StartPlaybackIntent()) {
+                        Link(destination: URL(string: "canary://play")!) {
                             Image(systemName: "play.fill")
                                 .font(.title2)
                                 .frame(maxWidth: .infinity)
@@ -221,8 +233,7 @@ struct PlayerWidgetView: View {
                 .resizable()
                 .aspectRatio(contentMode: .fill)
         } else {
-            Rectangle()
-                .fill(.gray.opacity(0.2))
+            Color.gray.opacity(0.2)
                 .overlay {
                     Image(systemName: "music.note")
                         .foregroundStyle(.gray)
