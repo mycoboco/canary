@@ -5,6 +5,7 @@ struct PlaylistDetailView: View {
 
     @Environment(APIClient.self) private var api
     @Environment(AudioPlayer.self) private var player
+    @Environment(LibraryViewModel.self) private var library
     @Environment(PlaylistViewModel.self) private var playlistVM
     @Environment(\.dismiss) private var dismiss
 
@@ -67,6 +68,9 @@ struct PlaylistDetailView: View {
         }
         .task {
             await loadSongs()
+        }
+        .onChange(of: library.playlists) {
+            Task { await loadSongs() }
         }
         .sheet(isPresented: $editing) {
             NavigationStack {
