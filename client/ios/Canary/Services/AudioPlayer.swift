@@ -84,6 +84,7 @@ final class AudioPlayer {
         currentTime = 0
         duration = 0
         cachedArtwork = nil
+        currentContext = nil
         apiClient = nil
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
         SharedConstants.sharedDefaults?.removeObject(forKey: SharedConstants.heartbeatKey)
@@ -181,9 +182,12 @@ final class AudioPlayer {
         }
     }
 
-    func playSong(songs: [Song], index: Int) {
+    private(set) var currentContext: PlaybackContext?
+
+    func playSong(songs: [Song], index: Int, context: PlaybackContext? = nil) {
         originalQueue = songs
         errorCount = 0
+        currentContext = context
 
         if shuffleMode {
             let selected = songs[index]
@@ -289,6 +293,7 @@ final class AudioPlayer {
         isPlaying = true
         currentTime = 0
         duration = 0
+        saveContext()
         updateNowPlaying()
         fetchNowPlayingArtwork(for: song)
     }
@@ -406,17 +411,61 @@ final class AudioPlayer {
 
     func startDefaultPlayback() async {
         guard let api = apiClient else { return }
+
+        if let data = SharedConstants.sharedDefaults?.data(forKey: SharedConstants.lastContextKey),
+           let context = try? JSONDecoder().decode(PlaybackContext.self, from: data),
+           let songs = try? await fetchSongsForContext(context, api: api),
+           !songs.isEmpty {
+            let index = songs.firstIndex(where: { $0.id == context.songId }) ?? 0
+            playSong(songs: songs, index: index, context: context)
+            return
+        }
+
         let playlistId = SharedConstants.sharedDefaults?.object(forKey: SharedConstants.defaultPlaylistIdKey) as? Int
         do {
             let songs: [Song]
+            let context: PlaybackContext
             if let playlistId {
                 songs = try await api.fetchPlaylistSongs(playlistId)
+                guard !songs.isEmpty else { return }
+                context = PlaybackContext(type: .playlist, name: "", playlistId: playlistId, songId: songs[0].id)
             } else {
                 songs = try await api.fetchSongs()
+                guard !songs.isEmpty else { return }
+                context = PlaybackContext(type: .allSongs, songId: songs[0].id)
             }
-            guard !songs.isEmpty else { return }
-            playSong(songs: songs, index: 0)
+            playSong(songs: songs, index: 0, context: context)
         } catch {}
+    }
+
+    private func fetchSongsForContext(_ context: PlaybackContext, api: APIClient) async throws -> [Song] {
+        switch context.type {
+        case .allSongs:
+            return try await api.fetchSongs()
+        case .playlist:
+            guard let id = context.playlistId else { return [] }
+            return try await api.fetchPlaylistSongs(id)
+        case .genre:
+            return try await api.fetchSongs().filter { $0.genre == context.name }
+        case .artist:
+            return try await api.fetchSongs().filter { $0.artist == context.name }
+        case .album:
+            return try await api.fetchSongs().filter {
+                $0.album == context.name && (context.artistName == nil || $0.artist == context.artistName)
+            }
+        }
+    }
+
+    private func saveContext() {
+        guard let song = currentSong, let ctx = currentContext else {
+            SharedConstants.sharedDefaults?.removeObject(forKey: SharedConstants.lastContextKey)
+            return
+        }
+        let updated = PlaybackContext(
+            type: ctx.type, name: ctx.name, artistName: ctx.artistName,
+            playlistId: ctx.playlistId, songId: song.id
+        )
+        SharedConstants.sharedDefaults?.set(try? JSONEncoder().encode(updated), forKey: SharedConstants.lastContextKey)
     }
 
     private var widgetObserversRegistered = false

@@ -14,6 +14,7 @@ enum SharedConstants {
     static let coverDataKey = "coverData"
     static let defaultPlaylistIdKey = "defaultPlaylistId"
     static let heartbeatKey = "heartbeat"
+    static let lastContextKey = "lastContext"
 
     static var sharedDefaults: UserDefaults? {
         UserDefaults(suiteName: appGroupId)

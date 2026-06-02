@@ -4,16 +4,17 @@ struct PlaylistsView: View {
     @Environment(LibraryViewModel.self) private var library
     @Environment(PlaylistViewModel.self) private var playlistVM
 
-    @State private var selectedPlaylist: Playlist?
+    @Binding var pendingContext: PlaybackContext?
+    @State private var path = NavigationPath()
     @State private var creatingSmart = false
     @State private var creatingManual = false
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List {
                 ForEach(library.playlists) { playlist in
                     Button {
-                        selectedPlaylist = playlist
+                        path.append(playlist)
                     } label: {
                         HStack {
                             Text(playlist.name)
@@ -40,9 +41,11 @@ struct PlaylistsView: View {
                     }
                 }
             }
-            .navigationDestination(item: $selectedPlaylist) { playlist in
+            .navigationDestination(for: Playlist.self) { playlist in
                 PlaylistDetailView(playlist: playlist)
             }
+            .task(id: pendingContext) { navigateIfNeeded() }
+            .onChange(of: library.playlists) { navigateIfNeeded() }
             .sheet(isPresented: $creatingSmart) {
                 NavigationStack {
                     PlaylistEditorView(mode: .createSmart)
@@ -54,5 +57,12 @@ struct PlaylistsView: View {
                 }
             }
         }
+    }
+
+    private func navigateIfNeeded() {
+        guard let ctx = pendingContext, ctx.type == .playlist,
+              let playlist = library.playlists.first(where: { $0.id == ctx.playlistId }) else { return }
+        pendingContext = nil
+        path.append(playlist)
     }
 }

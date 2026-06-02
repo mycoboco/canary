@@ -26,7 +26,7 @@ struct PlaylistDetailView: View {
                             isPlaying: player.currentSong?.id == song.id
                         )
                         .onTapGesture {
-                            player.playSong(songs: songs, index: index)
+                            player.playSong(songs: songs, index: index, context: PlaybackContext(type: .playlist, name: playlist.name, playlistId: playlist.id, songId: song.id))
                         }
                         .swipeActions(edge: .trailing) {
                             if playlist.type == .manual {

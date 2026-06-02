@@ -4,6 +4,7 @@ struct AlbumsView: View {
     @Environment(LibraryViewModel.self) private var library
     @Environment(AudioPlayer.self) private var player
 
+    @Binding var pendingContext: PlaybackContext?
     @State private var selectedAlbum: AlbumItem?
     @State private var addingSong: Song?
 
@@ -45,6 +46,12 @@ struct AlbumsView: View {
             }
             .refreshable { await library.load() }
             .navigationTitle("Albums")
+            .task(id: pendingContext) {
+                guard let ctx = pendingContext, ctx.type == .album,
+                      let album = library.albums.first(where: { $0.name == ctx.name && $0.artist == (ctx.artistName ?? $0.artist) }) else { return }
+                pendingContext = nil
+                selectedAlbum = album
+            }
             .navigationDestination(item: $selectedAlbum) { album in
                 albumDetail(album)
             }
@@ -75,7 +82,7 @@ struct AlbumsView: View {
                         isPlaying: player.currentSong?.id == song.id
                     )
                     .onTapGesture {
-                        player.playSong(songs: album.songs, index: index)
+                        player.playSong(songs: album.songs, index: index, context: PlaybackContext(type: .album, name: album.name, artistName: album.artist, songId: song.id))
                     }
                     .swipeActions(edge: .trailing) {
                         Button {

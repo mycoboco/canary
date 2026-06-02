@@ -4,10 +4,12 @@ struct GenresView: View {
     @Environment(LibraryViewModel.self) private var library
     @Environment(AudioPlayer.self) private var player
 
+    @Binding var pendingContext: PlaybackContext?
+    @State private var path = NavigationPath()
     @State private var addingSong: Song?
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List(library.genres) { genre in
                 NavigationLink(value: genre) {
                     HStack {
@@ -30,7 +32,7 @@ struct GenresView: View {
                             isPlaying: player.currentSong?.id == song.id
                         )
                         .onTapGesture {
-                            player.playSong(songs: genre.songs, index: index)
+                            player.playSong(songs: genre.songs, index: index, context: PlaybackContext(type: .genre, name: genre.name, songId: song.id))
                         }
                         .swipeActions(edge: .trailing) {
                             Button {
@@ -49,7 +51,14 @@ struct GenresView: View {
                     AddToPlaylistSheet(song: song)
                 }
             }
+            .task(id: pendingContext) { navigateIfNeeded() }
         }
     }
 
+    private func navigateIfNeeded() {
+        guard let ctx = pendingContext, ctx.type == .genre,
+              let genre = library.genres.first(where: { $0.name == ctx.name }) else { return }
+        pendingContext = nil
+        path.append(genre)
+    }
 }

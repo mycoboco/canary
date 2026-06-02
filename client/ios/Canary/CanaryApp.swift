@@ -69,17 +69,15 @@ struct CanaryApp: App {
                 player.setRepeatMode(AudioPlayer.RepeatMode(rawValue: v) ?? .none)
             }
             Task {
-                let songs: [Song]
                 if let playlistName {
                     guard let playlist = library.playlists.first(where: { $0.name.caseInsensitiveCompare(playlistName) == .orderedSame }),
                           let api = apiClient else { return }
-                    songs = (try? await api.fetchPlaylistSongs(playlist.id)) ?? []
+                    let songs = (try? await api.fetchPlaylistSongs(playlist.id)) ?? []
+                    guard !songs.isEmpty else { return }
+                    player.playSong(songs: songs, index: 0, context: PlaybackContext(type: .playlist, name: playlist.name, playlistId: playlist.id, songId: songs[0].id))
                 } else {
                     await player.startDefaultPlayback()
-                    return
                 }
-                guard !songs.isEmpty else { return }
-                player.playSong(songs: songs, index: 0)
             }
         case "pause":
             if player.isPlaying { player.togglePlay() }

@@ -69,7 +69,7 @@ struct SongsView: View {
             isPlaying: player.currentSong?.id == song.id
         )
         .onTapGesture {
-            player.playSong(songs: cachedSongs, index: index)
+            player.playSong(songs: cachedSongs, index: index, context: PlaybackContext(type: .allSongs, songId: song.id))
         }
         .swipeActions(edge: .trailing) {
             Button {

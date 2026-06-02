@@ -94,7 +94,6 @@ struct PreviousTrackIntent: AppIntent {
     }
 }
 
-
 // MARK: - Views
 
 struct PlayerWidgetView: View {

@@ -4,10 +4,12 @@ struct ArtistsView: View {
     @Environment(LibraryViewModel.self) private var library
     @Environment(AudioPlayer.self) private var player
 
+    @Binding var pendingContext: PlaybackContext?
+    @State private var path = NavigationPath()
     @State private var addingSong: Song?
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List(library.artists) { artist in
                 NavigationLink(value: artist) {
                     HStack {
@@ -25,6 +27,7 @@ struct ArtistsView: View {
             .navigationDestination(for: GroupedItem.self) { artist in
                 artistDetail(artist)
             }
+            .task(id: pendingContext) { navigateIfNeeded() }
         }
     }
 
@@ -60,7 +63,7 @@ struct ArtistsView: View {
             isPlaying: player.currentSong?.id == song.id
         )
         .onTapGesture {
-            player.playSong(songs: songs, index: index)
+            player.playSong(songs: songs, index: index, context: PlaybackContext(type: .artist, name: song.artist, songId: song.id))
         }
         .swipeActions(edge: .trailing) {
             Button {
@@ -72,4 +75,10 @@ struct ArtistsView: View {
         }
     }
 
+    private func navigateIfNeeded() {
+        guard let ctx = pendingContext, ctx.type == .artist,
+              let artist = library.artists.first(where: { $0.name == ctx.name }) else { return }
+        pendingContext = nil
+        path.append(artist)
+    }
 }
