@@ -294,6 +294,8 @@ final class AudioPlayer {
         currentTime = 0
         duration = 0
         saveContext()
+        cachedArtwork = nil
+        SharedConstants.sharedDefaults?.removeObject(forKey: SharedConstants.coverDataKey)
         updateNowPlaying()
         fetchNowPlayingArtwork(for: song)
     }
