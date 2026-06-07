@@ -40,6 +40,7 @@ final class AudioPlayer {
 
     nonisolated(unsafe) static var _widgetInstance: AudioPlayer?
 
+    private var widgetRefreshTimer: Timer?
     private var endObserver: NSObjectProtocol?
     private var errorObserver: NSObjectProtocol?
     private var interruptionObserver: NSObjectProtocol?
@@ -55,6 +56,7 @@ final class AudioPlayer {
 
     deinit {
         MainActor.assumeIsolated {
+            widgetRefreshTimer?.invalidate()
             if let timeObserver { player.removeTimeObserver(timeObserver) }
             if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
             if let errorObserver { NotificationCenter.default.removeObserver(errorObserver) }
@@ -76,6 +78,8 @@ final class AudioPlayer {
     }
 
     func stop() {
+        widgetRefreshTimer?.invalidate()
+        widgetRefreshTimer = nil
         player.pause()
         player.replaceCurrentItem(with: nil)
         isPlaying = false
@@ -291,6 +295,7 @@ final class AudioPlayer {
         player.volume = volume
         player.play()
         isPlaying = true
+        startWidgetRefresh()
         currentTime = 0
         duration = 0
         saveContext()
@@ -342,6 +347,13 @@ final class AudioPlayer {
     }
 
     private var cachedArtwork: (songId: Int, artwork: MPMediaItemArtwork)?
+
+    private func startWidgetRefresh() {
+        widgetRefreshTimer?.invalidate()
+        widgetRefreshTimer = Timer.scheduledTimer(withTimeInterval: 240, repeats: true) { _ in
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
 
     private func updateNowPlaying() {
         guard let song = currentSong else {
@@ -399,11 +411,10 @@ final class AudioPlayer {
 
         guard let defaults = SharedConstants.sharedDefaults else { return }
         if let song = currentSong {
-            let shared = SharedNowPlaying(
+            SharedConstants.saveNowPlaying(SharedNowPlaying(
                 songId: song.id, title: song.title, artist: song.artist,
                 album: song.album, isPlaying: isPlaying
-            )
-            defaults.set(try? JSONEncoder().encode(shared), forKey: SharedConstants.nowPlayingKey)
+            ))
         } else {
             defaults.removeObject(forKey: SharedConstants.nowPlayingKey)
             defaults.removeObject(forKey: SharedConstants.coverDataKey)

@@ -6,6 +6,10 @@ struct SharedNowPlaying: Codable, Sendable {
     let artist: String
     let album: String
     let isPlaying: Bool
+
+    func toggled() -> SharedNowPlaying {
+        SharedNowPlaying(songId: songId, title: title, artist: artist, album: album, isPlaying: !isPlaying)
+    }
 }
 
 enum SharedConstants {
@@ -20,10 +24,20 @@ enum SharedConstants {
         UserDefaults(suiteName: appGroupId)
     }
 
+    static var nowPlaying: SharedNowPlaying? {
+        guard let data = sharedDefaults?.data(forKey: nowPlayingKey) else { return nil }
+        return try? JSONDecoder().decode(SharedNowPlaying.self, from: data)
+    }
+
+    static func saveNowPlaying(_ np: SharedNowPlaying) {
+        if let encoded = try? JSONEncoder().encode(np) {
+            sharedDefaults?.set(encoded, forKey: nowPlayingKey)
+        }
+    }
+
     static func clearStateIfAppDead() -> Bool {
         guard let defaults = sharedDefaults,
-              let data = defaults.data(forKey: nowPlayingKey),
-              let np = try? JSONDecoder().decode(SharedNowPlaying.self, from: data),
+              let np = nowPlaying,
               np.isPlaying,
               let heartbeat = defaults.object(forKey: heartbeatKey) as? Date,
               Date().timeIntervalSince(heartbeat) > 5 else {

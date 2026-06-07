@@ -24,17 +24,22 @@ struct PlayerProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<PlayerEntry>) -> Void) {
-        completion(Timeline(entries: [currentEntry()], policy: .never))
+        _ = SharedConstants.clearStateIfAppDead()
+        let entry = currentEntry()
+        if entry.nowPlaying != nil {
+            let fallback = PlayerEntry(date: Date().addingTimeInterval(300), nowPlaying: nil, coverData: nil)
+            completion(Timeline(entries: [entry, fallback], policy: .never))
+        } else {
+            completion(Timeline(entries: [entry], policy: .never))
+        }
     }
 
     private func currentEntry() -> PlayerEntry {
-        let defaults = SharedConstants.sharedDefaults
-        var nowPlaying: SharedNowPlaying?
-        if let data = defaults?.data(forKey: SharedConstants.nowPlayingKey) {
-            nowPlaying = try? JSONDecoder().decode(SharedNowPlaying.self, from: data)
-        }
-        let coverData = defaults?.data(forKey: SharedConstants.coverDataKey)
-        return PlayerEntry(date: .now, nowPlaying: nowPlaying, coverData: coverData)
+        PlayerEntry(
+            date: .now,
+            nowPlaying: SharedConstants.nowPlaying,
+            coverData: SharedConstants.sharedDefaults?.data(forKey: SharedConstants.coverDataKey)
+        )
     }
 }
 
@@ -49,16 +54,8 @@ struct TogglePlayIntent: AppIntent {
             WidgetCenter.shared.reloadAllTimelines()
             return .result()
         }
-        if let defaults = SharedConstants.sharedDefaults,
-           let data = defaults.data(forKey: SharedConstants.nowPlayingKey),
-           let np = try? JSONDecoder().decode(SharedNowPlaying.self, from: data) {
-            let toggled = SharedNowPlaying(
-                songId: np.songId, title: np.title, artist: np.artist,
-                album: np.album, isPlaying: !np.isPlaying
-            )
-            if let encoded = try? JSONEncoder().encode(toggled) {
-                defaults.set(encoded, forKey: SharedConstants.nowPlayingKey)
-            }
+        if let np = SharedConstants.nowPlaying {
+            SharedConstants.saveNowPlaying(np.toggled())
         }
         WidgetCommand.togglePlay.post()
         WidgetCenter.shared.reloadAllTimelines()
