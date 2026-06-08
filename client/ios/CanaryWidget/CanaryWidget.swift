@@ -160,7 +160,7 @@ struct PlayerWidgetView: View {
     }
 
     private var mediumView: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 0) {
             GeometryReader { geo in
                 let size = geo.size.height
                 coverImage
@@ -168,8 +168,6 @@ struct PlayerWidgetView: View {
                     .clipped()
             }
             .aspectRatio(1, contentMode: .fit)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .padding(.vertical, 4)
 
             VStack(spacing: 0) {
                 Spacer()
@@ -217,7 +215,7 @@ struct PlayerWidgetView: View {
 
                 Spacer()
             }
-            .padding(.horizontal, 8)
+            .padding(.horizontal, 12)
         }
         .containerBackground(.fill.tertiary, for: .widget)
     }
@@ -251,6 +249,7 @@ struct PlayerWidget: Widget {
         .configurationDisplayName("Now Playing")
         .description("Control music playback")
         .supportedFamilies([.systemSmall, .systemMedium])
+        .contentMarginsDisabled()
     }
 }
 
