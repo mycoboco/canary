@@ -353,6 +353,7 @@ final class AudioPlayer {
             isPlaying = false
             errorCount = 0
             errorSongId = nil
+            updateNowPlaying()
             return
         }
         handleEnded()
