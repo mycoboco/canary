@@ -41,6 +41,7 @@ final class AudioPlayer {
     nonisolated(unsafe) static var _widgetInstance: AudioPlayer?
 
     private var widgetRefreshTimer: Timer?
+    private var statusObservation: NSKeyValueObservation?
     private var endObserver: NSObjectProtocol?
     private var errorObserver: NSObjectProtocol?
     private var interruptionObserver: NSObjectProtocol?
@@ -57,6 +58,7 @@ final class AudioPlayer {
     deinit {
         MainActor.assumeIsolated {
             widgetRefreshTimer?.invalidate()
+            statusObservation?.invalidate()
             if let timeObserver { player.removeTimeObserver(timeObserver) }
             if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
             if let errorObserver { NotificationCenter.default.removeObserver(errorObserver) }
@@ -166,13 +168,15 @@ final class AudioPlayer {
     private func observePlayerItem(_ item: AVPlayerItem) {
         if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
         if let errorObserver { NotificationCenter.default.removeObserver(errorObserver) }
+        statusObservation?.invalidate()
         endObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: item,
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                self?.handleEnded()
+                guard let self, self.player.currentItem === item else { return }
+                self.handleEnded()
             }
         }
         errorObserver = NotificationCenter.default.addObserver(
@@ -181,7 +185,15 @@ final class AudioPlayer {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                self?.handleError()
+                guard let self, self.player.currentItem === item else { return }
+                self.handleError()
+            }
+        }
+        statusObservation = item.observe(\.status) { [weak self] observed, _ in
+            guard observed.status == .failed else { return }
+            Task { @MainActor in
+                guard let self, self.player.currentItem === observed else { return }
+                self.handleError()
             }
         }
     }
