@@ -107,9 +107,13 @@ struct PlaylistDetailView: View {
     }
 
     private func removeSong(songId: Int) {
+        songs.removeAll { $0.id == songId }
         Task {
-            try? await playlistVM.removeSong(playlistId: playlist.id, songId: songId)
-            await loadSongs()
+            do {
+                try await playlistVM.removeSong(playlistId: playlist.id, songId: songId)
+            } catch {
+                await loadSongs()
+            }
         }
     }
 }
