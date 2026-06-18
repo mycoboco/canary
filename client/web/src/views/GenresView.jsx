@@ -1,11 +1,19 @@
-import {useState, useRef, useLayoutEffect} from 'react';
+import {useState, useRef, useEffect, useLayoutEffect} from 'react';
 import SongTable from '../components/SongTable.jsx';
 import {findScrollParent} from '../utils.js';
 
-export default function GenresView({genres, onPlay, currentSongId, onAddToPlaylist}) {
+export default function GenresView({genres, onPlay, currentSongId, onAddToPlaylist, resetKey}) {
   const [selected, setSelected] = useState(null);
   const rootRef = useRef(null);
   const savedScroll = useRef(0);
+  const initialResetKey = useRef(resetKey);
+
+  useEffect(() => {
+    if (resetKey !== initialResetKey.current) {
+      setSelected(null);
+      savedScroll.current = 0;
+    }
+  }, [resetKey]);
 
   function getScrollParent() {
     return rootRef.current ? findScrollParent(rootRef.current) : null;
