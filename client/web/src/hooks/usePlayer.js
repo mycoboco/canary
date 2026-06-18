@@ -224,6 +224,20 @@ export default function usePlayer() {
       previoustrack: prev,
       nexttrack: next,
       seekto: (details) => seek(details.seekTime),
+      seekbackward: (details) => {
+        const audio = audioRef.current;
+        if (audio) seek(Math.max(audio.currentTime - (details.seekOffset || 10), 0));
+      },
+      seekforward: (details) => {
+        const audio = audioRef.current;
+        if (audio) seek(Math.min(audio.currentTime + (details.seekOffset || 10), audio.duration || 0));
+      },
+      stop: () => {
+        const audio = audioRef.current;
+        if (audio) { audio.pause(); audio.currentTime = 0; }
+        setPlaying(false);
+        setCurrentTime(0);
+      },
     };
     for (const [action, handler] of Object.entries(handlers)) {
       try { navigator.mediaSession.setActionHandler(action, handler); } catch {}
