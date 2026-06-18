@@ -1,5 +1,5 @@
 import {useState, useRef, useEffect, useLayoutEffect, useCallback} from 'react';
-import {streamUrl} from '../api.js';
+import {streamUrl, coverUrl} from '../api.js';
 
 function shuffleArray(arr) {
   const shuffled = [...arr];
@@ -114,6 +114,20 @@ export default function usePlayer() {
 
   const currentSong = queue[currentIndex] || null;
 
+  function updatePositionState(pos) {
+    if (!('mediaSession' in navigator)) return;
+    const audio = audioRef.current;
+    const dur = audio?.duration;
+    if (!dur || !isFinite(dur)) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: dur,
+        position: Math.min(pos ?? audio.currentTime, dur),
+        playbackRate: 1,
+      });
+    } catch {}
+  }
+
   const playSong = useCallback((songs, index) => {
     originalQueueRef.current = [...songs];
     if (shuffle) {
@@ -167,6 +181,58 @@ export default function usePlayer() {
     if (!audio) return;
     audio.currentTime = time;
     setCurrentTime(time);
+    updatePositionState(time);
+  }, []);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    if (!currentSong) {
+      navigator.mediaSession.metadata = null;
+      return;
+    }
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentSong.title,
+      artist: currentSong.artist || '',
+      album: currentSong.album || '',
+      artwork: [{src: coverUrl(currentSong.id), type: 'image/jpeg'}],
+    });
+  }, [currentSong?.id]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    navigator.mediaSession.playbackState = currentSong
+      ? (playing ? 'playing' : 'paused')
+      : 'none';
+  }, [playing, currentSong?.id]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator) || !duration) return;
+    updatePositionState(0);
+  }, [duration, currentSong?.id]);
+
+  useEffect(() => {
+    if (!('mediaSession' in navigator)) return;
+    const handlers = {
+      play: () => {
+        const audio = audioRef.current;
+        if (audio) audio.play().then(() => setPlaying(true)).catch(() => {});
+      },
+      pause: () => {
+        const audio = audioRef.current;
+        if (audio) { audio.pause(); setPlaying(false); }
+      },
+      previoustrack: prev,
+      nexttrack: next,
+      seekto: (details) => seek(details.seekTime),
+    };
+    for (const [action, handler] of Object.entries(handlers)) {
+      try { navigator.mediaSession.setActionHandler(action, handler); } catch {}
+    }
+    return () => {
+      for (const action of Object.keys(handlers)) {
+        try { navigator.mediaSession.setActionHandler(action, null); } catch {}
+      }
+    };
   }, []);
 
   const setVolume = useCallback((v) => {
