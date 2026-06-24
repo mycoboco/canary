@@ -41,7 +41,10 @@ final class AudioPlayer {
     nonisolated(unsafe) static var _widgetInstance: AudioPlayer?
 
     private var widgetRefreshTimer: Timer?
+    private var stallTimer: Timer?
+    private var stallEnabled = false
     private var statusObservation: NSKeyValueObservation?
+    private var timeControlObservation: NSKeyValueObservation?
     private var endObserver: NSObjectProtocol?
     private var errorObserver: NSObjectProtocol?
     private var interruptionObserver: NSObjectProtocol?
@@ -53,12 +56,15 @@ final class AudioPlayer {
         setupRemoteCommands()
         setupTimeObserver()
         setupNotifications()
+        setupTimeControlObserver()
     }
 
     deinit {
         MainActor.assumeIsolated {
             widgetRefreshTimer?.invalidate()
+            stallTimer?.invalidate()
             statusObservation?.invalidate()
+            timeControlObservation?.invalidate()
             if let timeObserver { player.removeTimeObserver(timeObserver) }
             if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
             if let errorObserver { NotificationCenter.default.removeObserver(errorObserver) }
@@ -82,6 +88,8 @@ final class AudioPlayer {
     func stop() {
         widgetRefreshTimer?.invalidate()
         widgetRefreshTimer = nil
+        stallTimer?.invalidate()
+        stallTimer = nil
         player.pause()
         player.replaceCurrentItem(with: nil)
         isPlaying = false
@@ -289,7 +297,8 @@ final class AudioPlayer {
     private func loadAndPlay(_ song: Song) {
         let item: AVPlayerItem
 
-        if cache.exists(songId: song.id, format: song.format) {
+        let cached = cache.exists(songId: song.id, format: song.format)
+        if cached {
             let fileURL = cache.fileURL(songId: song.id, format: song.format)
             cache.touch(songId: song.id, format: song.format)
             item = AVPlayerItem(url: fileURL)
@@ -303,6 +312,9 @@ final class AudioPlayer {
         }
 
         observePlayerItem(item)
+        stallTimer?.invalidate()
+        stallTimer = nil
+        stallEnabled = !cached
         player.replaceCurrentItem(with: item)
         player.volume = volume
         player.play()
@@ -337,6 +349,30 @@ final class AudioPlayer {
         } else {
             isPlaying = false
             updateNowPlaying()
+        }
+    }
+
+    private func setupTimeControlObserver() {
+        timeControlObservation = player.observe(\.timeControlStatus) { [weak self] observed, _ in
+            Task { @MainActor in
+                guard let self else { return }
+                switch observed.timeControlStatus {
+                case .waitingToPlayAtSpecifiedRate:
+                    guard self.stallEnabled, self.stallTimer == nil else { return }
+                    self.stallTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: false) { [weak self] _ in
+                        Task { @MainActor in
+                            guard let self,
+                                  self.player.timeControlStatus == .waitingToPlayAtSpecifiedRate else { return }
+                            self.handleError()
+                        }
+                    }
+                case .playing:
+                    self.stallTimer?.invalidate()
+                    self.stallTimer = nil
+                default:
+                    break
+                }
+            }
         }
     }
 
