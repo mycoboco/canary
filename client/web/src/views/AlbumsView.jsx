@@ -57,6 +57,7 @@ export default function AlbumsView({albums, onPlay, currentSongId, onAddToPlayli
           onPlay={onPlay}
           currentSongId={currentSongId}
           onAddToPlaylist={onAddToPlaylist}
+          showCover={false}
         />
       </div>
     );

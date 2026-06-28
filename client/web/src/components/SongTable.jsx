@@ -1,6 +1,7 @@
 import {useState, useEffect, useRef, forwardRef} from 'react';
 import {TableVirtuoso} from 'react-virtuoso';
 import {formatMs, findScrollParent} from '../utils.js';
+import AlbumCover from './AlbumCover.jsx';
 
 const tableComponents = {
   Table: (props) => (
@@ -46,6 +47,7 @@ const renderItem = (_, song, ctx) => (
     song={song}
     isCurrent={ctx.currentSongId === song.id}
     showActions={ctx.showActions}
+    showCover={ctx.showCover}
     onAddToPlaylist={ctx.onAddToPlaylist}
     onRemove={ctx.onRemove}
   />
@@ -64,18 +66,25 @@ function useIsDesktop() {
   return isDesktop;
 }
 
-function SongCells({song, isCurrent, showActions, onAddToPlaylist, onRemove}) {
+function SongCells({song, isCurrent, showActions, showCover, onAddToPlaylist, onRemove}) {
   const cellBg = isCurrent ? 'bg-blue-100' : 'group-hover:bg-gray-100';
   return (
     <>
       <td className={`py-2 px-3 rounded-l-lg ${cellBg}`}>
-        <div className="flex items-start gap-2">
+        <div className="flex items-center gap-2">
           <span
             className={`shrink-0 text-xs leading-5 ${
               isCurrent ? 'text-blue-600' : 'invisible'
             }`}
             aria-hidden="true"
           >▶</span>
+          {showCover && (
+            <AlbumCover
+              coverId={song.id}
+              className="w-8 h-8 hidden sm:flex shrink-0"
+              imgClassName="rounded"
+            />
+          )}
           <div className="min-w-0 flex-1">
             <div className="truncate">{song.title}</div>
             <div className="text-gray-400 text-xs sm:hidden truncate">{song.artist}</div>
@@ -132,6 +141,7 @@ export default function SongTable({
   onSort,
   virtualized,
   stickyOffset = 0,
+  showCover = true,
 }) {
   const showActions = !!(onAddToPlaylist || onRemove);
   const thBase = 'py-2 px-3 border-b border-gray-100 bg-white';
@@ -231,7 +241,7 @@ export default function SongTable({
   );
 
   const context = {
-    songs, currentSongId, onPlay, showActions, onAddToPlaylist, onRemove,
+    songs, currentSongId, onPlay, showActions, showCover, onAddToPlaylist, onRemove,
     focusedIndex, setFocusedIndex, handleKeyDown,
   };
 
@@ -243,7 +253,7 @@ export default function SongTable({
             ref={virtuosoRef}
             key={isDesktop ? 'd' : 'm'}
             customScrollParent={scrollParent}
-            fixedItemHeight={isDesktop ? 40 : 52}
+            fixedItemHeight={isDesktop ? (showCover ? 48 : 40) : 52}
             data={songs}
             context={context}
             components={tableComponents}
@@ -285,6 +295,7 @@ export default function SongTable({
                 song={song}
                 isCurrent={isCurrent}
                 showActions={showActions}
+                showCover={showCover}
                 onAddToPlaylist={onAddToPlaylist}
                 onRemove={onRemove}
               />
