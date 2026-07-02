@@ -23,6 +23,7 @@ final class LibraryViewModel {
     var playlists: [Playlist] = []
     var serverName: String = ""
     var loading = true
+    private(set) var loaded = false
     var error: String?
     var authError = false
     private var knownDbVersion: Int?
@@ -50,6 +51,7 @@ final class LibraryViewModel {
 
     func configure(apiClient: APIClient) {
         self.apiClient = apiClient
+        loaded = false
         loadFromDisk()
         if !songs.isEmpty { loading = false }
     }
@@ -108,6 +110,7 @@ final class LibraryViewModel {
             }
         }
         loading = false
+        loaded = true
     }
 
     func reloadPlaylists() async {

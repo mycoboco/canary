@@ -27,7 +27,7 @@ struct CanaryApp: App {
                         await library.load()
                     }
                     .onOpenURL { url in handleURL(url) }
-                    .onChange(of: library.playlists) {
+                    .onChange(of: library.loaded) {
                         if let url = pendingURL {
                             pendingURL = nil
                             handleURL(url)
@@ -53,7 +53,7 @@ struct CanaryApp: App {
               components.scheme == "canary",
               apiClient != nil else { return }
 
-        if library.playlists.isEmpty && library.loading {
+        if !library.loaded {
             pendingURL = url
             return
         }
