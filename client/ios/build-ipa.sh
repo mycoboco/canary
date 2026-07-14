@@ -26,6 +26,19 @@ if [ -z "$APP_PATH" ]; then
   exit 1
 fi
 
+echo "==> Ad-hoc signing to embed entitlements..."
+APPEX_PATH=$(find "$APP_PATH/PlugIns" -name "*.appex" -maxdepth 1 | head -1)
+if [ -n "$APPEX_PATH" ]; then
+  codesign --force --sign - \
+    --entitlements "$PROJECT_DIR/CanaryWidget/CanaryWidget.entitlements" \
+    "$APPEX_PATH"
+  echo "    Signed widget extension"
+fi
+codesign --force --sign - \
+  --entitlements "$PROJECT_DIR/Canary/Canary.entitlements" \
+  "$APP_PATH"
+echo "    Signed main app"
+
 echo "==> Creating .ipa..."
 PAYLOAD_DIR="$OUTPUT_DIR/Payload"
 rm -rf "$PAYLOAD_DIR"

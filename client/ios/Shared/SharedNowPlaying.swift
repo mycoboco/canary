@@ -13,7 +13,22 @@ struct SharedNowPlaying: Codable, Sendable {
 }
 
 enum SharedConstants {
-    static let appGroupId = "group.org.woong.canary"
+    static let appGroupId: String = {
+        let fm = FileManager.default
+        let original = "group.org.woong.canary"
+        if fm.containerURL(forSecurityApplicationGroupIdentifier: original) != nil {
+            return original
+        }
+        if let bundleId = Bundle.main.bundleIdentifier {
+            let base = bundleId.hasSuffix(".widget") ? String(bundleId.dropLast(".widget".count)) : bundleId
+            let derived = "group.\(base)"
+            if fm.containerURL(forSecurityApplicationGroupIdentifier: derived) != nil {
+                return derived
+            }
+        }
+        return original
+    }()
+
     static let nowPlayingKey = "nowPlaying"
     static let coverDataKey = "coverData"
     static let defaultPlaylistIdKey = "defaultPlaylistId"
