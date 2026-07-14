@@ -8,6 +8,7 @@ final class AudioCache: Sendable {
     private static let sizeKey = "canary.cacheMaxSize"
 
     let directory: URL
+    let pendingDirectory: URL
 
     var maxSize: Int64 {
         get {
@@ -24,7 +25,10 @@ final class AudioCache: Sendable {
         directory: URL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("audio")
     ) {
         self.directory = directory
+        self.pendingDirectory = directory.deletingLastPathComponent()
+            .appendingPathComponent(directory.lastPathComponent + "-pending")
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: pendingDirectory, withIntermediateDirectories: true)
     }
 
     private static func sanitize(_ format: String) -> String {
@@ -65,10 +69,28 @@ final class AudioCache: Sendable {
 
     func clearAll() {
         let fm = FileManager.default
-        guard let files = try? fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else { return }
-        for file in files {
-            try? fm.removeItem(at: file)
+        for dir in [directory, pendingDirectory] {
+            guard let files = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else { continue }
+            for file in files {
+                try? fm.removeItem(at: file)
+            }
         }
+    }
+
+    func pendingFileURL(songId: Int, format: String) -> URL {
+        pendingDirectory.appendingPathComponent("\(songId).\(Self.sanitize(format))")
+    }
+
+    func promotePending(songId: Int, format: String) {
+        let src = pendingFileURL(songId: songId, format: format)
+        guard FileManager.default.fileExists(atPath: src.path) else { return }
+        let dst = fileURL(songId: songId, format: format)
+        try? FileManager.default.moveItem(at: src, to: dst)
+        evictIfNeeded()
+    }
+
+    func clearPending(songId: Int, format: String) {
+        try? FileManager.default.removeItem(at: pendingFileURL(songId: songId, format: format))
     }
 
     func evictIfNeeded() {

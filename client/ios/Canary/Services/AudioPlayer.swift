@@ -35,8 +35,11 @@ final class AudioPlayer {
     private var originalQueue: [Song] = []
     private var errorCount = 0
     private var timeObserver: Any?
+    private static let cacheMinPlayTime: TimeInterval = 20
+
     let cache: AudioCache
     private var apiClient: APIClient?
+    private var pendingCache: (songId: Int, format: String)?
 
     nonisolated(unsafe) static var _widgetInstance: AudioPlayer?
 
@@ -86,6 +89,7 @@ final class AudioPlayer {
     }
 
     func stop() {
+        cleanupPendingCache()
         widgetRefreshTimer?.invalidate()
         widgetRefreshTimer = nil
         stallTimer?.invalidate()
@@ -126,6 +130,7 @@ final class AudioPlayer {
                 self.currentTime = time.seconds
                 self.duration = self.player.currentItem?.duration.seconds ?? 0
                 self.updateNowPlaying()
+                self.checkCacheEligibility()
             }
         }
     }
@@ -295,6 +300,8 @@ final class AudioPlayer {
     }
 
     private func loadAndPlay(_ song: Song) {
+        cleanupPendingCache()
+
         let item: AVPlayerItem
 
         let cached = cache.exists(songId: song.id, format: song.format)
@@ -307,6 +314,7 @@ final class AudioPlayer {
             cachingItem.delegate = CachingDelegateProxy.shared
             CachingDelegateProxy.shared.register(item: cachingItem, songId: song.id, format: song.format, cache: cache)
             item = cachingItem
+            pendingCache = (songId: song.id, format: song.format)
         } else {
             return
         }
@@ -327,6 +335,27 @@ final class AudioPlayer {
         SharedConstants.sharedDefaults?.removeObject(forKey: SharedConstants.coverDataKey)
         updateNowPlaying()
         fetchNowPlayingArtwork(for: song)
+    }
+
+    private func cleanupPendingCache() {
+        guard let pending = pendingCache else { return }
+        pendingCache = nil
+        CachingDelegateProxy.shared.clearEligible(songId: pending.songId)
+        let cache = self.cache
+        DispatchQueue.global().async {
+            cache.clearPending(songId: pending.songId, format: pending.format)
+        }
+    }
+
+    private func checkCacheEligibility() {
+        guard let pending = pendingCache, currentTime >= Self.cacheMinPlayTime,
+              currentSong?.id == pending.songId else { return }
+        pendingCache = nil
+        CachingDelegateProxy.shared.markEligible(songId: pending.songId)
+        let cache = self.cache
+        DispatchQueue.global().async {
+            cache.promotePending(songId: pending.songId, format: pending.format)
+        }
     }
 
     private func pickNext() -> Int {
@@ -594,6 +623,7 @@ final class CachingDelegateProxy: NSObject, CachingPlayerItemDelegate, @unchecke
         }
     }
     private let entries = NSMapTable<CachingPlayerItem, Entry>.weakToStrongObjects()
+    private var eligibleSongIds = Set<Int>()
     private let lock = NSLock()
     private let fileQueue = DispatchQueue(label: "org.woong.canary.cache-io")
 
@@ -603,22 +633,44 @@ final class CachingDelegateProxy: NSObject, CachingPlayerItemDelegate, @unchecke
         lock.unlock()
     }
 
+    func markEligible(songId: Int) {
+        lock.lock()
+        eligibleSongIds.insert(songId)
+        lock.unlock()
+    }
+
+    func clearEligible(songId: Int) {
+        lock.lock()
+        eligibleSongIds.remove(songId)
+        lock.unlock()
+    }
+
     func playerItem(_ playerItem: CachingPlayerItem, didFinishDownloadingFileAt filePath: String) {
         lock.lock()
         let entry = entries.object(forKey: playerItem)
         entries.removeObject(forKey: playerItem)
+        let eligible = entry.map { eligibleSongIds.contains($0.songId) } ?? false
+        if eligible, let entry { eligibleSongIds.remove(entry.songId) }
         lock.unlock()
         guard let entry else { return }
         fileQueue.async {
             let src = URL(fileURLWithPath: filePath)
-            let dst = entry.cache.fileURL(songId: entry.songId, format: entry.format)
-            try? FileManager.default.moveItem(at: src, to: dst)
-            entry.cache.evictIfNeeded()
+            if eligible {
+                let dst = entry.cache.fileURL(songId: entry.songId, format: entry.format)
+                try? FileManager.default.moveItem(at: src, to: dst)
+                entry.cache.evictIfNeeded()
+            } else {
+                let dst = entry.cache.pendingFileURL(songId: entry.songId, format: entry.format)
+                try? FileManager.default.moveItem(at: src, to: dst)
+            }
         }
     }
 
     func playerItem(_ playerItem: CachingPlayerItem, downloadingFailedWith error: Error) {
         lock.lock()
+        if let entry = entries.object(forKey: playerItem) {
+            eligibleSongIds.remove(entry.songId)
+        }
         entries.removeObject(forKey: playerItem)
         lock.unlock()
     }
