@@ -11,11 +11,13 @@ struct CanaryApp: App {
     @State private var player = AudioPlayer()
     @State private var playlistVM = PlaylistViewModel()
     @State private var pendingURL: URL?
+    @State private var selectedTab: AppTab = .songs
+    @State private var pendingContext: PlaybackContext?
 
     var body: some Scene {
         WindowGroup {
             if let api = apiClient {
-                MainTabView()
+                MainTabView(selectedTab: $selectedTab, pendingContext: $pendingContext)
                     .environment(api)
                     .environment(library)
                     .environment(player)
@@ -74,7 +76,10 @@ struct CanaryApp: App {
                           let api = apiClient else { return }
                     let songs = (try? await api.fetchPlaylistSongs(playlist.id)) ?? []
                     guard !songs.isEmpty else { return }
-                    player.playSong(songs: songs, index: 0, context: PlaybackContext(type: .playlist, name: playlist.name, playlistId: playlist.id, songId: songs[0].id))
+                    let ctx = PlaybackContext(type: .playlist, name: playlist.name, playlistId: playlist.id, songId: songs[0].id)
+                    player.playSong(songs: songs, index: 0, context: ctx)
+                    selectedTab = .playlists
+                    pendingContext = ctx
                 } else {
                     await player.startDefaultPlayback()
                 }

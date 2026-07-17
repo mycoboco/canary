@@ -66,7 +66,7 @@ struct PlaylistDetailView: View {
                 }
             }
         }
-        .task {
+        .task(id: playlist.id) {
             await loadSongs()
         }
         .onChange(of: library.playlists) {

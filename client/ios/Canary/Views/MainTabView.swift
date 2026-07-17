@@ -9,8 +9,9 @@ struct MainTabView: View {
     @Environment(AudioPlayer.self) private var player
 
     @State private var showFullPlayer = false
-    @State private var selectedTab: AppTab = .songs
-    @State private var pendingContext: PlaybackContext?
+    @State private var hasRestoredNavigation = false
+    @Binding var selectedTab: AppTab
+    @Binding var pendingContext: PlaybackContext?
 
     var body: some View {
         if library.loading {
@@ -77,6 +78,8 @@ struct MainTabView: View {
     }
 
     private func restoreNavigation() {
+        guard !hasRestoredNavigation else { return }
+        hasRestoredNavigation = true
         guard let data = SharedConstants.sharedDefaults?.data(forKey: SharedConstants.lastContextKey),
               let context = try? JSONDecoder().decode(PlaybackContext.self, from: data) else { return }
 

@@ -5,7 +5,7 @@ struct PlaylistsView: View {
     @Environment(PlaylistViewModel.self) private var playlistVM
 
     @Binding var pendingContext: PlaybackContext?
-    @State private var path = NavigationPath()
+    @State private var path: [Playlist] = []
     @State private var creatingSmart = false
     @State private var creatingManual = false
 
@@ -44,7 +44,6 @@ struct PlaylistsView: View {
             .navigationDestination(for: Playlist.self) { playlist in
                 PlaylistDetailView(playlist: playlist)
             }
-            .task(id: pendingContext) { navigateIfNeeded() }
             .onChange(of: library.playlists) { navigateIfNeeded() }
             .sheet(isPresented: $creatingSmart) {
                 NavigationStack {
@@ -57,12 +56,15 @@ struct PlaylistsView: View {
                 }
             }
         }
+        .onChange(of: pendingContext) { navigateIfNeeded() }
+        .onAppear { navigateIfNeeded() }
     }
 
     private func navigateIfNeeded() {
         guard let ctx = pendingContext, ctx.type == .playlist,
               let playlist = library.playlists.first(where: { $0.id == ctx.playlistId }) else { return }
         pendingContext = nil
-        path.append(playlist)
+        if path.last == playlist { return }
+        path = [playlist]
     }
 }
