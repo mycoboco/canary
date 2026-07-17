@@ -90,6 +90,5 @@ struct MainTabView: View {
         case .album: selectedTab = .albums
         case .playlist: selectedTab = .playlists
         }
-        pendingContext = context
     }
 }
