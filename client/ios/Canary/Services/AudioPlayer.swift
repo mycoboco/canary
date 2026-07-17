@@ -126,7 +126,7 @@ final class AudioPlayer {
             queue: .main
         ) { [weak self] time in
             Task { @MainActor in
-                guard let self else { return }
+                guard let self, !self.isSeeking else { return }
                 self.currentTime = time.seconds
                 self.duration = self.player.currentItem?.duration.seconds ?? 0
                 self.updateNowPlaying()
@@ -262,10 +262,17 @@ final class AudioPlayer {
         }
     }
 
+    @ObservationIgnored private var isSeeking = false
+
     func seek(to time: TimeInterval) {
-        player.seek(to: CMTime(seconds: time, preferredTimescale: 600))
+        isSeeking = true
         currentTime = time
         updateNowPlaying()
+        player.seek(to: CMTime(seconds: time, preferredTimescale: 600)) { [weak self] _ in
+            Task { @MainActor in
+                self?.isSeeking = false
+            }
+        }
     }
 
     func toggleShuffle() {

@@ -6,7 +6,7 @@ struct FullPlayerView: View {
 
     @State private var addingSong: Song?
     @State private var scrubbing = false
-    @State private var scrubTime: TimeInterval = 0
+    @State private var sliderValue: TimeInterval = 0
 
     var body: some View {
         let currentTime = player.currentTime
@@ -42,23 +42,22 @@ struct FullPlayerView: View {
 
                 VStack(spacing: 4) {
                     Slider(
-                        value: Binding(
-                            get: { scrubbing ? scrubTime : currentTime },
-                            set: { scrubbing = true; scrubTime = $0 }
-                        ),
+                        value: $sliderValue,
                         in: 0...(duration > 0 ? duration : 1),
                         onEditingChanged: { editing in
+                            scrubbing = editing
                             if !editing {
-                                player.seek(to: scrubTime)
-                                scrubbing = false
+                                player.seek(to: sliderValue)
                             }
                         }
                     )
                     .tint(.primary)
-                    .id(song.id)
+                    .onChange(of: currentTime, initial: true) {
+                        if !scrubbing { sliderValue = currentTime }
+                    }
 
                     HStack {
-                        Text(TimeFormatter.sec(scrubbing ? scrubTime : currentTime))
+                        Text(TimeFormatter.sec(sliderValue))
                             .monospacedDigit()
                         Spacer()
                         Text(TimeFormatter.sec(duration))
@@ -133,7 +132,7 @@ struct FullPlayerView: View {
         }
         .onChange(of: player.currentSong?.id) {
             scrubbing = false
-            scrubTime = 0
+            sliderValue = 0
         }
     }
 
