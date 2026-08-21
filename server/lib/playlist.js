@@ -99,8 +99,20 @@ export function buildQuery(playlist) {
 }
 
 async function evaluateManual(playlist) {
-  const songs = await Promise.all(playlist.songIds.map((id) => db.song.get(id)));
-  return songs.filter(Boolean);
+  const resolved = await Promise.all(playlist.songIds.map((id) => db.song.get(id)));
+  const songs = resolved.filter(Boolean);
+
+  if (songs.length !== playlist.songIds.length) {
+    const missingIds = playlist.songIds.filter((id, i) => !resolved[i]);
+    log.info(`pruning ${missingIds.length} missing song(s) from playlist "${playlist.name}"`);
+    try {
+      await Promise.all(missingIds.map((id) => db.playlist.removeSong(playlist.id, id)));
+    } catch (err) {
+      log.error(err);
+    }
+  }
+
+  return songs;
 }
 
 export async function evaluate(playlist) {
