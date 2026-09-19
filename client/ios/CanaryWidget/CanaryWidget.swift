@@ -48,9 +48,14 @@ struct PlayerProvider: TimelineProvider {
 struct PlayerWidgetView: View {
     let entry: PlayerEntry
     @Environment(\.widgetFamily) var family
+    @Environment(\.widgetRenderingMode) private var renderingMode
 
     private var np: SharedNowPlaying? { entry.nowPlaying }
     private var hasNowPlaying: Bool { np != nil }
+    private var isTinted: Bool { renderingMode != .fullColor }
+    // In tinted/vibrant mode content renders as luminance-based ink, so dark (.primary)
+    // stays legible on the light glass; white would vanish. Full color keeps white-on-photo.
+    private var overlayForeground: Color { isTinted ? .primary : .white }
 
     var body: some View {
         switch family {
@@ -91,14 +96,16 @@ struct PlayerWidgetView: View {
                     .lineLimit(1)
                     .opacity(0.8)
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(overlayForeground)
             .padding(.horizontal, 8)
             .padding(.bottom, 10)
             .frame(maxWidth: .infinity)
-            .background(
-                LinearGradient(colors: [.clear, .black.opacity(0.6)], startPoint: .top, endPoint: .bottom)
-                    .clipShape(ContainerRelativeShape())
-            )
+            .background {
+                if !isTinted {
+                    LinearGradient(colors: [.clear, .black.opacity(0.6)], startPoint: .top, endPoint: .bottom)
+                        .clipShape(ContainerRelativeShape())
+                }
+            }
         }
         .containerBackground(.black, for: .widget)
     }
@@ -106,9 +113,15 @@ struct PlayerWidgetView: View {
     private var playPauseCircle: some View {
         Image(systemName: np?.isPlaying == true ? "pause.fill" : "play.fill")
             .font(.title2)
-            .foregroundStyle(.white)
+            .foregroundStyle(overlayForeground)
             .frame(width: 40, height: 40)
-            .background(.ultraThinMaterial, in: Circle())
+            .background {
+                // Material renders as an opaque white disc in tinted mode and hides the
+                // glyph, so only use it in full color; tinted shows the bare dark glyph.
+                if !isTinted {
+                    Circle().fill(.ultraThinMaterial)
+                }
+            }
     }
 
     private var mediumView: some View {
