@@ -49,7 +49,23 @@ struct PlayPlaylistIntent: AppIntent {
         SharedConstants.sharedDefaults?.set(playlist.id, forKey: SharedConstants.pendingPlaylistIdKey)
         // Nudge the app in case it is already foreground-active (no scene/launch transition fires).
         await MainActor.run {
-            NotificationCenter.default.post(name: .playPendingPlaylist, object: nil)
+            NotificationCenter.default.post(name: .consumePendingSiri, object: nil)
+        }
+        return .result()
+    }
+}
+
+// MARK: - Start playing intent
+
+struct StartPlayingIntent: AppIntent {
+    static let title: LocalizedStringResource = "Start Playing"
+    static let openAppWhenRun = true
+
+    func perform() async throws -> some IntentResult {
+        // Ask the app to resume/start playback once its library is ready.
+        SharedConstants.sharedDefaults?.set(true, forKey: SharedConstants.pendingStartKey)
+        await MainActor.run {
+            NotificationCenter.default.post(name: .consumePendingSiri, object: nil)
         }
         return .result()
     }
@@ -69,11 +85,21 @@ struct CanaryShortcuts: AppShortcutsProvider {
             systemImageName: "music.note.list"
         )
         AppShortcut(
-            intent: TogglePlayIntent(),
+            intent: StartPlayingIntent(),
             phrases: [
                 "Play in \(.applicationName)",
-                "Pause \(.applicationName)",
+                "Start playing in \(.applicationName)",
                 "\(.applicationName) 재생",
+                "\(.applicationName) 재생 시작",
+            ],
+            shortTitle: "Start Playing",
+            systemImageName: "play.fill"
+        )
+        AppShortcut(
+            intent: TogglePlayIntent(),
+            phrases: [
+                "Pause \(.applicationName)",
+                "Resume \(.applicationName)",
                 "\(.applicationName) 일시정지",
             ],
             shortTitle: "Play or Pause",

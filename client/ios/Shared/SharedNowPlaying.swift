@@ -41,6 +41,7 @@ enum SharedConstants {
     static let lastContextKey = "lastContext"
     static let playlistsKey = "playlists"
     static let pendingPlaylistIdKey = "pendingPlaylistId"
+    static let pendingStartKey = "pendingStart"
 
     static var sharedDefaults: UserDefaults? {
         UserDefaults(suiteName: appGroupId)

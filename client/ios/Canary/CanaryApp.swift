@@ -2,7 +2,7 @@ import SwiftUI
 
 extension Notification.Name {
     static let signOut = Notification.Name("canary.signOut")
-    static let playPendingPlaylist = Notification.Name("canary.playPendingPlaylist")
+    static let consumePendingSiri = Notification.Name("canary.consumePendingSiri")
 }
 
 @main
@@ -29,7 +29,7 @@ struct CanaryApp: App {
                         player.configure(apiClient: api)
                         playlistVM.configure(apiClient: api, library: library)
                         await library.load()
-                        consumePendingPlaylist()
+                        consumePendingSiriRequests()
                     }
                     .onOpenURL { url in handleURL(url) }
                     .onChange(of: library.loaded) {
@@ -37,10 +37,10 @@ struct CanaryApp: App {
                             pendingURL = nil
                             handleURL(url)
                         }
-                        consumePendingPlaylist()
+                        consumePendingSiriRequests()
                     }
                     .onChange(of: scenePhase) {
-                        if scenePhase == .active { consumePendingPlaylist() }
+                        if scenePhase == .active { consumePendingSiriRequests() }
                     }
                     .onChange(of: library.authError) {
                         if library.authError { signOut() }
@@ -48,8 +48,8 @@ struct CanaryApp: App {
                     .onReceive(NotificationCenter.default.publisher(for: .signOut)) { _ in
                         signOut()
                     }
-                    .onReceive(NotificationCenter.default.publisher(for: .playPendingPlaylist)) { _ in
-                        consumePendingPlaylist()
+                    .onReceive(NotificationCenter.default.publisher(for: .consumePendingSiri)) { _ in
+                        consumePendingSiriRequests()
                     }
             } else {
                 LoginView { url, password in
@@ -113,14 +113,21 @@ struct CanaryApp: App {
         }
     }
 
-    private func consumePendingPlaylist() {
-        guard library.loaded,
-              let defaults = SharedConstants.sharedDefaults,
-              defaults.object(forKey: SharedConstants.pendingPlaylistIdKey) != nil else { return }
-        let id = defaults.integer(forKey: SharedConstants.pendingPlaylistIdKey)
-        defaults.removeObject(forKey: SharedConstants.pendingPlaylistIdKey)
-        guard id > 0 else { return }
-        playPlaylist(id: id, name: nil)
+    private func consumePendingSiriRequests() {
+        guard library.loaded, let defaults = SharedConstants.sharedDefaults else { return }
+
+        if defaults.object(forKey: SharedConstants.pendingPlaylistIdKey) != nil {
+            let id = defaults.integer(forKey: SharedConstants.pendingPlaylistIdKey)
+            defaults.removeObject(forKey: SharedConstants.pendingPlaylistIdKey)
+            if id > 0 { playPlaylist(id: id, name: nil) }
+        }
+
+        if defaults.bool(forKey: SharedConstants.pendingStartKey) {
+            defaults.removeObject(forKey: SharedConstants.pendingStartKey)
+            if !player.isPlaying {
+                Task { await player.startDefaultPlayback() }
+            }
+        }
     }
 
     private func signOut() {
