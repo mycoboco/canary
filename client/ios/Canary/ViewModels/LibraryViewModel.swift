@@ -1,3 +1,4 @@
+import AppIntents
 import Foundation
 import Observation
 
@@ -20,7 +21,12 @@ struct AlbumItem: Identifiable {
 @MainActor
 final class LibraryViewModel {
     var songs: [Song] = [] { didSet { rebuildGroups() } }
-    var playlists: [Playlist] = []
+    var playlists: [Playlist] = [] {
+        didSet {
+            guard playlists != oldValue else { return }
+            mirrorPlaylistsToSharedCache()
+        }
+    }
     var serverName: String = ""
     var loading = true
     private(set) var loaded = false
@@ -123,6 +129,12 @@ final class LibraryViewModel {
         } catch {
             self.error = error.localizedDescription
         }
+    }
+
+    private func mirrorPlaylistsToSharedCache() {
+        SharedConstants.savePlaylists(playlists.map { SharedPlaylist(id: $0.id, name: $0.name) })
+        // Refresh Siri's vocabulary for the playlist parameter used in App Shortcut phrases.
+        CanaryShortcuts.updateAppShortcutParameters()
     }
 
     static func groupByKey(_ songs: [Song], key: KeyPath<Song, String>) -> [GroupedItem] {

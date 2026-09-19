@@ -12,6 +12,11 @@ struct SharedNowPlaying: Codable, Sendable {
     }
 }
 
+struct SharedPlaylist: Codable, Sendable, Identifiable {
+    let id: Int
+    let name: String
+}
+
 enum SharedConstants {
     static let appGroupId: String = {
         let fm = FileManager.default
@@ -34,6 +39,8 @@ enum SharedConstants {
     static let defaultPlaylistIdKey = "defaultPlaylistId"
     static let heartbeatKey = "heartbeat"
     static let lastContextKey = "lastContext"
+    static let playlistsKey = "playlists"
+    static let pendingPlaylistIdKey = "pendingPlaylistId"
 
     static var sharedDefaults: UserDefaults? {
         UserDefaults(suiteName: appGroupId)
@@ -47,6 +54,17 @@ enum SharedConstants {
     static func saveNowPlaying(_ np: SharedNowPlaying) {
         if let encoded = try? JSONEncoder().encode(np) {
             sharedDefaults?.set(encoded, forKey: nowPlayingKey)
+        }
+    }
+
+    static var playlists: [SharedPlaylist] {
+        guard let data = sharedDefaults?.data(forKey: playlistsKey) else { return [] }
+        return (try? JSONDecoder().decode([SharedPlaylist].self, from: data)) ?? []
+    }
+
+    static func savePlaylists(_ playlists: [SharedPlaylist]) {
+        if let encoded = try? JSONEncoder().encode(playlists) {
+            sharedDefaults?.set(encoded, forKey: playlistsKey)
         }
     }
 

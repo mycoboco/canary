@@ -54,6 +54,7 @@ final class AudioPlayer {
     private var routeChangeObserver: NSObjectProtocol?
     private var mediaSession: MediaSession<AudioPlayer>?
     private var seekTimer: Timer?
+    private var artworkDataCache: (songId: Int, data: Data)?
     private static let seekStep: TimeInterval = 5
     private static let seekInterval: TimeInterval = 0.5
 
@@ -639,8 +640,13 @@ extension AudioPlayer: MediaSessionRepresentable {
         seekTimer = Timer.scheduledTimer(withTimeInterval: Self.seekInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self, self.currentSong != nil else { return }
-                let upper = self.duration.isFinite && self.duration > 0 ? self.duration : self.currentTime
-                let target = min(max(self.currentTime + step, 0), upper)
+                let target: TimeInterval
+                if self.duration.isFinite && self.duration > 0 {
+                    target = min(max(self.currentTime + step, 0), self.duration)
+                } else {
+                    // Duration not known yet (just loaded); let AVPlayer clamp the upper bound.
+                    target = max(self.currentTime + step, 0)
+                }
                 self.seek(to: target)
             }
         }
@@ -652,11 +658,14 @@ extension AudioPlayer: MediaSessionRepresentable {
     }
 
     private func loadArtworkData(songId: Int) async -> Data? {
+        if let cached = artworkDataCache, cached.songId == songId { return cached.data }
         guard let api = apiClient else { return nil }
         guard let image = await CoverImageCache.shared.image(for: songId, fetch: {
             await api.fetchCoverImage(for: songId)
         }) else { return nil }
-        return image.jpegData(compressionQuality: 0.9)
+        guard let data = image.jpegData(compressionQuality: 0.9) else { return nil }
+        artworkDataCache = (songId: songId, data: data)
+        return data
     }
 
     enum ArtworkError: Error { case unavailable }

@@ -171,5 +171,13 @@ private struct SeekButton: View {
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel(forward ? "Next" : "Previous")
             .accessibilityAction { forward ? player.next() : player.prev() }
+            .onDisappear {
+                holdWork?.cancel()
+                holdWork = nil
+                if seeking {
+                    seeking = false
+                    player.endSeek()
+                }
+            }
     }
 }

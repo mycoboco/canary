@@ -43,54 +43,6 @@ struct PlayerProvider: TimelineProvider {
     }
 }
 
-// MARK: - Intents
-
-struct TogglePlayIntent: AppIntent {
-    static let title: LocalizedStringResource = "Toggle Play"
-    static let openAppWhenRun: Bool = false
-
-    func perform() async throws -> some IntentResult {
-        if SharedConstants.clearStateIfAppDead() {
-            WidgetCenter.shared.reloadAllTimelines()
-            return .result()
-        }
-        if let np = SharedConstants.nowPlaying {
-            SharedConstants.saveNowPlaying(np.toggled())
-        }
-        WidgetCommand.togglePlay.post()
-        WidgetCenter.shared.reloadAllTimelines()
-        return .result()
-    }
-}
-
-struct NextTrackIntent: AppIntent {
-    static let title: LocalizedStringResource = "Next Track"
-    static let openAppWhenRun: Bool = false
-
-    func perform() async throws -> some IntentResult {
-        if SharedConstants.clearStateIfAppDead() {
-            WidgetCenter.shared.reloadAllTimelines()
-            return .result()
-        }
-        WidgetCommand.nextTrack.post()
-        return .result()
-    }
-}
-
-struct PreviousTrackIntent: AppIntent {
-    static let title: LocalizedStringResource = "Previous Track"
-    static let openAppWhenRun: Bool = false
-
-    func perform() async throws -> some IntentResult {
-        if SharedConstants.clearStateIfAppDead() {
-            WidgetCenter.shared.reloadAllTimelines()
-            return .result()
-        }
-        WidgetCommand.prevTrack.post()
-        return .result()
-    }
-}
-
 // MARK: - Views
 
 struct PlayerWidgetView: View {
