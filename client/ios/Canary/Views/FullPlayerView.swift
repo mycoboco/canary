@@ -76,20 +76,14 @@ struct FullPlayerView: View {
                             .foregroundStyle(shuffleMode ? .blue : .secondary)
                     }
 
-                    Button { player.prev() } label: {
-                        Image(systemName: "backward.fill")
-                            .font(.title2)
-                    }
+                    SeekButton(systemImage: "backward.fill", forward: false, player: player)
 
                     Button { player.togglePlay() } label: {
                         Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
                             .font(.system(size: 56))
                     }
 
-                    Button { player.next() } label: {
-                        Image(systemName: "forward.fill")
-                            .font(.title2)
-                    }
+                    SeekButton(systemImage: "forward.fill", forward: true, player: player)
 
                     Button { player.toggleRepeat() } label: {
                         Image(systemName: repeatMode == .one ? "repeat.1" : "repeat")
@@ -136,4 +130,46 @@ struct FullPlayerView: View {
         }
     }
 
+}
+
+private struct SeekButton: View {
+    let systemImage: String
+    let forward: Bool
+    let player: AudioPlayer
+
+    private static let holdDelay: TimeInterval = 0.35
+
+    @State private var seeking = false
+    @State private var holdWork: DispatchWorkItem?
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .font(.title2)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in
+                        guard holdWork == nil, !seeking else { return }
+                        let work = DispatchWorkItem {
+                            seeking = true
+                            player.beginSeek(forward: forward)
+                        }
+                        holdWork = work
+                        DispatchQueue.main.asyncAfter(deadline: .now() + Self.holdDelay, execute: work)
+                    }
+                    .onEnded { _ in
+                        holdWork?.cancel()
+                        holdWork = nil
+                        if seeking {
+                            seeking = false
+                            player.endSeek()
+                        } else {
+                            forward ? player.next() : player.prev()
+                        }
+                    }
+            )
+            .accessibilityAddTraits(.isButton)
+            .accessibilityLabel(forward ? "Next" : "Previous")
+            .accessibilityAction { forward ? player.next() : player.prev() }
+    }
 }

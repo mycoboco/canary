@@ -2,8 +2,8 @@ name: Canary
 options:
   bundleIdPrefix: org.woong.canary
   deploymentTarget:
-    iOS: "26.0"
-  xcodeVersion: "16.0"
+    iOS: "27.0"
+  xcodeVersion: "27.0"
   groupSortPosition: top
 
 packages:

@@ -1,5 +1,5 @@
 import AVFoundation
-@preconcurrency import MediaPlayer
+import NowPlaying
 import Observation
 import CachingPlayerItem
 import WidgetKit
@@ -52,11 +52,14 @@ final class AudioPlayer {
     private var errorObserver: NSObjectProtocol?
     private var interruptionObserver: NSObjectProtocol?
     private var routeChangeObserver: NSObjectProtocol?
+    private var mediaSession: MediaSession<AudioPlayer>?
+    private var seekTimer: Timer?
+    private static let seekStep: TimeInterval = 5
+    private static let seekInterval: TimeInterval = 0.5
 
     init(cache: AudioCache = AudioCache()) {
         self.cache = cache
         setupAudioSession()
-        setupRemoteCommands()
         setupTimeObserver()
         setupNotifications()
         setupTimeControlObserver()
@@ -66,6 +69,7 @@ final class AudioPlayer {
         MainActor.assumeIsolated {
             widgetRefreshTimer?.invalidate()
             stallTimer?.invalidate()
+            seekTimer?.invalidate()
             statusObservation?.invalidate()
             timeControlObservation?.invalidate()
             if let timeObserver { player.removeTimeObserver(timeObserver) }
@@ -73,12 +77,6 @@ final class AudioPlayer {
             if let errorObserver { NotificationCenter.default.removeObserver(errorObserver) }
             if let interruptionObserver { NotificationCenter.default.removeObserver(interruptionObserver) }
             if let routeChangeObserver { NotificationCenter.default.removeObserver(routeChangeObserver) }
-            let center = MPRemoteCommandCenter.shared()
-            center.playCommand.removeTarget(nil)
-            center.pauseCommand.removeTarget(nil)
-            center.nextTrackCommand.removeTarget(nil)
-            center.previousTrackCommand.removeTarget(nil)
-            center.changePlaybackPositionCommand.removeTarget(nil)
         }
     }
 
@@ -86,6 +84,11 @@ final class AudioPlayer {
         self.apiClient = apiClient
         AudioPlayer._widgetInstance = self
         setupWidgetObservers()
+        if mediaSession == nil {
+            let session = MediaSession(self)
+            mediaSession = session
+            Task { try? await session.requestToBecomeApplicationPrimary() }
+        }
     }
 
     func stop() {
@@ -94,6 +97,8 @@ final class AudioPlayer {
         widgetRefreshTimer = nil
         stallTimer?.invalidate()
         stallTimer = nil
+        seekTimer?.invalidate()
+        seekTimer = nil
         player.pause()
         player.replaceCurrentItem(with: nil)
         isPlaying = false
@@ -101,10 +106,9 @@ final class AudioPlayer {
         currentIndex = -1
         currentTime = 0
         duration = 0
-        cachedArtwork = nil
         currentContext = nil
         apiClient = nil
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        mediaSession = nil
         SharedConstants.sharedDefaults?.removeObject(forKey: SharedConstants.heartbeatKey)
         updateSharedNowPlaying()
     }
@@ -129,7 +133,7 @@ final class AudioPlayer {
                 guard let self, !self.isSeeking else { return }
                 self.currentTime = time.seconds
                 self.duration = self.player.currentItem?.duration.seconds ?? 0
-                self.updateNowPlaying()
+                self.updateSharedState()
                 self.checkCacheEligibility()
             }
         }
@@ -152,11 +156,11 @@ final class AudioPlayer {
                 guard let self else { return }
                 if type == .began {
                     self.isPlaying = false
-                    self.updateNowPlaying()
+                    self.updateSharedState()
                 } else if shouldResume {
                     self.player.play()
                     self.isPlaying = true
-                    self.updateNowPlaying()
+                    self.updateSharedState()
                 }
             }
         }
@@ -173,7 +177,7 @@ final class AudioPlayer {
                 guard let self else { return }
                 self.player.pause()
                 self.isPlaying = false
-                self.updateNowPlaying()
+                self.updateSharedState()
             }
         }
     }
@@ -240,7 +244,7 @@ final class AudioPlayer {
             player.play()
             isPlaying = true
         }
-        updateNowPlaying()
+        updateSharedState()
     }
 
     func prev() {
@@ -258,7 +262,7 @@ final class AudioPlayer {
             loadAndPlay(queue[currentIndex])
         } else {
             isPlaying = false
-            updateNowPlaying()
+            updateSharedState()
         }
     }
 
@@ -267,7 +271,7 @@ final class AudioPlayer {
     func seek(to time: TimeInterval) {
         isSeeking = true
         currentTime = time
-        updateNowPlaying()
+        updateSharedState()
         player.seek(to: CMTime(seconds: time, preferredTimescale: 600)) { [weak self] _ in
             Task { @MainActor in
                 self?.isSeeking = false
@@ -338,10 +342,9 @@ final class AudioPlayer {
         currentTime = 0
         duration = 0
         saveContext()
-        cachedArtwork = nil
         SharedConstants.sharedDefaults?.removeObject(forKey: SharedConstants.coverDataKey)
-        updateNowPlaying()
-        fetchNowPlayingArtwork(for: song)
+        updateSharedState()
+        fetchWidgetArtwork(for: song)
     }
 
     private func cleanupPendingCache() {
@@ -384,7 +387,7 @@ final class AudioPlayer {
             loadAndPlay(queue[currentIndex])
         } else {
             isPlaying = false
-            updateNowPlaying()
+            updateSharedState()
         }
     }
 
@@ -425,13 +428,11 @@ final class AudioPlayer {
             isPlaying = false
             errorCount = 0
             errorSongId = nil
-            updateNowPlaying()
+            updateSharedState()
             return
         }
         handleEnded()
     }
-
-    private var cachedArtwork: (songId: Int, artwork: MPMediaItemArtwork)?
 
     private func startWidgetRefresh() {
         widgetRefreshTimer?.invalidate()
@@ -440,32 +441,17 @@ final class AudioPlayer {
         }
     }
 
-    private func updateNowPlaying() {
-        guard let song = currentSong else {
-            MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+    private func updateSharedState() {
+        guard currentSong != nil else {
             SharedConstants.sharedDefaults?.removeObject(forKey: SharedConstants.heartbeatKey)
             updateSharedNowPlaying()
             return
         }
         SharedConstants.sharedDefaults?.set(Date(), forKey: SharedConstants.heartbeatKey)
-        let safeDuration = duration.isFinite ? duration : 0
-        let safeCurrentTime = currentTime.isFinite ? currentTime : 0
-        var info: [String: Any] = [
-            MPMediaItemPropertyTitle: song.title,
-            MPMediaItemPropertyArtist: song.artist,
-            MPMediaItemPropertyAlbumTitle: song.album,
-            MPMediaItemPropertyPlaybackDuration: safeDuration,
-            MPNowPlayingInfoPropertyElapsedPlaybackTime: safeCurrentTime,
-            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
-        ]
-        if let cached = cachedArtwork, cached.songId == song.id {
-            info[MPMediaItemPropertyArtwork] = cached.artwork
-        }
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = info
         updateSharedNowPlaying()
     }
 
-    private func fetchNowPlayingArtwork(for song: Song) {
+    private func fetchWidgetArtwork(for song: Song) {
         guard let api = apiClient else { return }
         let songId = song.id
         Task { @MainActor [weak self] in
@@ -474,13 +460,10 @@ final class AudioPlayer {
             }),
                   let self,
                   self.currentSong?.id == songId else { return }
-            let artwork = _makeNowPlayingArtwork(size: image.size, image: image)
-            self.cachedArtwork = (songId: songId, artwork: artwork)
             if let thumb = image.preparingThumbnail(of: CGSize(width: 200, height: 200)) {
                 SharedConstants.sharedDefaults?.set(thumb.jpegData(compressionQuality: 0.7), forKey: SharedConstants.coverDataKey)
                 WidgetCenter.shared.reloadAllTimelines()
             }
-            self.updateNowPlaying()
         }
     }
 
@@ -580,40 +563,103 @@ final class AudioPlayer {
         }
     }
 
-    private func setupRemoteCommands() {
-        let center = MPRemoteCommandCenter.shared()
-        center.playCommand.addTarget { [weak self] _ in
-            Task { @MainActor in
-                guard let self, !self.isPlaying else { return }
-                self.player.play()
-                self.isPlaying = true
-                self.updateNowPlaying()
+    private func remotePlay() {
+        guard !isPlaying else { return }
+        player.play()
+        isPlaying = true
+        updateSharedState()
+    }
+
+    private func remotePause() {
+        guard isPlaying else { return }
+        player.pause()
+        isPlaying = false
+        updateSharedState()
+    }
+}
+
+// MARK: - NowPlaying
+
+extension AudioPlayer: MediaSessionRepresentable {
+    nonisolated var id: String { "org.woong.canary.player" }
+
+    var content: (any MediaContentRepresentable)? {
+        guard let song = currentSong else { return nil }
+        let songId = song.id
+        let safeDuration = duration.isFinite && duration > 0 ? duration : nil
+        return MusicContent(
+            id: String(songId),
+            songTitle: song.title,
+            artistName: song.artist,
+            albumName: song.album,
+            type: .audio,
+            duration: safeDuration.map { .finite($0) },
+            artwork: Artwork(id: String(songId)) { [weak self] _ in
+                guard let self, let data = await self.loadArtworkData(songId: songId) else {
+                    throw ArtworkError.unavailable
+                }
+                return try ArtworkRepresentation(data: data)
             }
-            return .success
-        }
-        center.pauseCommand.addTarget { [weak self] _ in
+        )
+    }
+
+    var playbackSnapshot: MediaPlaybackSnapshot? {
+        guard currentSong != nil else { return nil }
+        let elapsed = currentTime.isFinite ? currentTime : 0
+        return MediaPlaybackSnapshot(
+            state: isPlaying ? .playing(rate: 1.0) : .paused,
+            defaultPlaybackRate: 1.0,
+            elapsedTime: elapsed,
+            timestamp: .now
+        )
+    }
+
+    var commands: [MediaCommand] {
+        [
+            .play { [weak self] in await self?.remotePlay() },
+            .pause { [weak self] in await self?.remotePause() },
+            .togglePlayPause { [weak self] in await self?.togglePlay() },
+            .next { [weak self] in await self?.next() },
+            .previous { [weak self] in await self?.prev() },
+            .seekToPosition { [weak self] position in await self?.seek(to: position) },
+            .seekForward(
+                beginAction: { [weak self] in await self?.beginSeek(forward: true) },
+                endAction: { [weak self] in await self?.endSeek() }
+            ),
+            .seekBackward(
+                beginAction: { [weak self] in await self?.beginSeek(forward: false) },
+                endAction: { [weak self] in await self?.endSeek() }
+            ),
+        ]
+    }
+
+    func beginSeek(forward: Bool) {
+        seekTimer?.invalidate()
+        let step = forward ? Self.seekStep : -Self.seekStep
+        seekTimer = Timer.scheduledTimer(withTimeInterval: Self.seekInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                guard let self, self.isPlaying else { return }
-                self.player.pause()
-                self.isPlaying = false
-                self.updateNowPlaying()
+                guard let self, self.currentSong != nil else { return }
+                let upper = self.duration.isFinite && self.duration > 0 ? self.duration : self.currentTime
+                let target = min(max(self.currentTime + step, 0), upper)
+                self.seek(to: target)
             }
-            return .success
-        }
-        center.nextTrackCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.next() }
-            return .success
-        }
-        center.previousTrackCommand.addTarget { [weak self] _ in
-            Task { @MainActor in self?.prev() }
-            return .success
-        }
-        center.changePlaybackPositionCommand.addTarget { [weak self] event in
-            guard let event = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
-            Task { @MainActor in self?.seek(to: event.positionTime) }
-            return .success
         }
     }
+
+    func endSeek() {
+        seekTimer?.invalidate()
+        seekTimer = nil
+    }
+
+    private func loadArtworkData(songId: Int) async -> Data? {
+        guard let api = apiClient else { return nil }
+        guard let image = await CoverImageCache.shared.image(for: songId, fetch: {
+            await api.fetchCoverImage(for: songId)
+        }) else { return nil }
+        return image.jpegData(compressionQuality: 0.9)
+    }
+
+    enum ArtworkError: Error { case unavailable }
 }
 
 final class CachingDelegateProxy: NSObject, CachingPlayerItemDelegate, @unchecked Sendable {
@@ -702,7 +748,3 @@ private func _handleWidgetCommand(
     }
 }
 
-private func _makeNowPlayingArtwork(size: CGSize, image: sending UIImage) -> MPMediaItemArtwork {
-    nonisolated(unsafe) let img = image
-    return MPMediaItemArtwork(boundsSize: size) { _ in img }
-}
