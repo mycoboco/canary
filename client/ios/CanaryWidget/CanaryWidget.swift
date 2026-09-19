@@ -225,6 +225,7 @@ struct PlayerWidgetView: View {
         if let data = entry.coverData, let uiImage = UIImage(data: data) {
             Image(uiImage: uiImage)
                 .resizable()
+                .widgetAccentedRenderingMode(.fullColor)
                 .aspectRatio(contentMode: .fill)
         } else {
             Color.gray.opacity(0.2)
