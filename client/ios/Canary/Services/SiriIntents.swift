@@ -38,7 +38,7 @@ struct PlayPlaylistIntent: AppIntent {
     static let title: LocalizedStringResource = "Play Playlist"
     static let openAppWhenRun = true
 
-    @Parameter(title: "Playlist")
+    @Parameter(title: "Playlist", requestValueDialog: "어떤 재생목록을 재생할까요?")
     var playlist: CanaryPlaylistEntity
 
     init() {}
@@ -78,8 +78,15 @@ struct CanaryShortcuts: AppShortcutsProvider {
         AppShortcut(
             intent: PlayPlaylistIntent(),
             phrases: [
-                "Play \(\.$playlist) in \(.applicationName)",
+                // Parameter at the end matches most reliably by voice.
+                "\(.applicationName) 재생목록 \(\.$playlist)",
                 "\(.applicationName)에서 \(\.$playlist) 재생",
+                "\(.applicationName)에서 \(\.$playlist) 틀어줘",
+                "Play \(\.$playlist) in \(.applicationName)",
+                "\(.applicationName) playlist \(\.$playlist)",
+                // No-parameter phrases: Siri runs the intent and asks which playlist.
+                "\(.applicationName) 재생목록 재생",
+                "Play a playlist in \(.applicationName)",
             ],
             shortTitle: "Play Playlist",
             systemImageName: "music.note.list"
