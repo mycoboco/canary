@@ -14,6 +14,9 @@ struct PlaylistDetailView: View {
     @State private var editing = false
     @State private var confirmDelete = false
     @State private var deleteError: String?
+    @State private var search = ""
+
+    private var filteredSongs: [Song] { songs.filtered(by: search) }
 
     var body: some View {
         Group {
@@ -21,13 +24,13 @@ struct PlaylistDetailView: View {
                 ProgressView()
             } else {
                 List {
-                    ForEach(Array(songs.enumerated()), id: \.element.id) { index, song in
+                    ForEach(Array(filteredSongs.enumerated()), id: \.element.id) { index, song in
                         SongRow(
                             song: song,
                             isPlaying: player.currentSong?.id == song.id
                         )
                         .onTapGesture {
-                            player.playSong(songs: songs, index: index, context: PlaybackContext(type: .playlist, name: playlist.name, playlistId: playlist.id, songId: song.id))
+                            player.playSong(songs: filteredSongs, index: index, context: PlaybackContext(type: .playlist, name: playlist.name, playlistId: playlist.id, songId: song.id))
                         }
                         .swipeActions(edge: .trailing) {
                             if playlist.type == .manual {
@@ -54,6 +57,7 @@ struct PlaylistDetailView: View {
             }
         }
         .navigationTitle(playlist.name)
+        .searchable(text: $search, prompt: "Search songs")
         .toolbar {
             if playlist.type != .builtin {
                 ToolbarItem(placement: .topBarTrailing) {

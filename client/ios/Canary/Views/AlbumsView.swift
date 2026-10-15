@@ -2,22 +2,29 @@ import SwiftUI
 
 struct AlbumsView: View {
     @Environment(LibraryViewModel.self) private var library
-    @Environment(AudioPlayer.self) private var player
 
     @Binding var pendingContext: PlaybackContext?
     @State private var selectedAlbum: AlbumItem?
-    @State private var addingSong: Song?
+    @State private var search = ""
 
     private let columns = [
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16),
     ]
 
+    private var filteredAlbums: [AlbumItem] {
+        guard !search.isEmpty else { return library.albums }
+        return library.albums.filter {
+            $0.name.localizedCaseInsensitiveContains(search) ||
+            $0.artist.localizedCaseInsensitiveContains(search)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 16) {
-                    ForEach(library.albums) { album in
+                    ForEach(filteredAlbums) { album in
                         Button {
                             selectedAlbum = album
                         } label: {
@@ -46,6 +53,7 @@ struct AlbumsView: View {
             }
             .refreshable { await library.load() }
             .navigationTitle("Albums")
+            .searchable(text: $search, prompt: "Search albums")
             .task(id: pendingContext) {
                 guard let ctx = pendingContext, ctx.type == .album,
                       let album = library.albums.first(where: { $0.name == ctx.name && $0.artist == (ctx.artistName ?? $0.artist) }) else { return }
@@ -53,13 +61,23 @@ struct AlbumsView: View {
                 selectedAlbum = album
             }
             .navigationDestination(item: $selectedAlbum) { album in
-                albumDetail(album)
+                AlbumDetailView(album: album)
             }
         }
     }
+}
 
-    @ViewBuilder
-    private func albumDetail(_ album: AlbumItem) -> some View {
+struct AlbumDetailView: View {
+    let album: AlbumItem
+
+    @Environment(LibraryViewModel.self) private var library
+    @Environment(AudioPlayer.self) private var player
+    @State private var addingSong: Song?
+    @State private var search = ""
+
+    private var filteredSongs: [Song] { album.songs.filtered(by: search) }
+
+    var body: some View {
         List {
             Section {
                 HStack(spacing: 16) {
@@ -76,13 +94,13 @@ struct AlbumsView: View {
                 .padding(.vertical, 8)
             }
             Section {
-                ForEach(Array(album.songs.enumerated()), id: \.element.id) { index, song in
+                ForEach(Array(filteredSongs.enumerated()), id: \.element.id) { index, song in
                     SongRow(
                         song: song,
                         isPlaying: player.currentSong?.id == song.id
                     )
                     .onTapGesture {
-                        player.playSong(songs: album.songs, index: index, context: PlaybackContext(type: .album, name: album.name, artistName: album.artist, songId: song.id))
+                        player.playSong(songs: filteredSongs, index: index, context: PlaybackContext(type: .album, name: album.name, artistName: album.artist, songId: song.id))
                     }
                     .swipeActions(edge: .trailing) {
                         Button {
@@ -98,9 +116,9 @@ struct AlbumsView: View {
         .listStyle(.plain)
         .refreshable { await library.load() }
         .navigationTitle(album.name)
+        .searchable(text: $search, prompt: "Search in album")
         .sheet(item: $addingSong) { song in
             AddToPlaylistSheet(song: song)
         }
     }
-
 }

@@ -132,3 +132,15 @@ struct SongsView: View {
         }
     }
 }
+
+extension Array where Element == Song {
+    /// Case-insensitive filter over title, artist, and album. Empty query returns all.
+    func filtered(by search: String) -> [Song] {
+        guard !search.isEmpty else { return self }
+        return filter {
+            $0.title.localizedCaseInsensitiveContains(search) ||
+            $0.artist.localizedCaseInsensitiveContains(search) ||
+            $0.album.localizedCaseInsensitiveContains(search)
+        }
+    }
+}
