@@ -13,11 +13,7 @@ struct AlbumsView: View {
     ]
 
     private var filteredAlbums: [AlbumItem] {
-        guard !search.isEmpty else { return library.albums }
-        return library.albums.filter {
-            $0.name.localizedCaseInsensitiveContains(search) ||
-            $0.artist.localizedCaseInsensitiveContains(search)
-        }
+        library.albums.filtered(by: search) { [$0.name, $0.artist] }
     }
 
     var body: some View {
@@ -71,13 +67,11 @@ struct AlbumDetailView: View {
     let album: AlbumItem
 
     @Environment(LibraryViewModel.self) private var library
-    @Environment(AudioPlayer.self) private var player
     @State private var addingSong: Song?
     @State private var search = ""
 
-    private var filteredSongs: [Song] { album.songs.filtered(by: search) }
-
     var body: some View {
+        let shown = album.songs.filtered(by: search)
         List {
             Section {
                 HStack(spacing: 16) {
@@ -94,22 +88,13 @@ struct AlbumDetailView: View {
                 .padding(.vertical, 8)
             }
             Section {
-                ForEach(Array(filteredSongs.enumerated()), id: \.element.id) { index, song in
-                    SongRow(
+                ForEach(Array(shown.enumerated()), id: \.element.id) { index, song in
+                    PlayableSongRow(
                         song: song,
-                        isPlaying: player.currentSong?.id == song.id
-                    )
-                    .onTapGesture {
-                        player.playSong(songs: filteredSongs, index: index, context: PlaybackContext(type: .album, name: album.name, artistName: album.artist, songId: song.id))
-                    }
-                    .swipeActions(edge: .trailing) {
-                        Button {
-                            addingSong = song
-                        } label: {
-                            Label("Add to Playlist", systemImage: "text.badge.plus")
-                        }
-                        .tint(.blue)
-                    }
+                        songs: shown,
+                        index: index,
+                        context: PlaybackContext(type: .album, name: album.name, artistName: album.artist, songId: song.id)
+                    ) { addingSong = $0 }
                 }
             }
         }

@@ -38,3 +38,30 @@ struct SongRow: View {
         .foregroundStyle(isPlaying ? .blue : .primary)
     }
 }
+
+/// A song row wired for playback (tap to play within `songs`) plus the common
+/// "Add to Playlist" swipe action. Shared by the Songs, Album, Artist, and Genre lists.
+struct PlayableSongRow: View {
+    let song: Song
+    let songs: [Song]
+    let index: Int
+    let context: PlaybackContext
+    var onAddToPlaylist: (Song) -> Void
+
+    @Environment(AudioPlayer.self) private var player
+
+    var body: some View {
+        SongRow(song: song, isPlaying: player.currentSong?.id == song.id)
+            .onTapGesture {
+                player.playSong(songs: songs, index: index, context: context)
+            }
+            .swipeActions(edge: .trailing) {
+                Button {
+                    onAddToPlaylist(song)
+                } label: {
+                    Label("Add to Playlist", systemImage: "text.badge.plus")
+                }
+                .tint(.blue)
+            }
+    }
+}

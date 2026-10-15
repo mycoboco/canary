@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SongsView: View {
     @Environment(LibraryViewModel.self) private var library
-    @Environment(AudioPlayer.self) private var player
 
     private enum SortKey: CaseIterable {
         case title, artist, album
@@ -58,26 +57,13 @@ struct SongsView: View {
     private var songList: some View {
         List {
             ForEach(Array(cachedSongs.enumerated()), id: \.element.id) { index, song in
-                songRow(song: song, index: index)
+                PlayableSongRow(
+                    song: song,
+                    songs: cachedSongs,
+                    index: index,
+                    context: PlaybackContext(type: .allSongs, songId: song.id)
+                ) { addingSong = $0 }
             }
-        }
-    }
-
-    private func songRow(song: Song, index: Int) -> some View {
-        SongRow(
-            song: song,
-            isPlaying: player.currentSong?.id == song.id
-        )
-        .onTapGesture {
-            player.playSong(songs: cachedSongs, index: index, context: PlaybackContext(type: .allSongs, songId: song.id))
-        }
-        .swipeActions(edge: .trailing) {
-            Button {
-                addingSong = song
-            } label: {
-                Label("Add to Playlist", systemImage: "text.badge.plus")
-            }
-            .tint(.blue)
         }
     }
 
@@ -94,14 +80,7 @@ struct SongsView: View {
     }
 
     private func rebuildSongs() {
-        var result = library.songs
-        if !search.isEmpty {
-            result = result.filter {
-                $0.title.localizedCaseInsensitiveContains(search) ||
-                $0.artist.localizedCaseInsensitiveContains(search) ||
-                $0.album.localizedCaseInsensitiveContains(search)
-            }
-        }
+        var result = library.songs.filtered(by: search)
         if let key = sortKey {
             let asc = sortAscending
             result.sort { a, b in
@@ -129,18 +108,6 @@ struct SongsView: View {
             }
         } label: {
             Image(systemName: "arrow.up.arrow.down")
-        }
-    }
-}
-
-extension Array where Element == Song {
-    /// Case-insensitive filter over title, artist, and album. Empty query returns all.
-    func filtered(by search: String) -> [Song] {
-        guard !search.isEmpty else { return self }
-        return filter {
-            $0.title.localizedCaseInsensitiveContains(search) ||
-            $0.artist.localizedCaseInsensitiveContains(search) ||
-            $0.album.localizedCaseInsensitiveContains(search)
         }
     }
 }

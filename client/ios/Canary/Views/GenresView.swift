@@ -41,30 +41,19 @@ struct GenreDetailView: View {
     let genre: GroupedItem
 
     @Environment(LibraryViewModel.self) private var library
-    @Environment(AudioPlayer.self) private var player
     @State private var addingSong: Song?
     @State private var search = ""
 
-    private var filteredSongs: [Song] { genre.songs.filtered(by: search) }
-
     var body: some View {
+        let shown = genre.songs.filtered(by: search)
         List {
-            ForEach(Array(filteredSongs.enumerated()), id: \.element.id) { index, song in
-                SongRow(
+            ForEach(Array(shown.enumerated()), id: \.element.id) { index, song in
+                PlayableSongRow(
                     song: song,
-                    isPlaying: player.currentSong?.id == song.id
-                )
-                .onTapGesture {
-                    player.playSong(songs: filteredSongs, index: index, context: PlaybackContext(type: .genre, name: genre.name, songId: song.id))
-                }
-                .swipeActions(edge: .trailing) {
-                    Button {
-                        addingSong = song
-                    } label: {
-                        Label("Add to Playlist", systemImage: "text.badge.plus")
-                    }
-                    .tint(.blue)
-                }
+                    songs: shown,
+                    index: index,
+                    context: PlaybackContext(type: .genre, name: genre.name, songId: song.id)
+                ) { addingSong = $0 }
             }
         }
         .listStyle(.plain)

@@ -8,8 +8,7 @@ struct ArtistsView: View {
     @State private var search = ""
 
     private var filteredArtists: [GroupedItem] {
-        guard !search.isEmpty else { return library.artists }
-        return library.artists.filter { $0.name.localizedCaseInsensitiveContains(search) }
+        library.artists.filtered(by: search) { [$0.name] }
     }
 
     var body: some View {
@@ -48,26 +47,26 @@ struct ArtistDetailView: View {
     let artist: GroupedItem
 
     @Environment(LibraryViewModel.self) private var library
-    @Environment(AudioPlayer.self) private var player
     @State private var addingSong: Song?
     @State private var search = ""
 
     private var artistAlbums: [AlbumItem] { library.albums.filter { $0.artist == artist.name } }
+    private var showAlbumSections: Bool { search.isEmpty && !artistAlbums.isEmpty }
 
     var body: some View {
         List {
-            if search.isEmpty && !artistAlbums.isEmpty {
+            if showAlbumSections {
                 ForEach(artistAlbums) { album in
                     Section(album.name) {
                         ForEach(Array(album.songs.enumerated()), id: \.element.id) { index, song in
-                            songRow(song: song, songs: album.songs, index: index)
+                            row(song: song, songs: album.songs, index: index)
                         }
                     }
                 }
             } else {
                 let shown = artist.songs.filtered(by: search)
                 ForEach(Array(shown.enumerated()), id: \.element.id) { index, song in
-                    songRow(song: song, songs: shown, index: index)
+                    row(song: song, songs: shown, index: index)
                 }
             }
         }
@@ -80,21 +79,12 @@ struct ArtistDetailView: View {
         }
     }
 
-    private func songRow(song: Song, songs: [Song], index: Int) -> some View {
-        SongRow(
+    private func row(song: Song, songs: [Song], index: Int) -> some View {
+        PlayableSongRow(
             song: song,
-            isPlaying: player.currentSong?.id == song.id
-        )
-        .onTapGesture {
-            player.playSong(songs: songs, index: index, context: PlaybackContext(type: .artist, name: song.artist, songId: song.id))
-        }
-        .swipeActions(edge: .trailing) {
-            Button {
-                addingSong = song
-            } label: {
-                Label("Add to Playlist", systemImage: "text.badge.plus")
-            }
-            .tint(.blue)
-        }
+            songs: songs,
+            index: index,
+            context: PlaybackContext(type: .artist, name: song.artist, songId: song.id)
+        ) { addingSong = $0 }
     }
 }
