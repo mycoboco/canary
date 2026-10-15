@@ -19,41 +19,37 @@ struct PlaylistDetailView: View {
     private var filteredSongs: [Song] { songs.filtered(by: search) }
 
     var body: some View {
-        Group {
+        List {
+            ForEach(Array(filteredSongs.enumerated()), id: \.element.id) { index, song in
+                SongRow(
+                    song: song,
+                    isPlaying: player.currentSong?.id == song.id
+                )
+                .onTapGesture {
+                    player.playSong(songs: filteredSongs, index: index, context: PlaybackContext(type: .playlist, name: playlist.name, playlistId: playlist.id, songId: song.id))
+                }
+                .swipeActions(edge: .trailing) {
+                    if playlist.type == .manual {
+                        Button(role: .destructive) {
+                            removeSong(songId: song.id)
+                        } label: {
+                            Label("Remove", systemImage: "trash")
+                        }
+                    }
+                }
+            }
+        }
+        .listStyle(.plain)
+        .refreshable { await loadSongs() }
+        .overlay {
             if loading {
                 ProgressView()
-            } else {
-                List {
-                    ForEach(Array(filteredSongs.enumerated()), id: \.element.id) { index, song in
-                        SongRow(
-                            song: song,
-                            isPlaying: player.currentSong?.id == song.id
-                        )
-                        .onTapGesture {
-                            player.playSong(songs: filteredSongs, index: index, context: PlaybackContext(type: .playlist, name: playlist.name, playlistId: playlist.id, songId: song.id))
-                        }
-                        .swipeActions(edge: .trailing) {
-                            if playlist.type == .manual {
-                                Button(role: .destructive) {
-                                    removeSong(songId: song.id)
-                                } label: {
-                                    Label("Remove", systemImage: "trash")
-                                }
-                            }
-                        }
-                    }
-                }
-                .listStyle(.plain)
-                .refreshable { await loadSongs() }
-                .overlay {
-                    if songs.isEmpty && playlist.type == .manual {
-                        ContentUnavailableView(
-                            "No Songs",
-                            systemImage: "music.note",
-                            description: Text("Add songs from Songs, Albums, Artists, or Genres.")
-                        )
-                    }
-                }
+            } else if songs.isEmpty && playlist.type == .manual {
+                ContentUnavailableView(
+                    "No Songs",
+                    systemImage: "music.note",
+                    description: Text("Add songs from Songs, Albums, Artists, or Genres.")
+                )
             }
         }
         .navigationTitle(playlist.name)
