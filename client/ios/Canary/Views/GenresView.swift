@@ -10,7 +10,9 @@ struct GenresView: View {
         NavigationStack(path: $path) {
             List(library.genres) { genre in
                 NavigationLink(value: genre) {
-                    HStack {
+                    HStack(spacing: 12) {
+                        GenreIcon(genre: genre.name, size: 30)
+                            .foregroundStyle(.secondary)
                         Text(genre.name)
                         Spacer()
                         Text("\(genre.count) songs")
@@ -47,6 +49,15 @@ struct GenreDetailView: View {
     var body: some View {
         let shown = genre.songs.filtered(by: search)
         List {
+            HStack(spacing: 14) {
+                GenreIcon(genre: genre.name, size: 52)
+                    .foregroundStyle(.secondary)
+                Text(genre.name)
+                    .font(.title3)
+                    .fontWeight(.bold)
+            }
+            .listRowSeparator(.hidden)
+            .padding(.vertical, 8)
             ForEach(Array(shown.enumerated()), id: \.element.id) { index, song in
                 PlayableSongRow(
                     song: song,
