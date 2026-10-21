@@ -4,6 +4,9 @@ db
 server/web/*
 !server/web/.keep
 
+# macOS
+.DS_Store
+
 # iOS
 *.xcuserstate
 xcuserdata/
