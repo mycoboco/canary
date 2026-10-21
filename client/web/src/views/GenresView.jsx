@@ -1,5 +1,6 @@
 import {useState, useRef, useEffect, useLayoutEffect} from 'react';
 import SongTable from '../components/SongTable.jsx';
+import GenreIcon from '../components/GenreIcon.jsx';
 import {findScrollParent} from '../utils.js';
 
 export default function GenresView({genres, onPlay, currentSongId, onAddToPlaylist, resetKey}) {
@@ -43,7 +44,10 @@ export default function GenresView({genres, onPlay, currentSongId, onAddToPlayli
           onClick={() => setSelected(null)}
           className="text-sm text-blue-600 hover:underline mb-2"
         >← Genres</button>
-        <h2 className="text-xl font-bold mb-4">{selected}</h2>
+        <div className="flex items-center gap-3 mb-4">
+          <GenreIcon genre={selected} size={40} className="text-gray-700" />
+          <h2 className="text-xl font-bold">{selected}</h2>
+        </div>
         <SongTable
           songs={genre?.songs || []}
           onPlay={onPlay}
@@ -62,9 +66,10 @@ export default function GenresView({genres, onPlay, currentSongId, onAddToPlayli
           <li key={g.name}>
             <button
               onClick={() => handleSelect(g.name)}
-              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 flex justify-between"
+              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 flex items-center gap-3"
             >
-              <span>{g.name}</span>
+              <GenreIcon genre={g.name} size={32} className="text-gray-600" />
+              <span className="flex-1">{g.name}</span>
               <span className="text-gray-400 text-sm">{g.count} songs</span>
             </button>
           </li>
