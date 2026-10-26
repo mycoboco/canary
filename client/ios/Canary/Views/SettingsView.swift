@@ -42,7 +42,7 @@ struct SettingsView: View {
                         Slider(
                             value: $cacheSizeMB,
                             in: 100...4096,
-                            step: 1
+                            step: 50
                         ) {
                             Text("Cache Limit")
                         } minimumValueLabel: {
@@ -88,20 +88,22 @@ struct SettingsView: View {
                     player.cache.clearAll()
                     CoverImageCache.shared.clearAll()
                     library.clearSongCache()
-                    refreshCacheInfo()
+                    Task { await refreshCacheInfo() }
                 }
             }
-            .onAppear {
+            .task {
                 defaultPlaylistId = SharedConstants.sharedDefaults?.object(forKey: SharedConstants.defaultPlaylistIdKey) as? Int
                 cacheSizeMB = Double(player.cache.maxSize) / 1024 / 1024
-                refreshCacheInfo()
+                await refreshCacheInfo()
             }
         }
     }
 
-    private func refreshCacheInfo() {
-        currentCacheSize = player.cache.currentSize()
-        cacheFileCount = player.cache.fileCount()
+    private func refreshCacheInfo() async {
+        let cache = player.cache
+        let info = await Task.detached { (size: cache.currentSize(), count: cache.fileCount()) }.value
+        currentCacheSize = info.size
+        cacheFileCount = info.count
     }
 
     private func formatSize(_ bytes: Int64) -> String {
