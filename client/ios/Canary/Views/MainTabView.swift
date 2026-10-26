@@ -37,25 +37,26 @@ struct MainTabView: View {
         } else {
             TabView(selection: $selectedTab) {
                 tab { SongsView() }
-                    .tabItem { Label("Songs", systemImage: "music.note") }
+                    .tabItem { tabLabel("Songs", "play.circle", for: .songs) }
                     .tag(AppTab.songs)
 
                 tab { GenresView(pendingContext: $pendingContext) }
-                    .tabItem { Label("Genres", systemImage: "guitars") }
+                    .tabItem { tabLabel("Genres", "guitars", for: .genres) }
                     .tag(AppTab.genres)
 
                 tab { ArtistsView(pendingContext: $pendingContext) }
-                    .tabItem { Label("Artists", systemImage: "person") }
+                    .tabItem { tabLabel("Artists", "person", for: .artists) }
                     .tag(AppTab.artists)
 
                 tab { AlbumsView(pendingContext: $pendingContext) }
-                    .tabItem { Label("Albums", systemImage: "square.stack") }
+                    .tabItem { tabLabel("Albums", "square.stack", for: .albums) }
                     .tag(AppTab.albums)
 
                 tab { PlaylistsView(pendingContext: $pendingContext) }
-                    .tabItem { Label("Playlists", systemImage: "music.note.list") }
+                    .tabItem { tabLabel("Playlists", "list.bullet.rectangle.portrait", for: .playlists) }
                     .tag(AppTab.playlists)
             }
+            .tint(.primary)
             .sheet(isPresented: $showFullPlayer) {
                 FullPlayerView()
                     .presentationDetents([.large])
@@ -64,6 +65,17 @@ struct MainTabView: View {
                     .presentationBackground(.ultraThinMaterial)
             }
             .onAppear { restoreNavigation() }
+        }
+    }
+
+    // Outline symbol when unselected, filled when selected. symbolVariants(.none)
+    // stops the Liquid Glass tab bar from forcing the filled variant on all items.
+    private func tabLabel(_ title: String, _ base: String, for tab: AppTab) -> some View {
+        Label {
+            Text(title)
+        } icon: {
+            Image(systemName: selectedTab == tab ? "\(base).fill" : base)
+                .environment(\.symbolVariants, .none)
         }
     }
 
