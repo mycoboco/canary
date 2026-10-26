@@ -1,9 +1,33 @@
 import SwiftUI
 
+enum AppAppearance: String, CaseIterable, Identifiable {
+    case system, light, dark
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .system: "System"
+        case .light: "Light"
+        case .dark: "Dark"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: nil
+        case .light: .light
+        case .dark: .dark
+        }
+    }
+}
+
 struct SettingsView: View {
     @Environment(AudioPlayer.self) private var player
     @Environment(LibraryViewModel.self) private var library
     @Environment(\.dismiss) private var dismiss
+
+    @AppStorage("appearance") private var appearance = AppAppearance.system
 
     @State private var cacheSizeMB: Double = 1024
     @State private var currentCacheSize: Int64 = 0
@@ -14,6 +38,15 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("Appearance") {
+                    Picker("Theme", selection: $appearance) {
+                        ForEach(AppAppearance.allCases) { option in
+                            Text(option.label).tag(option)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
                 Section("Widget") {
                     Picker("Default Playlist", selection: $defaultPlaylistId) {
                         Text("All Songs").tag(nil as Int?)

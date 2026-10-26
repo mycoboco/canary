@@ -15,9 +15,11 @@ struct CanaryApp: App {
     @State private var pendingURL: URL?
     @State private var selectedTab: AppTab = .songs
     @State private var pendingContext: PlaybackContext?
+    @AppStorage("appearance") private var appearance = AppAppearance.system
 
     var body: some Scene {
         WindowGroup {
+            Group {
             if let api = apiClient {
                 MainTabView(selectedTab: $selectedTab, pendingContext: $pendingContext)
                     .environment(api)
@@ -57,6 +59,8 @@ struct CanaryApp: App {
                     apiClient = APIClient(baseURL: url, password: password)
                 }
             }
+            }
+            .preferredColorScheme(appearance.colorScheme)
         }
     }
 
