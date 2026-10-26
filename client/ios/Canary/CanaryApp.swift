@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 extension Notification.Name {
     static let signOut = Notification.Name("canary.signOut")
@@ -60,7 +61,18 @@ struct CanaryApp: App {
                 }
             }
             }
-            .preferredColorScheme(appearance.colorScheme)
+            .onAppear { applyAppearance() }
+            .onChange(of: appearance) { applyAppearance() }
+        }
+    }
+
+    private func applyAppearance() {
+        let style = appearance.uiStyle
+        for scene in UIApplication.shared.connectedScenes {
+            guard let windowScene = scene as? UIWindowScene else { continue }
+            for window in windowScene.windows {
+                window.overrideUserInterfaceStyle = style
+            }
         }
     }
 

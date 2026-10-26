@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum AppAppearance: String, CaseIterable, Identifiable {
     case system, light, dark
@@ -13,9 +14,11 @@ enum AppAppearance: String, CaseIterable, Identifiable {
         }
     }
 
-    var colorScheme: ColorScheme? {
+    // Applied directly to the window so switching back to System (.unspecified)
+    // reverts live, including already-presented sheets.
+    var uiStyle: UIUserInterfaceStyle {
         switch self {
-        case .system: nil
+        case .system: .unspecified
         case .light: .light
         case .dark: .dark
         }
