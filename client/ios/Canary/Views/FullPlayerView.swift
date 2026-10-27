@@ -184,12 +184,14 @@ struct FullPlayerView: View {
             return
         }
         let api = self.api
-        guard let image = await CoverImageCache.shared.image(for: songId, fetch: {
+        let image = await CoverImageCache.shared.image(for: songId, fetch: {
             await api.fetchCoverImage(for: songId)
-        }) else { return }
-        let colors = Self.meshColors(from: image)
-        guard player.currentSong?.id == songId, colors.count == 9 else { return }
-        withAnimation(.easeInOut(duration: 0.5)) { artColors = colors }
+        })
+        guard player.currentSong?.id == songId else { return }
+        // Always reflect the current song: fall back to the default mesh when the
+        // cover is missing or can't be sampled (never keep the previous song's palette).
+        let colors = image.map { Self.meshColors(from: $0) } ?? []
+        withAnimation(.easeInOut(duration: 0.5)) { artColors = colors.count == 9 ? colors : [] }
     }
 
     private static let meshPoints: [SIMD2<Float>] = [

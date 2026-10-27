@@ -84,7 +84,7 @@ struct MainTabView: View {
                     FullPlayerView(progress: $progress, onCollapse: {
                         withAnimation(Self.playerAnimation) { progress = 0 }
                     })
-                    .allowsHitTesting(progress > 0.5)
+                    .allowsHitTesting(progress > 0)
                     .zIndex(1)
                 }
             }
@@ -100,6 +100,10 @@ struct MainTabView: View {
                             .allowsHitTesting(false)
                     }
                 }
+            }
+            .onChange(of: player.currentSong == nil) {
+                // Collapse when playback stops so a new song doesn't reopen expanded.
+                if player.currentSong == nil { progress = 0 }
             }
         }
     }
