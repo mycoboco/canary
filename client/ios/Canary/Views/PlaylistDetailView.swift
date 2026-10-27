@@ -35,6 +35,7 @@ struct PlaylistDetailView: View {
                         } label: {
                             Label("Remove", systemImage: "trash")
                         }
+                        .tint(.red)
                     }
                 }
             }
