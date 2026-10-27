@@ -55,7 +55,6 @@ struct LoginView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .tint(.primary)
             .disabled(serverURL.isEmpty || password.isEmpty || connecting)
         }
         .padding(32)
