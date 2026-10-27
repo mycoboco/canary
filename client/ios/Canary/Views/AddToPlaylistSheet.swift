@@ -77,6 +77,10 @@ struct AddToPlaylistSheet: View {
                 }
             }
         }
+        // Fix the accent explicitly so the sheet looks identical whether it is
+        // presented from the song list (under the tab bar's .tint(.primary)) or
+        // from the full player overlay (outside it).
+        .tint(.primary)
         .presentationDetents([.medium])
     }
 
