@@ -79,7 +79,7 @@ struct PlaylistDetailView: View {
                 PlaylistEditorView(mode: .edit(playlist))
             }
         }
-        .confirmationDialog("Delete \"\(playlist.name)\"?", isPresented: $confirmDelete) {
+        .alert("Delete \"\(playlist.name)\"?", isPresented: $confirmDelete) {
             Button("Delete", role: .destructive) {
                 Task {
                     do {
@@ -90,6 +90,9 @@ struct PlaylistDetailView: View {
                     }
                 }
             }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This can't be undone.")
         }
         .alert("Failed to Delete", isPresented: Binding(get: { deleteError != nil }, set: { if !$0 { deleteError = nil } })) {
         } message: {

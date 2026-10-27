@@ -105,13 +105,14 @@ struct SettingsView: View {
                         confirmClear = true
                     }
                     .disabled(cacheFileCount == 0)
-                    .confirmationDialog("Clear all cached files?", isPresented: $confirmClear) {
+                    .alert("Clear all cached files?", isPresented: $confirmClear) {
                         Button("Clear Cache", role: .destructive) {
                             player.cache.clearAll()
                             CoverImageCache.shared.clearAll()
                             library.clearSongCache()
                             Task { await refreshCacheInfo() }
                         }
+                        Button("Cancel", role: .cancel) {}
                     }
                 }
 
@@ -119,10 +120,11 @@ struct SettingsView: View {
                     Button("Sign Out", role: .destructive) {
                         confirmSignOut = true
                     }
-                    .confirmationDialog("Sign out?", isPresented: $confirmSignOut) {
+                    .alert("Sign out?", isPresented: $confirmSignOut) {
                         Button("Sign Out", role: .destructive) {
                             NotificationCenter.default.post(name: .signOut, object: nil)
                         }
+                        Button("Cancel", role: .cancel) {}
                     }
                 }
             }
