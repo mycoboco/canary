@@ -104,6 +104,14 @@ struct SettingsView: View {
                         confirmClear = true
                     }
                     .disabled(cacheFileCount == 0)
+                    .confirmationDialog("Clear all cached files?", isPresented: $confirmClear) {
+                        Button("Clear Cache", role: .destructive) {
+                            player.cache.clearAll()
+                            CoverImageCache.shared.clearAll()
+                            library.clearSongCache()
+                            Task { await refreshCacheInfo() }
+                        }
+                    }
                 }
 
                 Section("Server") {
@@ -117,14 +125,6 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
-                }
-            }
-            .confirmationDialog("Clear all cached files?", isPresented: $confirmClear) {
-                Button("Clear Cache", role: .destructive) {
-                    player.cache.clearAll()
-                    CoverImageCache.shared.clearAll()
-                    library.clearSongCache()
-                    Task { await refreshCacheInfo() }
                 }
             }
             .task {
