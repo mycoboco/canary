@@ -27,6 +27,7 @@ struct ArtistsView: View {
             .listStyle(.plain)
             .refreshable { await library.load() }
             .navigationTitle("Artists")
+            .flushTopHeader()
             .searchable(text: $search, prompt: "Search artists")
             .navigationDestination(for: GroupedItem.self) { artist in
                 ArtistDetailView(artist: artist)
@@ -73,6 +74,7 @@ struct ArtistDetailView: View {
         .listStyle(.plain)
         .refreshable { await library.load() }
         .navigationTitle(artist.name)
+        .flushTopHeader()
         .searchable(text: $search, prompt: "Search songs")
         .sheet(item: $addingSong) { song in
             AddToPlaylistSheet(song: song)

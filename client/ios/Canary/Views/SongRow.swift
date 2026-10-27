@@ -65,3 +65,11 @@ struct PlayableSongRow: View {
             }
     }
 }
+
+extension View {
+    /// Hide the iOS 26 top scroll-edge blur so content scrolls flush under the
+    /// navigation bar. Shared by the top-level library lists.
+    func flushTopHeader() -> some View {
+        scrollEdgeEffectHidden(true, for: .top)
+    }
+}

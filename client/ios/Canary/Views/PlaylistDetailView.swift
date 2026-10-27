@@ -53,6 +53,7 @@ struct PlaylistDetailView: View {
             }
         }
         .navigationTitle(playlist.name)
+        .flushTopHeader()
         .searchable(text: $search, prompt: "Search songs")
         .toolbar {
             if playlist.type != .builtin {

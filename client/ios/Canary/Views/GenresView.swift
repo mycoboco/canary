@@ -24,6 +24,7 @@ struct GenresView: View {
             .listStyle(.plain)
             .refreshable { await library.load() }
             .navigationTitle("Genres")
+            .flushTopHeader()
             .navigationDestination(for: GroupedItem.self) { genre in
                 GenreDetailView(genre: genre)
             }
@@ -70,6 +71,7 @@ struct GenreDetailView: View {
         .listStyle(.plain)
         .refreshable { await library.load() }
         .navigationTitle(genre.name)
+        .flushTopHeader()
         .searchable(text: $search, prompt: "Search songs")
         .sheet(item: $addingSong) { song in
             AddToPlaylistSheet(song: song)

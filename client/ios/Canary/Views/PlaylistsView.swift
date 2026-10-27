@@ -31,6 +31,7 @@ struct PlaylistsView: View {
             .listStyle(.plain)
             .refreshable { await library.load() }
             .navigationTitle("Playlists")
+            .flushTopHeader()
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {

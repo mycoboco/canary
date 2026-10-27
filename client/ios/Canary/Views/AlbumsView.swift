@@ -49,6 +49,7 @@ struct AlbumsView: View {
             }
             .refreshable { await library.load() }
             .navigationTitle("Albums")
+            .flushTopHeader()
             .searchable(text: $search, prompt: "Search albums")
             .task(id: pendingContext) {
                 guard let ctx = pendingContext, ctx.type == .album,
@@ -101,6 +102,7 @@ struct AlbumDetailView: View {
         .listStyle(.plain)
         .refreshable { await library.load() }
         .navigationTitle(album.name)
+        .flushTopHeader()
         .searchable(text: $search, prompt: "Search in album")
         .sheet(item: $addingSong) { song in
             AddToPlaylistSheet(song: song)

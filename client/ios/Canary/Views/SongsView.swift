@@ -36,6 +36,7 @@ struct SongsView: View {
                 .listStyle(.plain)
                 .refreshable { await library.load() }
                 .navigationTitle("Songs")
+                .flushTopHeader()
                 .searchable(text: $search, prompt: "Search songs")
                 .toolbar { toolbarItems }
                 .sheet(isPresented: $showSettings) { SettingsView() }
