@@ -29,7 +29,10 @@ struct AddToPlaylistSheet: View {
                             addToExisting(playlist.id)
                         } label: {
                             Text(playlist.name)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
                         }
+                        .buttonStyle(.plain)
                         .disabled(busy)
                     }
                 }
