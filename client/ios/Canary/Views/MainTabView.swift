@@ -4,14 +4,34 @@ enum AppTab: Int {
     case songs, genres, artists, albums, playlists
 }
 
+// Reports the mini ("mini") and full ("full") album-art slots so a single flying
+// art view can be interpolated between them.
+struct PlayerArtAnchor: PreferenceKey {
+    static let defaultValue: [String: Anchor<CGRect>] = [:]
+    static func reduce(value: inout [String: Anchor<CGRect>], nextValue: () -> [String: Anchor<CGRect>]) {
+        value.merge(nextValue()) { _, new in new }
+    }
+}
+
+private func lerp(_ a: CGFloat, _ b: CGFloat, _ t: CGFloat) -> CGFloat { a + (b - a) * t }
+
+private func lerpRect(_ a: CGRect, _ b: CGRect, _ t: CGFloat) -> CGRect {
+    CGRect(
+        x: lerp(a.minX, b.minX, t), y: lerp(a.minY, b.minY, t),
+        width: lerp(a.width, b.width, t), height: lerp(a.height, b.height, t)
+    )
+}
+
 struct MainTabView: View {
     @Environment(LibraryViewModel.self) private var library
     @Environment(AudioPlayer.self) private var player
 
-    @State private var showFullPlayer = false
+    @State private var progress: CGFloat = 0
     @State private var hasRestoredNavigation = false
     @Binding var selectedTab: AppTab
     @Binding var pendingContext: PlaybackContext?
+
+    private static let playerAnimation = Animation.spring(response: 0.5, dampingFraction: 0.9)
 
     var body: some View {
         if library.loading {
@@ -35,36 +55,52 @@ struct MainTabView: View {
                 .buttonStyle(.bordered)
             }
         } else {
-            TabView(selection: $selectedTab) {
-                tab { SongsView() }
-                    .tabItem { tabLabel("Songs", "play.circle", for: .songs) }
-                    .tag(AppTab.songs)
+            ZStack {
+                TabView(selection: $selectedTab) {
+                    tab { SongsView() }
+                        .tabItem { tabLabel("Songs", "play.circle", for: .songs) }
+                        .tag(AppTab.songs)
 
-                tab { GenresView(pendingContext: $pendingContext) }
-                    .tabItem { tabLabel("Genres", "guitars", for: .genres) }
-                    .tag(AppTab.genres)
+                    tab { GenresView(pendingContext: $pendingContext) }
+                        .tabItem { tabLabel("Genres", "guitars", for: .genres) }
+                        .tag(AppTab.genres)
 
-                tab { ArtistsView(pendingContext: $pendingContext) }
-                    .tabItem { tabLabel("Artists", "person", for: .artists) }
-                    .tag(AppTab.artists)
+                    tab { ArtistsView(pendingContext: $pendingContext) }
+                        .tabItem { tabLabel("Artists", "person", for: .artists) }
+                        .tag(AppTab.artists)
 
-                tab { AlbumsView(pendingContext: $pendingContext) }
-                    .tabItem { tabLabel("Albums", "square.stack", for: .albums) }
-                    .tag(AppTab.albums)
+                    tab { AlbumsView(pendingContext: $pendingContext) }
+                        .tabItem { tabLabel("Albums", "square.stack", for: .albums) }
+                        .tag(AppTab.albums)
 
-                tab { PlaylistsView(pendingContext: $pendingContext) }
-                    .tabItem { tabLabel("Playlists", "list.bullet.rectangle.portrait", for: .playlists) }
-                    .tag(AppTab.playlists)
+                    tab { PlaylistsView(pendingContext: $pendingContext) }
+                        .tabItem { tabLabel("Playlists", "list.bullet.rectangle.portrait", for: .playlists) }
+                        .tag(AppTab.playlists)
+                }
+                .tint(.primary)
+                .onAppear { restoreNavigation() }
+
+                if player.currentSong != nil {
+                    FullPlayerView(progress: $progress, onCollapse: {
+                        withAnimation(Self.playerAnimation) { progress = 0 }
+                    })
+                    .allowsHitTesting(progress > 0.5)
+                    .zIndex(1)
+                }
             }
-            .tint(.primary)
-            .sheet(isPresented: $showFullPlayer) {
-                FullPlayerView()
-                    .presentationDetents([.large])
-                    .presentationCornerRadius(0)
-                    .presentationDragIndicator(.hidden)
-                    .presentationBackground(.ultraThinMaterial)
+            .overlayPreferenceValue(PlayerArtAnchor.self) { anchors in
+                GeometryReader { proxy in
+                    if let song = player.currentSong,
+                       let mini = anchors["mini"], let full = anchors["full"] {
+                        let rect = lerpRect(proxy[mini], proxy[full], progress)
+                        AlbumCoverView(songId: song.id, size: rect.width, clipCorners: false)
+                            .clipShape(RoundedRectangle(cornerRadius: lerp(6, 20, progress)))
+                            .shadow(color: .black.opacity(0.45 * progress), radius: 24 * progress, y: 16 * progress)
+                            .position(x: rect.midX, y: rect.midY)
+                            .allowsHitTesting(false)
+                    }
+                }
             }
-            .onAppear { restoreNavigation() }
         }
     }
 
@@ -84,7 +120,9 @@ struct MainTabView: View {
             .contentMargins(.bottom, player.currentSong != nil ? 64 : 0, for: .scrollContent)
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if player.currentSong != nil {
-                    MiniPlayerView(onExpand: { showFullPlayer = true })
+                    MiniPlayerView(progress: progress, onExpand: {
+                        withAnimation(Self.playerAnimation) { progress = 1 }
+                    })
                 }
             }
     }

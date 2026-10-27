@@ -3,12 +3,17 @@ import SwiftUI
 struct MiniPlayerView: View {
     @Environment(AudioPlayer.self) private var player
 
+    var progress: CGFloat
     var onExpand: () -> Void
 
     var body: some View {
         if let song = player.currentSong {
             HStack(spacing: 12) {
-                AlbumCoverView(songId: song.id, size: 40)
+                // The album art itself is drawn by the shared flying overlay; this
+                // clear slot just reports where the mini art should sit.
+                Color.clear
+                    .frame(width: 40, height: 40)
+                    .anchorPreference(key: PlayerArtAnchor.self, value: .bounds) { ["mini": $0] }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(song.title)
@@ -38,7 +43,7 @@ struct MiniPlayerView: View {
             .padding(.bottom, 8)
             .contentShape(Rectangle())
             .onTapGesture { onExpand() }
+            .opacity(1 - progress)
         }
     }
-
 }
