@@ -11,6 +11,7 @@ struct AddToPlaylistSheet: View {
     @State private var newName = ""
     @State private var error: String?
     @State private var busy = false
+    @FocusState private var nameFocused: Bool
 
     private var manualPlaylists: [Playlist] {
         library.playlists.filter { $0.type == .manual }
@@ -41,14 +42,20 @@ struct AddToPlaylistSheet: View {
                     if creating {
                         HStack {
                             TextField("Playlist name", text: $newName)
-                                .textFieldStyle(.roundedBorder)
-                            Button("Add") { createAndAdd() }
-                                .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty || busy)
+                                .focused($nameFocused)
+                                .submitLabel(.done)
+                                .onSubmit(createAndAdd)
                             Button("Cancel") {
                                 creating = false
                                 newName = ""
                             }
+                            .buttonStyle(.borderless)
+                            Button("Add", action: createAndAdd)
+                                .buttonStyle(.borderless)
+                                .fontWeight(.semibold)
+                                .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty || busy)
                         }
+                        .onAppear { nameFocused = true }
                     } else {
                         Button("New Manual Playlist") {
                             creating = true
