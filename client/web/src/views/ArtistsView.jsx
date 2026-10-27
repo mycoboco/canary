@@ -49,12 +49,12 @@ export default function ArtistsView({
       <div ref={rootRef}>
         <button
           onClick={() => setSelected(null)}
-          className="text-sm text-blue-600 hover:underline mb-2"
+          className="text-sm text-blue-600 dark:text-blue-400 hover:underline mb-2"
         >← Artists</button>
         <h2 className="text-xl font-bold mb-4">{selected}</h2>
         {artistAlbums.map((album) => (
           <div key={album.name} className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-500 mb-2">{album.name}</h3>
+            <h3 className="text-sm font-semibold text-gray-500 dark:text-neutral-400 mb-2">{album.name}</h3>
             <SongTable
               songs={album.songs}
               onPlay={onPlay}
@@ -83,10 +83,10 @@ export default function ArtistsView({
           <li key={a.name}>
             <button
               onClick={() => handleSelect(a.name)}
-              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 flex justify-between"
+              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 flex justify-between"
             >
               <span>{a.name}</span>
-              <span className="text-gray-400 text-sm">{a.count} songs</span>
+              <span className="text-gray-400 dark:text-neutral-500 text-sm">{a.count} songs</span>
             </button>
           </li>
         ))}

@@ -25,7 +25,7 @@ export default function Player({player, onAddToPlaylist}) {
   if (!currentSong) return null;
 
   return (
-    <div className="hidden md:flex items-center h-20 bg-white border-t border-gray-200 px-6 gap-4">
+    <div className="hidden md:flex items-center h-20 bg-white dark:bg-neutral-900 border-t border-gray-200 dark:border-neutral-700 px-6 gap-4">
       {/* left: song info */}
       <div className="flex items-center gap-3 w-72 min-w-0">
         <AlbumCover
@@ -35,12 +35,12 @@ export default function Player({player, onAddToPlaylist}) {
         />
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium truncate">{currentSong.title}</div>
-          <div className="text-xs text-gray-400 truncate">{currentSong.artist}</div>
+          <div className="text-xs text-gray-400 dark:text-neutral-500 truncate">{currentSong.artist}</div>
         </div>
         {onAddToPlaylist && (
           <button
             onClick={() => onAddToPlaylist(currentSong)}
-            className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-full text-base leading-none text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+            className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-full text-base leading-none text-gray-400 dark:text-neutral-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/15"
             title="Add to playlist"
             aria-label="Add to playlist"
           >+</button>
@@ -56,7 +56,7 @@ export default function Player({player, onAddToPlaylist}) {
             aria-pressed={shuffle}
             title="Shuffle"
             className={`p-1.5 rounded-full transition-colors ${
-              shuffle ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              shuffle ? 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/15' : 'text-gray-400 dark:text-neutral-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-800'
             }`}
           >
             <Icon d={icons.shuffle} size={18} />
@@ -65,14 +65,14 @@ export default function Player({player, onAddToPlaylist}) {
             onClick={prev}
             aria-label="Previous"
             title="Previous"
-            className="p-1.5 rounded-full text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
           >
             <Icon d={icons.prev} size={22} />
           </button>
           <button
             onClick={togglePlay}
             aria-label={playing ? 'Pause' : 'Play'}
-            className="w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-700 hover:scale-105 transition-all"
+            className="w-10 h-10 rounded-full bg-gray-800 dark:bg-neutral-700 text-white flex items-center justify-center hover:bg-gray-700 dark:hover:bg-neutral-600 hover:scale-105 transition-all"
           >
             <Icon d={playing ? icons.pause : icons.play} size={22} />
           </button>
@@ -80,7 +80,7 @@ export default function Player({player, onAddToPlaylist}) {
             onClick={next}
             aria-label="Next"
             title="Next"
-            className="p-1.5 rounded-full text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors"
           >
             <Icon d={icons.next} size={22} />
           </button>
@@ -89,13 +89,13 @@ export default function Player({player, onAddToPlaylist}) {
             aria-label={repeat === 'one' ? 'Repeat one' : repeat === 'all' ? 'Repeat all' : 'No repeat'}
             title={repeat === 'one' ? 'Repeat one' : repeat === 'all' ? 'Repeat all' : 'No repeat'}
             className={`p-1.5 rounded-full transition-colors ${
-              repeat !== 'none' ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+              repeat !== 'none' ? 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/15' : 'text-gray-400 dark:text-neutral-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-neutral-800'
             }`}
           >
             <Icon d={repeat === 'one' ? icons.repeatOne : icons.repeat} size={18} />
           </button>
         </div>
-        <div className="w-full max-w-md flex items-center gap-2 text-xs text-gray-400">
+        <div className="w-full max-w-md flex items-center gap-2 text-xs text-gray-400 dark:text-neutral-500">
           <span className="w-8 text-right">{formatSec(displayTime)}</span>
           <input
             type="range"
@@ -111,7 +111,7 @@ export default function Player({player, onAddToPlaylist}) {
 
       {/* right: volume */}
       <div className="flex items-center gap-2 w-36 shrink-0 mr-2">
-        <span className="text-gray-400 p-1" aria-hidden="true">
+        <span className="text-gray-400 dark:text-neutral-500 p-1" aria-hidden="true">
           <Icon d={icons.volume} size={18} />
         </span>
         <input

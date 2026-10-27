@@ -42,10 +42,10 @@ export default function GenresView({genres, onPlay, currentSongId, onAddToPlayli
       <div ref={rootRef}>
         <button
           onClick={() => setSelected(null)}
-          className="text-sm text-blue-600 hover:underline mb-2"
+          className="text-sm text-blue-600 dark:text-blue-400 hover:underline mb-2"
         >← Genres</button>
         <div className="flex items-center gap-3 mb-4">
-          <GenreIcon genre={selected} size={40} className="text-gray-700" />
+          <GenreIcon genre={selected} size={40} className="text-gray-700 dark:text-gray-200" />
           <h2 className="text-xl font-bold">{selected}</h2>
         </div>
         <SongTable
@@ -66,11 +66,11 @@ export default function GenresView({genres, onPlay, currentSongId, onAddToPlayli
           <li key={g.name}>
             <button
               onClick={() => handleSelect(g.name)}
-              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 flex items-center gap-3"
+              className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-800 flex items-center gap-3"
             >
-              <GenreIcon genre={g.name} size={32} className="text-gray-600" />
+              <GenreIcon genre={g.name} size={32} className="text-gray-600 dark:text-gray-300" />
               <span className="flex-1">{g.name}</span>
-              <span className="text-gray-400 text-sm">{g.count} songs</span>
+              <span className="text-gray-400 dark:text-neutral-500 text-sm">{g.count} songs</span>
             </button>
           </li>
         ))}

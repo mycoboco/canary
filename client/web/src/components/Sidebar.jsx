@@ -11,9 +11,9 @@ export default function Sidebar(
   }
 ) {
   return (
-    <aside className="hidden md:flex flex-col w-56 bg-gray-50 border-r border-gray-200 h-full">
+    <aside className="hidden md:flex flex-col w-56 bg-gray-50 dark:bg-neutral-800 border-r border-gray-200 dark:border-neutral-700 h-full">
       <div
-        className="p-4 font-bold text-lg text-gray-800 truncate"
+        className="p-4 font-bold text-lg text-gray-800 dark:text-gray-100 truncate"
         title={serverName}
       >
         {serverName || 'canary'}
@@ -26,8 +26,8 @@ export default function Sidebar(
                 onClick={() => onNavigate(item.id)}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${
                   view === item.id
-                    ? 'bg-blue-100 text-blue-700 font-medium'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-medium'
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-800'
                 }`}
               >
                 <span>{item.icon}</span>
@@ -37,7 +37,7 @@ export default function Sidebar(
           ))}
         </ul>
         <div className="mt-4 px-4">
-          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+          <div className="text-xs font-semibold text-gray-400 dark:text-neutral-500 uppercase tracking-wider mb-2">
             Playlists
           </div>
         </div>
@@ -48,8 +48,8 @@ export default function Sidebar(
                 onClick={() => onSelectPlaylist(p.id)}
                 className={`w-full text-left px-3 py-2 rounded-lg text-sm truncate ${
                   view === 'playlist' && selectedPlaylistId === p.id
-                    ? 'bg-blue-100 text-blue-700 font-medium'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-medium'
+                    : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-neutral-800'
                 }`}
               >
                 {p.name}

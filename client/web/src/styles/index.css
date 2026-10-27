@@ -6,3 +6,12 @@ html, body, #root {
   height: 100%;
   overflow: hidden;
 }
+
+/* Follow the system appearance (native controls, scrollbars) and paint a dark
+   canvas so there is no white flash behind the app in dark mode. */
+:root { color-scheme: light; }
+
+@media (prefers-color-scheme: dark) {
+  :root { color-scheme: dark; }
+  body { background: #0a0a0a; }
+}

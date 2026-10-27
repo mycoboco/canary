@@ -51,26 +51,26 @@ export default function AddToPlaylistMenu({song, playlists, onClose, onChange}) 
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-to-playlist-title"
-        className="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden"
+        className="bg-white dark:bg-neutral-900 rounded-lg shadow-xl w-full max-w-sm overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-4 py-3 border-b">
           <div id="add-to-playlist-title" className="text-sm font-semibold truncate">
             Add to playlist
           </div>
-          <div className="text-xs text-gray-500 truncate">{song.title}</div>
+          <div className="text-xs text-gray-500 dark:text-neutral-400 truncate">{song.title}</div>
         </div>
 
         <ul className="max-h-72 overflow-y-auto px-2 py-1">
           {manualLists.length === 0 && !creating && (
-            <li className="px-4 py-3 text-sm text-gray-400">No manual playlists yet.</li>
+            <li className="px-4 py-3 text-sm text-gray-400 dark:text-neutral-500">No manual playlists yet.</li>
           )}
           {manualLists.map((p) => (
             <li key={p.id}>
               <button
                 onClick={() => addExisting(p.id)}
                 disabled={busy}
-                className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 disabled:opacity-50 truncate"
+                className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 disabled:opacity-50 truncate"
               >{p.name}</button>
             </li>
           ))}
@@ -86,7 +86,7 @@ export default function AddToPlaylistMenu({song, playlists, onClose, onChange}) 
                 onKeyDown={(e) => e.key === 'Enter' && createAndAdd()}
                 placeholder="New playlist name"
                 autoFocus
-                className="w-full border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full border rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/40"
               />
               <div className="flex gap-2">
                 <button
@@ -96,7 +96,7 @@ export default function AddToPlaylistMenu({song, playlists, onClose, onChange}) 
                 >Create &amp; add</button>
                 <button
                   onClick={() => { setCreating(false); setName(''); }}
-                  className="px-3 py-1.5 border rounded text-sm hover:bg-gray-100"
+                  className="px-3 py-1.5 border rounded text-sm hover:bg-gray-100 dark:hover:bg-neutral-800"
                 >Cancel</button>
               </div>
             </div>
@@ -104,13 +104,13 @@ export default function AddToPlaylistMenu({song, playlists, onClose, onChange}) 
             <div className="p-2">
               <button
                 onClick={() => setCreating(true)}
-                className="w-full text-left px-3 py-2 text-sm text-blue-600 rounded-lg hover:bg-gray-100"
+                className="w-full text-left px-3 py-2 text-sm text-blue-600 dark:text-blue-400 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800"
               >+ New manual playlist</button>
             </div>
           )}
         </div>
 
-        {error && <div className="px-4 py-2 text-xs text-red-500">{error}</div>}
+        {error && <div className="px-4 py-2 text-xs text-red-500 dark:text-red-400">{error}</div>}
       </div>
     </div>
   );

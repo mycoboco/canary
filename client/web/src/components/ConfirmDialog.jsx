@@ -14,14 +14,14 @@ export default function ConfirmDialog({message, confirmLabel = 'Confirm', onConf
         ref={rootRef}
         role="dialog"
         aria-modal="true"
-        className="bg-white rounded-lg shadow-xl w-full max-w-sm p-5 space-y-4"
+        className="bg-white dark:bg-neutral-900 rounded-lg shadow-xl w-full max-w-sm p-5 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
         <p className="text-sm">{message}</p>
         <div className="flex gap-2 justify-end">
           <button
             onClick={onCancel}
-            className="px-4 py-1.5 border rounded text-sm hover:bg-gray-100"
+            className="px-4 py-1.5 border rounded text-sm hover:bg-gray-100 dark:hover:bg-neutral-800"
           >Cancel</button>
           <button
             onClick={onConfirm}

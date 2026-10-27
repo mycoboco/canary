@@ -103,13 +103,13 @@ function RuleEditor({rules, onChange}) {
             )}
             <button
               onClick={() => removeRule(i)}
-              className="text-gray-400 hover:text-red-500 text-sm"
+              className="text-gray-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 text-sm"
               title="Delete"
             >✕</button>
           </div>
         );
       })}
-      <button onClick={addRule} className="text-sm text-blue-600 hover:underline">
+      <button onClick={addRule} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
         + Add rule
       </button>
     </div>
@@ -142,7 +142,7 @@ function SmartPlaylistEditor({playlist, onSave, onCancel}) {
   }
 
   return (
-    <div className="border rounded-lg p-4 bg-gray-50 space-y-4">
+    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-neutral-800 space-y-4">
       <div>
         <label className="block text-sm font-medium mb-1">Name</label>
         <input
@@ -167,7 +167,7 @@ function SmartPlaylistEditor({playlist, onSave, onCancel}) {
         <label className="block text-sm font-medium mb-1">Rules</label>
         <RuleEditor rules={rules} onChange={setRules} />
       </div>
-      {error && <div className="text-red-500 text-sm">{error}</div>}
+      {error && <div className="text-red-500 dark:text-red-400 text-sm">{error}</div>}
       <div className="flex gap-2">
         <button
           onClick={handleSave}
@@ -175,7 +175,7 @@ function SmartPlaylistEditor({playlist, onSave, onCancel}) {
         >{isNew ? 'Create' : 'Save'}</button>
         <button
           onClick={onCancel}
-          className="px-4 py-1.5 border rounded text-sm hover:bg-gray-100"
+          className="px-4 py-1.5 border rounded text-sm hover:bg-gray-100 dark:hover:bg-neutral-800"
         >Cancel</button>
       </div>
     </div>
@@ -206,7 +206,7 @@ function ManualPlaylistEditor({playlist, onSave, onCancel}) {
   }
 
   return (
-    <div className="border rounded-lg p-4 bg-gray-50 space-y-4">
+    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-neutral-800 space-y-4">
       <div>
         <label className="block text-sm font-medium mb-1">Name</label>
         <input
@@ -218,11 +218,11 @@ function ManualPlaylistEditor({playlist, onSave, onCancel}) {
         />
       </div>
       {isNew && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-neutral-400">
           Add songs from the Songs, Albums, Artists, or Genres views using the + button on each row.
         </p>
       )}
-      {error && <div className="text-red-500 text-sm">{error}</div>}
+      {error && <div className="text-red-500 dark:text-red-400 text-sm">{error}</div>}
       <div className="flex gap-2">
         <button
           onClick={handleSave}
@@ -231,7 +231,7 @@ function ManualPlaylistEditor({playlist, onSave, onCancel}) {
         >{isNew ? 'Create' : 'Save'}</button>
         <button
           onClick={onCancel}
-          className="px-4 py-1.5 border rounded text-sm hover:bg-gray-100"
+          className="px-4 py-1.5 border rounded text-sm hover:bg-gray-100 dark:hover:bg-neutral-800"
         >Cancel</button>
       </div>
     </div>
@@ -340,8 +340,8 @@ export default function PlaylistView({
             onClick={() => onSelectPlaylist(p.id)}
             className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap ${
               playlistId === p.id
-                ? 'bg-gray-800 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-gray-800 dark:bg-neutral-700 text-white'
+                : 'bg-gray-100 dark:bg-neutral-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-neutral-700'
             }`}
           >
             {p.name}
@@ -349,11 +349,11 @@ export default function PlaylistView({
         ))}
         <button
           onClick={() => setCreating('smart')}
-          className="px-3 py-1.5 rounded-full text-sm whitespace-nowrap bg-blue-50 text-blue-600 hover:bg-blue-100"
+          className="px-3 py-1.5 rounded-full text-sm whitespace-nowrap bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20"
         >+ New Smart</button>
         <button
           onClick={() => setCreating('manual')}
-          className="px-3 py-1.5 rounded-full text-sm whitespace-nowrap bg-blue-50 text-blue-600 hover:bg-blue-100"
+          className="px-3 py-1.5 rounded-full text-sm whitespace-nowrap bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20"
         >+ New Manual</button>
       </div>
 
@@ -362,7 +362,7 @@ export default function PlaylistView({
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-xl font-bold">{playlist.name}</h2>
             {playlist.type && (
-              <span className="text-xs uppercase tracking-wider text-gray-400">
+              <span className="text-xs uppercase tracking-wider text-gray-400 dark:text-neutral-500">
                 {playlist.type}
               </span>
             )}
@@ -370,17 +370,17 @@ export default function PlaylistView({
               <>
                 <button
                   onClick={() => setEditing(true)}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                 >Edit</button>
                 <button
                   onClick={() => setConfirmDelete(true)}
-                  className="text-sm text-red-500 hover:underline"
+                  className="text-sm text-red-500 dark:text-red-400 hover:underline"
                 >Delete</button>
               </>
             )}
           </div>
           {loading ? (
-            <div className="text-gray-400 text-sm">Loading...</div>
+            <div className="text-gray-400 dark:text-neutral-500 text-sm">Loading...</div>
           ) : (
             <SongTable
               songs={songs}
@@ -391,15 +391,15 @@ export default function PlaylistView({
             />
           )}
           {isManual && songs.length === 0 && !loading && (
-            <div className="text-gray-400 text-sm mt-4">
+            <div className="text-gray-400 dark:text-neutral-500 text-sm mt-4">
               No songs yet. Add some from the Songs, Albums, Artists, or Genres views.
             </div>
           )}
         </div>
       ) : (
-        <div className="text-gray-400 text-sm">Select a playlist</div>
+        <div className="text-gray-400 dark:text-neutral-500 text-sm">Select a playlist</div>
       )}
-      {error && <div className="text-red-500 text-sm mt-3">{error}</div>}
+      {error && <div className="text-red-500 dark:text-red-400 text-sm mt-3">{error}</div>}
       {confirmDelete && (
         <ConfirmDialog
           message={`Delete playlist "${playlist?.name}"?`}

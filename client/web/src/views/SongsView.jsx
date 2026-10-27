@@ -40,7 +40,7 @@ export default function SongsView({
 
   return (
     <div>
-      <div ref={searchRef} className="sticky top-0 z-10 bg-white">
+      <div ref={searchRef} className="sticky top-0 z-10 bg-white dark:bg-neutral-900">
         <SearchBar value={search} onChange={onSearchChange} />
       </div>
       <h2 className="text-xl font-bold mb-4">Songs</h2>

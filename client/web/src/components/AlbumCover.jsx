@@ -15,9 +15,9 @@ export default function AlbumCover({coverId, className, imgClassName = '', fit =
   if (!coverId || failed) {
     return (
       <div
-        className={`${className} shrink-0 bg-gray-100 flex items-center justify-center overflow-hidden ${imgClassName}`}
+        className={`${className} shrink-0 bg-gray-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden ${imgClassName}`}
       >
-        <span className="text-gray-300 select-none text-3xl" aria-hidden="true">💿</span>
+        <span className="text-gray-300 dark:text-neutral-600 select-none text-3xl" aria-hidden="true">💿</span>
       </div>
     );
   }

@@ -43,13 +43,13 @@ export default function AlbumsView({albums, onPlay, currentSongId, onAddToPlayli
       <div ref={rootRef}>
         <button
           onClick={() => setSelected(null)}
-          className="text-sm text-blue-600 hover:underline mb-2"
+          className="text-sm text-blue-600 dark:text-blue-400 hover:underline mb-2"
         >← Albums</button>
         <div className="flex items-end gap-4 mb-6">
           <AlbumCover coverId={album.coverId} className="w-32 h-32 rounded-lg" />
           <div>
             <h2 className="text-xl font-bold">{album.name}</h2>
-            <p className="text-gray-500">{album.artist}</p>
+            <p className="text-gray-500 dark:text-neutral-400">{album.artist}</p>
           </div>
         </div>
         <SongTable
@@ -80,7 +80,7 @@ export default function AlbumsView({albums, onPlay, currentSongId, onAddToPlayli
               />
             </div>
             <div className="text-sm font-medium truncate">{album.name}</div>
-            <div className="text-xs text-gray-400 truncate">{album.artist}</div>
+            <div className="text-xs text-gray-400 dark:text-neutral-500 truncate">{album.artist}</div>
           </button>
         ))}
       </div>

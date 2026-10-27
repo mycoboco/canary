@@ -32,13 +32,13 @@ export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
       role="dialog"
       aria-modal="true"
       aria-label="Now playing"
-      className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-8"
+      className="fixed inset-0 bg-white dark:bg-neutral-900 z-50 flex flex-col items-center justify-center p-8"
     >
       <button
         onClick={onClose}
         aria-label="Close"
         title="Close"
-        className="absolute top-4 left-4 text-gray-400 p-2 rounded-full hover:bg-gray-100"
+        className="absolute top-4 left-4 text-gray-400 dark:text-neutral-500 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800"
       >
         <Icon d={icons.chevronDown} size={28} />
       </button>
@@ -46,7 +46,7 @@ export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
       {onAddToPlaylist && (
         <button
           onClick={() => onAddToPlaylist(currentSong)}
-          className="absolute top-4 right-4 w-11 h-11 flex items-center justify-center rounded-full text-3xl leading-none text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+          className="absolute top-4 right-4 w-11 h-11 flex items-center justify-center rounded-full text-3xl leading-none text-gray-400 dark:text-neutral-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/15"
           title="Add to playlist"
           aria-label="Add to playlist"
         >+</button>
@@ -62,7 +62,7 @@ export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
 
       <div className="text-center mb-6 w-full max-w-xs">
         <div className="text-lg font-bold truncate">{currentSong.title}</div>
-        <div className="text-gray-500 truncate">{currentSong.artist}</div>
+        <div className="text-gray-500 dark:text-neutral-400 truncate">{currentSong.artist}</div>
       </div>
 
       <div className="w-full max-w-xs mb-6">
@@ -74,7 +74,7 @@ export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
           aria-label="Seek"
           className="w-full h-1 accent-gray-800 cursor-pointer"
         />
-        <div className="flex justify-between text-xs text-gray-400 mt-1">
+        <div className="flex justify-between text-xs text-gray-400 dark:text-neutral-500 mt-1">
           <span>{formatSec(displayTime)}</span>
           <span>{formatSec(duration)}</span>
         </div>
@@ -87,7 +87,7 @@ export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
           aria-pressed={shuffle}
           title="Shuffle"
           className={`p-2 rounded-full transition-colors ${
-            shuffle ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+            shuffle ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-neutral-500 hover:text-gray-600 dark:hover:text-gray-300'
           }`}
         >
           <Icon d={icons.shuffle} size={22} />
@@ -96,14 +96,14 @@ export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
           onClick={prev}
           aria-label="Previous"
           title="Previous"
-          className="p-2 rounded-full text-gray-600 hover:text-gray-800 transition-colors"
+          className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
         >
           <Icon d={icons.prev} size={28} />
         </button>
         <button
           onClick={togglePlay}
           aria-label={playing ? 'Pause' : 'Play'}
-          className="w-14 h-14 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-700 hover:scale-105 transition-all"
+          className="w-14 h-14 rounded-full bg-gray-800 dark:bg-neutral-700 text-white flex items-center justify-center hover:bg-gray-700 dark:hover:bg-neutral-600 hover:scale-105 transition-all"
         >
           <Icon d={playing ? icons.pause : icons.play} size={28} />
         </button>
@@ -111,7 +111,7 @@ export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
           onClick={next}
           aria-label="Next"
           title="Next"
-          className="p-2 rounded-full text-gray-600 hover:text-gray-800 transition-colors"
+          className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
         >
           <Icon d={icons.next} size={28} />
         </button>
@@ -120,7 +120,7 @@ export default function FullScreenPlayer({player, onClose, onAddToPlaylist}) {
           aria-label={repeat === 'one' ? 'Repeat one' : repeat === 'all' ? 'Repeat all' : 'No repeat'}
           title={repeat === 'one' ? 'Repeat one' : repeat === 'all' ? 'Repeat all' : 'No repeat'}
           className={`p-2 rounded-full transition-colors ${
-            repeat !== 'none' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
+            repeat !== 'none' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-neutral-500 hover:text-gray-600 dark:hover:text-gray-300'
           }`}
         >
           <Icon d={repeat === 'one' ? icons.repeatOne : icons.repeat} size={22} />

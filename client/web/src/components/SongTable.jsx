@@ -15,7 +15,7 @@ const tableComponents = {
     <thead
       {...props}
       ref={ref}
-      className="bg-white"
+      className="bg-white dark:bg-neutral-900"
       style={{...props.style, top: 'var(--header-top, 0px)'}}
     />
   )),
@@ -35,7 +35,7 @@ const tableComponents = {
         onKeyDown={(e) => context.handleKeyDown(e, idx)}
         onFocus={() => context.setFocusedIndex(idx)}
         className={`group cursor-pointer ${
-          isCurrent ? 'text-blue-600 font-medium' : ''
+          isCurrent ? 'text-blue-600 dark:text-blue-400 font-medium' : ''
         }`}
       />
     );
@@ -67,14 +67,14 @@ function useIsDesktop() {
 }
 
 function SongCells({song, isCurrent, showActions, showCover, onAddToPlaylist, onRemove}) {
-  const cellBg = isCurrent ? 'bg-blue-100' : 'group-hover:bg-gray-100';
+  const cellBg = isCurrent ? 'bg-blue-100 dark:bg-blue-500/20' : 'group-hover:bg-gray-100 dark:group-hover:bg-neutral-800';
   return (
     <>
       <td className={`py-2 px-3 rounded-l-lg ${cellBg}`}>
         <div className="flex items-center gap-2">
           <span
             className={`shrink-0 text-xs leading-5 ${
-              isCurrent ? 'text-blue-600' : 'invisible'
+              isCurrent ? 'text-blue-600 dark:text-blue-400' : 'invisible'
             }`}
             aria-hidden="true"
           >▶</span>
@@ -87,20 +87,20 @@ function SongCells({song, isCurrent, showActions, showCover, onAddToPlaylist, on
           )}
           <div className="min-w-0 flex-1">
             <div className="truncate">{song.title}</div>
-            <div className="text-gray-400 text-xs sm:hidden truncate">{song.artist}</div>
+            <div className="text-gray-400 dark:text-neutral-500 text-xs sm:hidden truncate">{song.artist}</div>
           </div>
         </div>
       </td>
-      <td className={`py-2 px-3 hidden sm:table-cell text-gray-600 truncate ${cellBg}`}>
+      <td className={`py-2 px-3 hidden sm:table-cell text-gray-600 dark:text-gray-300 truncate ${cellBg}`}>
         {song.artist}
       </td>
-      <td className={`py-2 px-3 hidden md:table-cell text-gray-600 truncate ${cellBg}`}>
+      <td className={`py-2 px-3 hidden md:table-cell text-gray-600 dark:text-gray-300 truncate ${cellBg}`}>
         {song.album}
       </td>
-      <td className={`py-2 px-3 hidden lg:table-cell text-gray-600 truncate ${cellBg}`}>
+      <td className={`py-2 px-3 hidden lg:table-cell text-gray-600 dark:text-gray-300 truncate ${cellBg}`}>
         {song.genre}
       </td>
-      <td className={`py-2 px-3 text-right text-gray-400 ${
+      <td className={`py-2 px-3 text-right text-gray-400 dark:text-neutral-500 ${
         !showActions ? 'rounded-r-lg' : ''
       } ${cellBg}`}>{formatMs(song.time)}</td>
       {showActions && (
@@ -111,7 +111,7 @@ function SongCells({song, isCurrent, showActions, showCover, onAddToPlaylist, on
           {onAddToPlaylist && (
             <button
               onClick={() => onAddToPlaylist(song)}
-              className="inline-flex items-center justify-center w-8 h-8 rounded-full text-base leading-none text-gray-400 hover:text-blue-600 hover:bg-blue-50 sm:opacity-60 sm:group-hover:opacity-100 focus:opacity-100"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full text-base leading-none text-gray-400 dark:text-neutral-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/15 sm:opacity-60 sm:group-hover:opacity-100 focus:opacity-100"
               title="Add to playlist"
               aria-label="Add to playlist"
             >+</button>
@@ -119,7 +119,7 @@ function SongCells({song, isCurrent, showActions, showCover, onAddToPlaylist, on
           {onRemove && (
             <button
               onClick={() => onRemove(song.id)}
-              className="inline-flex items-center justify-center w-8 h-8 rounded-full text-base leading-none text-gray-400 hover:text-red-500 hover:bg-red-50 sm:opacity-60 sm:group-hover:opacity-100 focus:opacity-100"
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full text-base leading-none text-gray-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/15 sm:opacity-60 sm:group-hover:opacity-100 focus:opacity-100"
               title="Remove"
               aria-label="Remove"
             >−</button>
@@ -144,7 +144,7 @@ export default function SongTable({
   showCover = true,
 }) {
   const showActions = !!(onAddToPlaylist || onRemove);
-  const thBase = 'py-2 px-3 border-b border-gray-100 bg-white';
+  const thBase = 'py-2 px-3 border-b border-gray-100 dark:border-neutral-800 bg-white dark:bg-neutral-900';
   const isDesktop = useIsDesktop();
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [scrollParent, setScrollParent] = useState(null);
@@ -220,8 +220,8 @@ export default function SongTable({
       <th
         onClick={() => onSort(key)}
         style={style}
-        className={`${thBase} font-medium cursor-pointer select-none hover:text-gray-600 ${
-          active ? 'text-gray-700' : ''
+        className={`${thBase} font-medium cursor-pointer select-none hover:text-gray-600 dark:hover:text-gray-300 ${
+          active ? 'text-gray-700 dark:text-gray-200' : ''
         } ${extra}`}
       >
         {label}{arrow}
@@ -230,7 +230,7 @@ export default function SongTable({
   };
 
   const headerRow = (
-    <tr className="text-left text-gray-400">
+    <tr className="text-left text-gray-400 dark:text-neutral-500">
       {sortableHeader('title', 'Title', '')}
       {sortableHeader('artist', 'Artist', 'hidden sm:table-cell', '20%')}
       {sortableHeader('album', 'Album', 'hidden md:table-cell', '20%')}
@@ -288,7 +288,7 @@ export default function SongTable({
               onKeyDown={(e) => handleKeyDown(e, i)}
               onFocus={() => setFocusedIndex(i)}
               className={`group cursor-pointer ${
-                isCurrent ? 'text-blue-600 font-medium' : ''
+                isCurrent ? 'text-blue-600 dark:text-blue-400 font-medium' : ''
               }`}
             >
               <SongCells
