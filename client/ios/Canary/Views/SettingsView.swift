@@ -36,6 +36,7 @@ struct SettingsView: View {
     @State private var currentCacheSize: Int64 = 0
     @State private var cacheFileCount: Int = 0
     @State private var confirmClear = false
+    @State private var confirmSignOut = false
     @State private var defaultPlaylistId: Int?
 
     var body: some View {
@@ -116,7 +117,12 @@ struct SettingsView: View {
 
                 Section("Server") {
                     Button("Sign Out", role: .destructive) {
-                        NotificationCenter.default.post(name: .signOut, object: nil)
+                        confirmSignOut = true
+                    }
+                    .confirmationDialog("Sign out?", isPresented: $confirmSignOut) {
+                        Button("Sign Out", role: .destructive) {
+                            NotificationCenter.default.post(name: .signOut, object: nil)
+                        }
                     }
                 }
             }
