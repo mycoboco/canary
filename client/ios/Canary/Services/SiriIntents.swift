@@ -29,7 +29,7 @@ struct CanaryPlaylistQuery: EntityQuery {
 
 extension CanaryPlaylistQuery: EntityStringQuery {
     func entities(matching string: String) async throws -> [CanaryPlaylistEntity] {
-        SharedConstants.playlists.filter { $0.name.localizedCaseInsensitiveContains(string) }.map(CanaryPlaylistEntity.init)
+        PlaylistMatcher.match(string, in: SharedConstants.playlists).map(CanaryPlaylistEntity.init)
     }
 }
 

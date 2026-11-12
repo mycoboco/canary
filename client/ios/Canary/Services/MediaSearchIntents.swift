@@ -101,7 +101,7 @@ struct AudioPlaylistQuery: EntityQuery, IntentValueQuery {
     func values(for input: AudioSearch) async throws -> [AudioPlaylistEntity] {
         switch input.criteria {
         case .searchQuery(let query):
-            return SharedConstants.playlists.filter { $0.name.localizedCaseInsensitiveContains(query) }.map(AudioPlaylistEntity.init)
+            return PlaylistMatcher.match(query, in: SharedConstants.playlists).map(AudioPlaylistEntity.init)
         case .unspecified:
             return SharedConstants.playlists.map(AudioPlaylistEntity.init)
         case .url:
