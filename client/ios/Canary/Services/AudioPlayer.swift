@@ -92,6 +92,32 @@ final class AudioPlayer {
         }
     }
 
+    // The single app-wide player, shared between the SwiftUI app and Siri
+    // intents (which may run in a background-launched app process). Reuses the
+    // instance the app already configured when one exists.
+    static var shared: AudioPlayer {
+        if let existing = _widgetInstance { return existing }
+        let created = AudioPlayer()
+        _widgetInstance = created
+        return created
+    }
+
+    // Starts playback of a playlist by id, bootstrapping the API client from
+    // the Keychain when the player hasn't been configured yet (e.g. a cold
+    // background launch from a Siri intent). Lets playback start without
+    // bringing the app to the foreground.
+    func playPlaylistById(_ id: Int) async {
+        if apiClient == nil, let credentials = KeychainService.load() {
+            configure(apiClient: APIClient(baseURL: credentials.serverURL, password: credentials.password))
+        }
+        guard let api = apiClient,
+              let songs = try? await api.fetchPlaylistSongs(id),
+              !songs.isEmpty else { return }
+        let name = SharedConstants.playlists.first(where: { $0.id == id })?.name ?? ""
+        let context = PlaybackContext(type: .playlist, name: name, playlistId: id, songId: songs[0].id)
+        playSong(songs: songs, index: 0, context: context)
+    }
+
     func stop() {
         cleanupPendingCache()
         widgetRefreshTimer?.invalidate()
@@ -631,7 +657,19 @@ extension AudioPlayer: MediaSessionRepresentable {
                 beginAction: { [weak self] in await self?.beginSeek(forward: false) },
                 endAction: { [weak self] in await self?.endSeek() }
             ),
+            .changeShuffleMode(current: shuffleMode ? .items : .off, supported: [.off, .items]) { [weak self] mode in
+                await self?.setShuffle(mode != .off)
+            },
+            .changeRepeatMode(current: repeatMode.mediaCommandMode, supported: [.off, .one, .all]) { [weak self] mode in
+                await self?.setRepeatMode(AudioPlayer.RepeatMode(mediaCommandMode: mode))
+            },
         ]
+    }
+
+    // Sets shuffle to a specific state (the queue reorder lives in toggleShuffle).
+    func setShuffle(_ on: Bool) {
+        guard shuffleMode != on else { return }
+        toggleShuffle()
     }
 
     func beginSeek(forward: Bool) {
@@ -757,3 +795,22 @@ private func _handleWidgetCommand(
     }
 }
 
+
+private extension AudioPlayer.RepeatMode {
+    var mediaCommandMode: MediaCommand.RepeatMode {
+        switch self {
+        case .none: .off
+        case .all: .all
+        case .one: .one
+        }
+    }
+
+    init(mediaCommandMode: MediaCommand.RepeatMode) {
+        switch mediaCommandMode {
+        case .off: self = .none
+        case .all: self = .all
+        case .one: self = .one
+        @unknown default: self = .none
+        }
+    }
+}

@@ -3,7 +3,7 @@ import WidgetKit
 
 // Playback transport intents shared by the widget buttons and Siri / App Shortcuts.
 
-struct TogglePlayIntent: AppIntent {
+struct TogglePlayIntent: AudioPlaybackIntent {
     static let title: LocalizedStringResource = "Play or Pause"
     static let openAppWhenRun: Bool = false
 
@@ -21,7 +21,7 @@ struct TogglePlayIntent: AppIntent {
     }
 }
 
-struct NextTrackIntent: AppIntent {
+struct NextTrackIntent: AudioPlaybackIntent {
     static let title: LocalizedStringResource = "Next Track"
     static let openAppWhenRun: Bool = false
 
@@ -35,7 +35,7 @@ struct NextTrackIntent: AppIntent {
     }
 }
 
-struct PreviousTrackIntent: AppIntent {
+struct PreviousTrackIntent: AudioPlaybackIntent {
     static let title: LocalizedStringResource = "Previous Track"
     static let openAppWhenRun: Bool = false
 

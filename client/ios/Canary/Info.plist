@@ -31,6 +31,21 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>INAlternativeAppNames</key>
+	<array>
+		<dict>
+			<key>INAlternativeAppName</key>
+			<string>카나리</string>
+			<key>INAlternativeAppNamePronunciationHint</key>
+			<string>카나리</string>
+		</dict>
+		<dict>
+			<key>INAlternativeAppName</key>
+			<string>까나리</string>
+			<key>INAlternativeAppNamePronunciationHint</key>
+			<string>까나리</string>
+		</dict>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

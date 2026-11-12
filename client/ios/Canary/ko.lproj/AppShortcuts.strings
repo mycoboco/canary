@@ -17,3 +17,23 @@
 
 /* Previous Track */
 "Previous song in ${applicationName}" = "${applicationName} 이전 곡";
+
+/* Shuffle On (셔플 / 랜덤) */
+"Turn on shuffle in ${applicationName}" = "${applicationName} 셔플 켜줘";
+"Shuffle on in ${applicationName}" = "${applicationName} 랜덤 켜줘";
+
+/* Shuffle Off */
+"Turn off shuffle in ${applicationName}" = "${applicationName} 셔플 꺼줘";
+"Shuffle off in ${applicationName}" = "${applicationName} 랜덤 꺼줘";
+
+/* Repeat All (전체 반복) */
+"Repeat all in ${applicationName}" = "${applicationName} 전체 반복";
+"Repeat everything in ${applicationName}" = "${applicationName} 전곡 반복";
+
+/* Repeat One (1곡 반복) */
+"Repeat one in ${applicationName}" = "${applicationName} 한 곡 반복";
+"Repeat this song in ${applicationName}" = "${applicationName} 1곡 반복";
+
+/* Repeat Off (반복 꺼줘) */
+"Turn off repeat in ${applicationName}" = "${applicationName} 반복 꺼줘";
+"Stop repeating in ${applicationName}" = "${applicationName} 반복 끄기";

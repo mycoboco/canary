@@ -34,7 +34,7 @@ extension CanaryPlaylistQuery: EntityStringQuery {
 
 // MARK: - Play playlist intent
 
-struct PlayPlaylistIntent: AppIntent {
+struct PlayPlaylistIntent: AudioPlaybackIntent {
     static let title: LocalizedStringResource = "Play Playlist"
     static let openAppWhenRun = true
 
@@ -57,7 +57,7 @@ struct PlayPlaylistIntent: AppIntent {
 
 // MARK: - Start playing intent
 
-struct StartPlayingIntent: AppIntent {
+struct StartPlayingIntent: AudioPlaybackIntent {
     static let title: LocalizedStringResource = "Start Playing"
     static let openAppWhenRun = true
 
@@ -126,6 +126,51 @@ struct CanaryShortcuts: AppShortcutsProvider {
             ],
             shortTitle: "Previous Track",
             systemImageName: "backward.fill"
+        )
+        AppShortcut(
+            intent: ShuffleOnIntent(),
+            phrases: [
+                "Turn on shuffle in \(.applicationName)",
+                "Shuffle on in \(.applicationName)",
+            ],
+            shortTitle: "Shuffle On",
+            systemImageName: "shuffle"
+        )
+        AppShortcut(
+            intent: ShuffleOffIntent(),
+            phrases: [
+                "Turn off shuffle in \(.applicationName)",
+                "Shuffle off in \(.applicationName)",
+            ],
+            shortTitle: "Shuffle Off",
+            systemImageName: "shuffle"
+        )
+        AppShortcut(
+            intent: RepeatAllIntent(),
+            phrases: [
+                "Repeat all in \(.applicationName)",
+                "Repeat everything in \(.applicationName)",
+            ],
+            shortTitle: "Repeat All",
+            systemImageName: "repeat"
+        )
+        AppShortcut(
+            intent: RepeatOneIntent(),
+            phrases: [
+                "Repeat one in \(.applicationName)",
+                "Repeat this song in \(.applicationName)",
+            ],
+            shortTitle: "Repeat One",
+            systemImageName: "repeat.1"
+        )
+        AppShortcut(
+            intent: RepeatOffIntent(),
+            phrases: [
+                "Turn off repeat in \(.applicationName)",
+                "Stop repeating in \(.applicationName)",
+            ],
+            shortTitle: "Repeat Off",
+            systemImageName: "repeat"
         )
     }
 }

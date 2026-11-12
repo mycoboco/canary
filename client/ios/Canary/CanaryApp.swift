@@ -11,7 +11,7 @@ struct CanaryApp: App {
     @Environment(\.scenePhase) private var scenePhase
     @State private var apiClient: APIClient?
     @State private var library = LibraryViewModel()
-    @State private var player = AudioPlayer()
+    @State private var player = AudioPlayer.shared
     @State private var playlistVM = PlaylistViewModel()
     @State private var pendingURL: URL?
     @State private var selectedTab: AppTab = .songs

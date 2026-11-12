@@ -38,6 +38,13 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         CFBundleDisplayName: Canary
+        # Korean spoken aliases so Siri matches "카나리"/"까나리" as the app name
+        # in App Shortcut and audio-schema phrases that use the app name.
+        INAlternativeAppNames:
+          - INAlternativeAppName: 카나리
+            INAlternativeAppNamePronunciationHint: 카나리
+          - INAlternativeAppName: 까나리
+            INAlternativeAppNamePronunciationHint: 까나리
         UILaunchScreen: {}
         CFBundleURLTypes:
           - CFBundleURLName: org.woong.canary
