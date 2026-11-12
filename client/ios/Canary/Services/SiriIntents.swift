@@ -73,19 +73,21 @@ struct StartPlayingIntent: AppIntent {
 
 // MARK: - App Shortcuts
 
+// Phrases are authored here in the development language (English). Localized
+// spoken phrases live in <locale>.lproj/AppShortcuts.strings, keyed by these
+// source strings with ${applicationName} / ${playlist} placeholders. Siri only
+// matches phrases in languages the app is localized for, so every supported
+// Siri language needs an AppShortcuts.strings translation.
 struct CanaryShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: PlayPlaylistIntent(),
             phrases: [
                 // Parameter at the end matches most reliably by voice.
-                "\(.applicationName) 재생목록 \(\.$playlist)",
-                "\(.applicationName)에서 \(\.$playlist) 재생",
-                "\(.applicationName)에서 \(\.$playlist) 틀어줘",
                 "Play \(\.$playlist) in \(.applicationName)",
+                "Play the \(\.$playlist) playlist in \(.applicationName)",
                 "\(.applicationName) playlist \(\.$playlist)",
-                // No-parameter phrases: Siri runs the intent and asks which playlist.
-                "\(.applicationName) 재생목록 재생",
+                // No-parameter phrase: Siri runs the intent and asks which playlist.
                 "Play a playlist in \(.applicationName)",
             ],
             shortTitle: "Play Playlist",
@@ -96,8 +98,6 @@ struct CanaryShortcuts: AppShortcutsProvider {
             phrases: [
                 "Play in \(.applicationName)",
                 "Start playing in \(.applicationName)",
-                "\(.applicationName) 재생",
-                "\(.applicationName) 재생 시작",
             ],
             shortTitle: "Start Playing",
             systemImageName: "play.fill"
@@ -107,7 +107,6 @@ struct CanaryShortcuts: AppShortcutsProvider {
             phrases: [
                 "Pause \(.applicationName)",
                 "Resume \(.applicationName)",
-                "\(.applicationName) 일시정지",
             ],
             shortTitle: "Play or Pause",
             systemImageName: "playpause.fill"
@@ -116,7 +115,6 @@ struct CanaryShortcuts: AppShortcutsProvider {
             intent: NextTrackIntent(),
             phrases: [
                 "Next song in \(.applicationName)",
-                "\(.applicationName) 다음 곡",
             ],
             shortTitle: "Next Track",
             systemImageName: "forward.fill"
@@ -125,7 +123,6 @@ struct CanaryShortcuts: AppShortcutsProvider {
             intent: PreviousTrackIntent(),
             phrases: [
                 "Previous song in \(.applicationName)",
-                "\(.applicationName) 이전 곡",
             ],
             shortTitle: "Previous Track",
             systemImageName: "backward.fill"
