@@ -10,25 +10,26 @@ struct CanaryPlaylistEntity: AppEntity, Identifiable {
     var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(name)") }
 
     static let defaultQuery = CanaryPlaylistQuery()
+
+    init(_ playlist: SharedPlaylist) {
+        self.id = playlist.id
+        self.name = playlist.name
+    }
 }
 
 struct CanaryPlaylistQuery: EntityQuery {
     func entities(for identifiers: [Int]) async throws -> [CanaryPlaylistEntity] {
-        SharedConstants.playlists
-            .filter { identifiers.contains($0.id) }
-            .map { CanaryPlaylistEntity(id: $0.id, name: $0.name) }
+        SharedConstants.playlists.filter { identifiers.contains($0.id) }.map(CanaryPlaylistEntity.init)
     }
 
     func suggestedEntities() async throws -> [CanaryPlaylistEntity] {
-        SharedConstants.playlists.map { CanaryPlaylistEntity(id: $0.id, name: $0.name) }
+        SharedConstants.playlists.map(CanaryPlaylistEntity.init)
     }
 }
 
 extension CanaryPlaylistQuery: EntityStringQuery {
     func entities(matching string: String) async throws -> [CanaryPlaylistEntity] {
-        SharedConstants.playlists
-            .filter { $0.name.localizedCaseInsensitiveContains(string) }
-            .map { CanaryPlaylistEntity(id: $0.id, name: $0.name) }
+        SharedConstants.playlists.filter { $0.name.localizedCaseInsensitiveContains(string) }.map(CanaryPlaylistEntity.init)
     }
 }
 

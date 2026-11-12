@@ -79,9 +79,9 @@ struct AudioPlaylistEntity {
 
     static let defaultQuery = AudioPlaylistQuery()
 
-    init(id: Int, title: String) {
-        self.id = id
-        self.title = title
+    init(_ playlist: SharedPlaylist) {
+        self.id = playlist.id
+        self.title = playlist.name
         self.owner = nil
         self.createdByMe = nil
         self.curatedForMe = nil
@@ -90,24 +90,20 @@ struct AudioPlaylistEntity {
 
 struct AudioPlaylistQuery: EntityQuery, IntentValueQuery {
     func entities(for identifiers: [Int]) async throws -> [AudioPlaylistEntity] {
-        SharedConstants.playlists
-            .filter { identifiers.contains($0.id) }
-            .map { AudioPlaylistEntity(id: $0.id, title: $0.name) }
+        SharedConstants.playlists.filter { identifiers.contains($0.id) }.map(AudioPlaylistEntity.init)
     }
 
     func suggestedEntities() async throws -> [AudioPlaylistEntity] {
-        SharedConstants.playlists.map { AudioPlaylistEntity(id: $0.id, title: $0.name) }
+        SharedConstants.playlists.map(AudioPlaylistEntity.init)
     }
 
     // Siri audio search → resolve the spoken term to playlists.
     func values(for input: AudioSearch) async throws -> [AudioPlaylistEntity] {
         switch input.criteria {
         case .searchQuery(let query):
-            return SharedConstants.playlists
-                .filter { $0.name.localizedCaseInsensitiveContains(query) }
-                .map { AudioPlaylistEntity(id: $0.id, title: $0.name) }
+            return SharedConstants.playlists.filter { $0.name.localizedCaseInsensitiveContains(query) }.map(AudioPlaylistEntity.init)
         case .unspecified:
-            return SharedConstants.playlists.map { AudioPlaylistEntity(id: $0.id, title: $0.name) }
+            return SharedConstants.playlists.map(AudioPlaylistEntity.init)
         case .url:
             return []
         @unknown default:
@@ -148,6 +144,14 @@ struct PlayAudioIntent {
         // Start playback directly on the shared player so Siri plays without
         // bringing the app to the foreground.
         await AudioPlayer.shared.playPlaylistById(playlist.id)
+        // Honor the playback attributes Siri requested (e.g. "shuffle <playlist>").
+        // Shuffle must be applied after the queue is populated.
+        if playbackAttributes.contains(.shuffle) {
+            await AudioPlayer.shared.setShuffle(true)
+        }
+        if playbackAttributes.contains(.repeat) {
+            await AudioPlayer.shared.setRepeatMode(.all)
+        }
         return .result()
     }
 }
