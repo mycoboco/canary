@@ -18,6 +18,12 @@ struct PlaylistDetailView: View {
 
     private var filteredSongs: [Song] { songs.filtered(by: search) }
 
+    // The passed-in `playlist` is a snapshot from navigation time; read the live
+    // copy from the library by id so edits (e.g. a rename) reflect immediately.
+    private var current: Playlist {
+        library.playlists.first { $0.id == playlist.id } ?? playlist
+    }
+
     var body: some View {
         List {
             ForEach(Array(filteredSongs.enumerated()), id: \.element.id) { index, song in
@@ -26,10 +32,10 @@ struct PlaylistDetailView: View {
                     isPlaying: player.currentSong?.id == song.id
                 )
                 .onTapGesture {
-                    player.playSong(songs: filteredSongs, index: index, context: PlaybackContext(type: .playlist, name: playlist.name, playlistId: playlist.id, songId: song.id))
+                    player.playSong(songs: filteredSongs, index: index, context: PlaybackContext(type: .playlist, name: current.name, playlistId: playlist.id, songId: song.id))
                 }
                 .swipeActions(edge: .trailing) {
-                    if playlist.type == .manual {
+                    if current.type == .manual {
                         Button(role: .destructive) {
                             removeSong(songId: song.id)
                         } label: {
@@ -45,7 +51,7 @@ struct PlaylistDetailView: View {
         .overlay {
             if loading {
                 ProgressView()
-            } else if songs.isEmpty && playlist.type == .manual {
+            } else if songs.isEmpty && current.type == .manual {
                 ContentUnavailableView(
                     "No Songs",
                     systemImage: "music.note",
@@ -53,11 +59,11 @@ struct PlaylistDetailView: View {
                 )
             }
         }
-        .navigationTitle(playlist.name)
+        .navigationTitle(current.name)
         .flushTopHeader()
         .searchable(text: $search, prompt: "Search songs")
         .toolbar {
-            if playlist.type != .builtin {
+            if current.type != .builtin {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button("Edit") { editing = true }
@@ -76,10 +82,10 @@ struct PlaylistDetailView: View {
         }
         .sheet(isPresented: $editing) {
             NavigationStack {
-                PlaylistEditorView(mode: .edit(playlist))
+                PlaylistEditorView(mode: .edit(current))
             }
         }
-        .alert("Delete \"\(playlist.name)\"?", isPresented: $confirmDelete) {
+        .alert("Delete \"\(current.name)\"?", isPresented: $confirmDelete) {
             Button("Delete", role: .destructive) {
                 Task {
                     do {
