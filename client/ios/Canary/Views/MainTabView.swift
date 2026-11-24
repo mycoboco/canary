@@ -1,7 +1,15 @@
 import SwiftUI
+import UIKit
 
 enum AppTab: Int {
     case songs, genres, artists, albums, playlists
+}
+
+// Resign the first responder app-wide. Used to drop the search keyboard that
+// would otherwise stay up (and keep capturing input) behind the full player.
+@MainActor
+func dismissKeyboard() {
+    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
 }
 
 // Reports the mini ("mini") and full ("full") album-art slots so a single flying
@@ -125,6 +133,7 @@ struct MainTabView: View {
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 if player.currentSong != nil {
                     MiniPlayerView(progress: progress, onExpand: {
+                        dismissKeyboard()
                         withAnimation(Self.playerAnimation) { progress = 1 }
                     })
                 }
